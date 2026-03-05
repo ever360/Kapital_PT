@@ -9,9 +9,16 @@ import 'pages/socio_home.dart';
 import 'pages/cobrador_home.dart';
 import 'services/push_notification_service.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+// Futuro global para inicialización
+Future<void>? _initFuture;
 
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  _initFuture = _initializeServices();
+  runApp(const KapitalApp());
+}
+
+Future<void> _initializeServices() async {
   // 1. Inicializar Firebase
   try {
     await Firebase.initializeApp(
@@ -25,7 +32,6 @@ void main() async {
         measurementId: 'G-J4SN2H8BJG',
       ),
     );
-    debugPrint("Firebase conectado");
   } catch (e) {
     debugPrint("Firebase init error: $e");
   }
@@ -36,20 +42,16 @@ void main() async {
       url: 'https://uvmlrxazutsocrfzueoc.supabase.co',
       anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2bWxyeGF6dXRzb2NyZnp1ZW9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3MDgzMDgsImV4cCI6MjA4NzI4NDMwOH0.vi59v3GKVnwpE7D1C8A0HEswLIJD0fqDXXZEfuNcXGA',
     );
-    debugPrint("Supabase conectado");
   } catch (e) {
     debugPrint("Supabase init error: $e");
   }
 
-  // 3. Inicializar Notificaciones (Sin bloquear el inicio)
+  // 3. Inicializar Notificaciones
   try {
     PushNotificationService.initialize();
-    debugPrint("Servicio de notificaciones iniciado");
   } catch (e) {
     debugPrint("Push init error: $e");
   }
-
-  runApp(const KapitalApp());
 }
 
 class KapitalApp extends StatelessWidget {
@@ -57,27 +59,40 @@ class KapitalApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Kapital',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        primarySwatch: Colors.amber,
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFD4AF37),
-          brightness: Brightness.dark,
-          surface: const Color(0xFF1E1E1E),
-        ),
-      ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashScreen(),
-        '/login': (context) => const LoginPage(),
-        '/register': (context) => const RegisterPage(),
-        '/super_admin_home': (context) => const SuperAdminHomePage(),
-        '/socio_home': (context) => const SocioHomePage(),
-        '/cobrador_home': (context) => const CobradorHomePage(),
+    return FutureBuilder(
+      future: _initFuture,
+      builder: (context, snapshot) {
+        // Mientras carga los servicios críticos, mostramos un contenedor negro
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: Scaffold(backgroundColor: Color(0xFF121212), body: Center(child: CircularProgressIndicator())),
+          );
+        }
+
+        return MaterialApp(
+          title: 'Kapital',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            useMaterial3: true,
+            primarySwatch: Colors.amber,
+            scaffoldBackgroundColor: const Color(0xFF121212),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFFD4AF37),
+              brightness: Brightness.dark,
+              surface: const Color(0xFF1E1E1E),
+            ),
+          ),
+          initialRoute: '/',
+          routes: {
+            '/': (context) => const SplashScreen(),
+            '/login': (context) => const LoginPage(),
+            '/register': (context) => const RegisterPage(),
+            '/super_admin_home': (context) => const SuperAdminHomePage(),
+            '/socio_home': (context) => const SocioHomePage(),
+            '/cobrador_home': (context) => const CobradorHomePage(),
+          },
+        );
       },
     );
   }

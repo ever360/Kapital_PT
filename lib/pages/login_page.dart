@@ -40,11 +40,17 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _checkBiometrics() async {
     try {
+      // Pequeño delay para dar tiempo al hardware de inicializarse
+      await Future.delayed(const Duration(milliseconds: 500));
       final canCheck = await auth.canCheckBiometrics;
       final isDeviceSupported = await auth.isDeviceSupported();
+      final availableBiometrics = await auth.getAvailableBiometrics();
+      
+      debugPrint("Biometrics: canCheck=$canCheck, isSupported=$isDeviceSupported, types=$availableBiometrics");
+      
       if (mounted) {
         setState(() {
-          _canCheckBiometrics = canCheck && isDeviceSupported;
+          _canCheckBiometrics = (canCheck || availableBiometrics.isNotEmpty) && isDeviceSupported;
         });
       }
     } catch (e) {
@@ -602,7 +608,7 @@ class _LoginPageState extends State<LoginPage> {
 
                         // Versión Abajo
                         const Text(
-                          'v1.1.3 - Estable',
+                          'v1.1.4 - Rescate Total',
                           style: TextStyle(color: Colors.white24, fontSize: 11),
                         ),
                         const SizedBox(height: 20),
