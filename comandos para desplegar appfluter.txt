@@ -1,0 +1,30 @@
+git checkout main
+
+1 guardar 
+git add .
+git commit -m "Actualizar lógica de préstamos 1.1"
+git push origin main
+
+2-- Compilar y corregir index
+flutter build web --no-tree-shake-icons
+(Get-Content build\web\index.html) -replace '<base href="/">', '<base href="/Kapital_App/">' | Set-Content build\web\index.html
+
+
+3-- copiar compilados 
+Copy-Item build\web\* C:\deploy_temp -Recurse -Force
+
+4- - Cambia a gh-pages y limpia lo viejo:
+git checkout gh-pages
+git rm -rf .
+
+
+5-- Pega compilados y publica:
+Copy-Item C:\deploy_temp\* . -Recurse -Force
+git add .
+git commit -m "Deploy Kapital PWA 1"
+git push origin gh-pages
+git checkout main
+
+6-forzar actualizado
+git add .
+git commit -m "Descripción de los cambios realizados"

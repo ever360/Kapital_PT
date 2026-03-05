@@ -1,0 +1,210 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Cambiar color de la barra de notificaciones
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor:
+            Colors.transparent, // transparente para que se vea el gradiente
+        statusBarIconBrightness: Brightness.light, // íconos claros
+      ),
+    );
+  }
+
+  void _signInWithGoogle(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Login con Google en construcción...")),
+    );
+  }
+
+  void _signInWithApple(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Login con Apple en construcción...")),
+    );
+  }
+
+  void _recoverPassword(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Recuperación de contraseña en construcción..."),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return Scaffold(
+      body: Container(
+        height: MediaQuery.of(context).size.height,
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.green, Colors.orange], // gradiente Kapital
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: screenWidth > 600 ? 400 : double.infinity,
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 40,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset('assets/logoKapital.png', height: 120),
+                    const SizedBox(height: 40),
+
+                    TextField(
+                      decoration: InputDecoration(
+                        labelText: "Correo electrónico",
+                        prefixIcon: const Icon(Icons.email),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    TextField(
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: "Contraseña",
+                        prefixIcon: const Icon(Icons.lock),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => _recoverPassword(context),
+                        child: const Text("¿Olvidaste tu contraseña?"),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 50),
+                        backgroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: Colors.amber, width: 2),
+                        ),
+                      ),
+                      onPressed: () {},
+                      child: const Text(
+                        "Ingresar",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    Row(
+                      children: const [
+                        Expanded(child: Divider(thickness: 1)),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Text("o"),
+                        ),
+                        Expanded(child: Divider(thickness: 1)),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: const FaIcon(
+                            FontAwesomeIcons.google,
+                            color: Colors.red,
+                            size: 32,
+                          ),
+                          onPressed: () => _signInWithGoogle(context),
+                        ),
+                        const SizedBox(width: 40),
+                        IconButton(
+                          icon: const FaIcon(
+                            FontAwesomeIcons.apple,
+                            color: Colors.black,
+                            size: 32,
+                          ),
+                          onPressed: () => _signInWithApple(context),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    TextButton(
+                      onPressed: () {},
+                      child: RichText(
+                        text: const TextSpan(
+                          style: TextStyle(color: Colors.black),
+                          children: [
+                            TextSpan(text: "¿No tienes cuenta? "),
+                            TextSpan(
+                              text: "Regístrate",
+                              style: TextStyle(
+                                color: Colors.amber,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
