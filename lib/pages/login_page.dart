@@ -602,7 +602,7 @@ class _LoginPageState extends State<LoginPage> {
 
                         // Versión Abajo
                         const Text(
-                          'v1.1.1 - Beta',
+                          'v1.1.3 - Estable',
                           style: TextStyle(color: Colors.white24, fontSize: 11),
                         ),
                         const SizedBox(height: 20),

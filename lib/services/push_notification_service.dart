@@ -7,32 +7,39 @@ class PushNotificationService {
   static final supabase = Supabase.instance.client;
 
   static Future<void> initialize() async {
-    // 1. Solicitar permisos (fundamental en iOS y Web)
-    NotificationSettings settings = await _firebaseMessaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    try {
+      // 1. Solicitar permisos (fundamental en iOS y Web)
+      NotificationSettings settings =
+          await _firebaseMessaging.requestPermission(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      debugPrint('Permisos de notificaciones concedidos.');
-      // 2. Obtener el token único del dispositivo
-      String? token = await _firebaseMessaging.getToken();
-      if (token != null) {
-        debugPrint('FCM Token: $token');
-        await _saveTokenToSupabase(token);
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        debugPrint('Permisos de notificaciones concedidos.');
+        // 2. Obtener el token único del dispositivo
+        String? token = await _firebaseMessaging.getToken();
+        if (token != null) {
+          debugPrint('FCM Token: $token');
+          await _saveTokenToSupabase(token);
+        }
+
+        // Escuchar si el token se refresca
+        _firebaseMessaging.onTokenRefresh.listen(_saveTokenToSupabase);
+
+        // 3. Configurar recepción de mensajes en Foreground (App abierta)
+        FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+          debugPrint(
+            'Mensaje recibido en primer plano: ${message.notification?.title}',
+          );
+          // Aquí se podría mostrar un SnackBar local de aviso
+        });
+      } else {
+        debugPrint('El usuario denegó los permisos de notificación.');
       }
-
-      // Escuchar si el token se refresca
-      _firebaseMessaging.onTokenRefresh.listen(_saveTokenToSupabase);
-
-      // 3. Configurar recepción de mensajes en Foreground (App abierta)
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        debugPrint('Mensaje recibido en primer plano: ${message.notification?.title}');
-        // Aquí se podría mostrar un SnackBar local de aviso
-      });
-    } else {
-      debugPrint('El usuario denegó los permisos de notificación.');
+    } catch (e) {
+      debugPrint("Error al inicializar notificaciones: $e");
     }
   }
 

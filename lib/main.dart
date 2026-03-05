@@ -1,74 +1,84 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'pages/login_page.dart';
+import 'pages/register_page.dart';
+import 'pages/splash_screen.dart';
+import 'pages/super_admin_home.dart';
+import 'pages/socio_home.dart';
+import 'pages/cobrador_home.dart';
+import 'services/push_notification_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 1. Inicializar Firebase
+  try {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: 'AIzaSyAaxzlRP7giXc0WMYsrXYKDpakx-L2-JHI',
+        appId: '1:903185337094:web:98058680bf7d8c6f98ec87',
+        messagingSenderId: '903185337094',
+        projectId: 'kapital-br',
+        authDomain: 'kapital-br.firebaseapp.com',
+        storageBucket: 'kapital-br.firebasestorage.app',
+        measurementId: 'G-J4SN2H8BJG',
+      ),
+    );
+    debugPrint("Firebase conectado");
+  } catch (e) {
+    debugPrint("Firebase init error: $e");
+  }
+
+  // 2. Inicializar Supabase
+  try {
+    await Supabase.initialize(
+      url: 'https://uvmlrxazutsocrfzueoc.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2bWxyeGF6dXRzb2NyZnp1ZW9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3MDgzMDgsImV4cCI6MjA4NzI4NDMwOH0.vi59v3GKVnwpE7D1C8A0HEswLIJD0fqDXXZEfuNcXGA',
+    );
+    debugPrint("Supabase conectado");
+  } catch (e) {
+    debugPrint("Supabase init error: $e");
+  }
+
+  // 3. Inicializar Notificaciones (Sin bloquear el inicio)
+  try {
+    PushNotificationService.initialize();
+    debugPrint("Servicio de notificaciones iniciado");
+  } catch (e) {
+    debugPrint("Push init error: $e");
+  }
+
   runApp(const KapitalApp());
 }
 
-class KapitalApp extends StatefulWidget {
+class KapitalApp extends StatelessWidget {
   const KapitalApp({super.key});
-
-  @override
-  State<KapitalApp> createState() => _KapitalAppState();
-}
-
-class _KapitalAppState extends State<KapitalApp> {
-  bool _isDarkMode = false;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'Kapital',
       debugShowCheckedModeBanner: false,
-
-      // Cambia automáticamente según el estado
-      themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
-
-      // 🌞 MODO CLARO
       theme: ThemeData(
-        brightness: Brightness.light,
-        primarySwatch: Colors.green,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF2E7D32),
-          foregroundColor: Colors.white,
-          centerTitle: true,
+        useMaterial3: true,
+        primarySwatch: Colors.amber,
+        scaffoldBackgroundColor: const Color(0xFF121212),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFD4AF37),
+          brightness: Brightness.dark,
+          surface: const Color(0xFF1E1E1E),
         ),
       ),
-
-      // 🌙 MODO OSCURO
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF1B5E20),
-          foregroundColor: Colors.white,
-          centerTitle: true,
-        ),
-      ),
-
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Kapital BR'),
-          actions: [
-            IconButton(
-              icon: Icon(
-                _isDarkMode ? Icons.light_mode : Icons.dark_mode,
-              ),
-              onPressed: () {
-                setState(() {
-                  _isDarkMode = !_isDarkMode;
-                });
-              },
-            ),
-          ],
-        ),
-        body: Center(
-          child: Text(
-            _isDarkMode ? "Modo Oscuro Activado 🌙" : "Modo Claro Activado 🌞",
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const SplashScreen(),
+        '/login': (context) => const LoginPage(),
+        '/register': (context) => const RegisterPage(),
+        '/super_admin_home': (context) => const SuperAdminHomePage(),
+        '/socio_home': (context) => const SocioHomePage(),
+        '/cobrador_home': (context) => const CobradorHomePage(),
+      },
     );
   }
 }
