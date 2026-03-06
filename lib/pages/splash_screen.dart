@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-const Color doradoKapital = Color(0xFFFFD700);
+import 'package:kapital_app/theme/theme_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -72,17 +71,22 @@ class _SplashScreenState extends State<SplashScreen>
       body: AnimatedBuilder(
         animation: _radiusAnimation,
         builder: (context, child) {
-          return Container(
-            width: screenWidth,
-            height: screenHeight,
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.center,
-                radius: _radiusAnimation.value,
-                colors: const [doradoKapital, Colors.white],
-                stops: const [0.0, 1.0],
+            final isDark = themeProvider.isDarkMode;
+            final primaryColor = AppColors.primary(isDark);
+            
+            return Container(
+              width: screenWidth,
+              height: screenHeight,
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.center,
+                  radius: _radiusAnimation.value,
+                  colors: isDark 
+                      ? [primaryColor.withValues(alpha: 0.3), const Color(0xFF121212)] 
+                      : [primaryColor, Colors.white],
+                  stops: const [0.0, 1.0],
+                ),
               ),
-            ),
             child: _radiusAnimation.value >= 1.5
                 ? Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -105,13 +109,16 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ),
                       const SizedBox(height: 10),
-                      const Text(
+                      Text(
                         "Más que real, una experiencia única",
-                        style: TextStyle(fontSize: 18, color: Colors.black87),
+                        style: TextStyle(
+                          fontSize: 18, 
+                          color: isDark ? Colors.white70 : Colors.black87
+                        ),
                       ),
                       const SizedBox(height: 30),
-                      const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(isDark ? primaryColor : Colors.white),
                         strokeWidth: 3,
                       ),
                     ],
@@ -159,10 +166,12 @@ class _ShimmerTextState extends State<ShimmerText>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
+        final primaryColor = AppColors.primary(themeProvider.isDarkMode);
+        
         return ShaderMask(
           shaderCallback: (bounds) {
             return LinearGradient(
-              colors: const [Colors.white, doradoKapital, Colors.white],
+              colors: [Colors.white, primaryColor, Colors.white],
               stops: const [0.2, 0.5, 0.8],
               begin: Alignment(-1.0 + _controller.value * 2, 0),
               end: Alignment(1.0 + _controller.value * 2, 0),

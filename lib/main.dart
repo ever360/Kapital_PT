@@ -5,20 +5,36 @@ import 'pages/login_page.dart';
 import 'pages/register_page.dart';
 import 'pages/splash_screen.dart';
 import 'pages/super_admin_home.dart';
+import 'pages/master_page.dart';  // El panel global que creamos
 import 'pages/socio_home.dart';
 import 'pages/cobrador_home.dart';
 import 'services/push_notification_service.dart';
+import 'theme/theme_provider.dart'; // Controlador de Temas
+import 'package:flutter/services.dart';
 
 // Futuro global para inicialización
 Future<void>? _initFuture;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Hacer que la barra de notificaciones superior sea transparente
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // Barra superior transparente
+      statusBarIconBrightness: Brightness.light, // Iconos blancos de hora/batería
+      systemNavigationBarColor: Color(0xFF121212), // Color de la barra de navegación de abajo
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
+
   _initFuture = _initializeServices();
   runApp(const KapitalApp());
 }
 
 Future<void> _initializeServices() async {
+  // 0. Inicializar Tema Visual
+  await themeProvider.init();
   // 1. Inicializar Firebase
   try {
     await Firebase.initializeApp(
@@ -59,39 +75,66 @@ class KapitalApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Kapital',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        primarySwatch: Colors.amber,
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFD4AF37),
-          brightness: Brightness.dark,
-          surface: const Color(0xFF1E1E1E),
-        ),
-      ),
-      home: FutureBuilder(
-        future: _initFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              backgroundColor: Color(0xFF121212),
-              body: Center(
-                child: CircularProgressIndicator(color: Color(0xFFD4AF37)),
-              ),
-            );
-          }
-          return const SplashScreen();
-        },
-      ),
-      routes: {
-        '/login': (context) => const LoginPage(),
-        '/register': (context) => const RegisterPage(),
-        '/super_admin_home': (context) => const SuperAdminHomePage(),
-        '/socio_home': (context) => const SocioHomePage(),
-        '/cobrador_home': (context) => const CobradorHomePage(),
+    return ListenableBuilder(
+      listenable: themeProvider,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'Kapital',
+          debugShowCheckedModeBanner: false,
+          themeMode: themeProvider.themeMode,
+          // ============== TEMA CLARO ==============
+          theme: ThemeData(
+            useMaterial3: true,
+            primarySwatch: Colors.amber,
+            scaffoldBackgroundColor: const Color(0xFFF5F5F5), // Color claro de fondo
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.doradoKapital,
+              brightness: Brightness.light,
+              surface: Colors.white,
+            ),
+            textTheme: const TextTheme(
+              bodyMedium: TextStyle(color: Colors.black87),
+              bodyLarge: TextStyle(color: Colors.black87),
+            ),
+          ),
+          // ============== TEMA OSCURO ==============
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            primaryColor: AppColors.verdeSupabase,
+            scaffoldBackgroundColor: const Color(0xFF121212), // Fondo oscuro
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.verdeSupabase,
+              brightness: Brightness.dark,
+              surface: const Color(0xFF1E1E1E),
+            ),
+            textTheme: const TextTheme(
+              bodyMedium: TextStyle(color: Colors.white),
+              bodyLarge: TextStyle(color: Colors.white),
+            ),
+          ),
+          home: FutureBuilder(
+            future: _initFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Scaffold(
+                  // El fondo ya lo toma automático del tema
+                  body: Center(
+                    child: CircularProgressIndicator(color: AppColors.primary(themeProvider.isDarkMode)),
+                  ),
+                );
+              }
+              return const SplashScreen();
+            },
+          ),
+          routes: {
+            '/login': (context) => const LoginPage(),
+            '/register': (context) => const RegisterPage(),
+            '/super_admin_home': (context) => const SuperAdminHomePage(),
+            '/master_home': (context) => const MasterHomePage(),
+            '/socio_home': (context) => const SocioHomePage(),
+            '/cobrador_home': (context) => const CobradorHomePage(),
+          },
+        );
       },
     );
   }

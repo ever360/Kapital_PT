@@ -3,12 +3,14 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:kapital_app/pages/register_page.dart';
 import 'package:kapital_app/pages/super_admin_home.dart';
+import 'package:kapital_app/pages/master_page.dart';
 import 'package:kapital_app/pages/socio_home.dart';
 import 'package:kapital_app/pages/cobrador_home.dart';
 import 'package:kapital_app/pages/completar_perfil_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:kapital_app/theme/theme_provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -146,7 +148,9 @@ class _LoginPageState extends State<LoginPage> {
           );
 
           Widget homePage;
-          if (rol == 'super_admin') {
+          if (rol == 'master') {
+            homePage = const MasterHomePage();
+          } else if (rol == 'admin' || rol == 'super_admin') {
             homePage = const SuperAdminHomePage();
           } else if (rol == 'socio') {
             homePage = const SocioHomePage();
@@ -314,16 +318,18 @@ class _LoginPageState extends State<LoginPage> {
     return TextFormField(
       controller: controller,
       obscureText: obscure,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black87),
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white54),
-        prefixIcon: Icon(icon, color: Colors.white70),
+        hintStyle: TextStyle(color: themeProvider.isDarkMode ? Colors.white54 : Colors.black54),
+        prefixIcon: Icon(icon, color: themeProvider.isDarkMode ? Colors.white70 : Colors.black54),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.08),
+        fillColor: themeProvider.isDarkMode 
+            ? Colors.white.withValues(alpha: 0.08)
+            : Colors.black.withValues(alpha: 0.05),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -348,11 +354,14 @@ class _LoginPageState extends State<LoginPage> {
         icon: Image.asset(iconPath, height: 24),
         label: Text(
           label,
-          style: const TextStyle(color: Colors.white, fontSize: 16),
+          style: TextStyle(
+            color: themeProvider.isDarkMode ? Colors.white : Colors.black87, 
+            fontSize: 16
+          ),
         ),
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14),
-          side: const BorderSide(color: Colors.white30),
+          side: BorderSide(color: themeProvider.isDarkMode ? Colors.white30 : Colors.black26),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -365,9 +374,9 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final isDark = themeProvider.isDarkMode;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212), // Fondo oscuro elegante
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: SafeArea(
@@ -395,7 +404,7 @@ class _LoginPageState extends State<LoginPage> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.amber.withValues(alpha: 0.15),
+                                  color: Colors.amber.withValues(alpha: isDark ? 0.15 : 0.4),
                                   blurRadius: 30,
                                   spreadRadius: 10,
                                 ),
@@ -409,19 +418,19 @@ class _LoginPageState extends State<LoginPage> {
                         ),
 
                         const SizedBox(height: 12),
-                        const Text(
+                        Text(
                           "Iniciar Sesión",
                           style: TextStyle(
-                            color: Colors.white,
+                            color: isDark ? Colors.white : Colors.black87,
                             fontSize: 26,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.2,
                           ),
                         ),
                         const SizedBox(height: 6),
-                        const Text(
+                        Text(
                           "Bienvenido de nuevo a Kapital",
-                          style: TextStyle(color: Colors.white54, fontSize: 14),
+                          style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 14),
                         ),
                         const SizedBox(height: 35),
 
@@ -458,9 +467,9 @@ class _LoginPageState extends State<LoginPage> {
                             children: [
                               if (_canCheckBiometrics)
                                 IconButton(
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.fingerprint,
-                                    color: Color(0xFFD4AF37),
+                                    color: AppColors.primary(isDark),
                                   ),
                                   onPressed: authenticateWithBiometrics,
                                 ),
@@ -469,7 +478,7 @@ class _LoginPageState extends State<LoginPage> {
                                   _obscurePassword
                                       ? Icons.visibility_outlined
                                       : Icons.visibility_off_outlined,
-                                  color: Colors.white54,
+                                  color: isDark ? Colors.white54 : Colors.black54,
                                 ),
                                 onPressed: () => setState(
                                   () => _obscurePassword = !_obscurePassword,
@@ -491,9 +500,7 @@ class _LoginPageState extends State<LoginPage> {
                           width: double.infinity,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(
-                                0xFFD4AF37,
-                              ), // Dorado Kapital
+                              backgroundColor: AppColors.primary(isDark), // Color primario dinámico
                               foregroundColor:
                                   Colors.black, // Texto oscuro sobre dorado
                               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -527,10 +534,10 @@ class _LoginPageState extends State<LoginPage> {
                         // Enlace de Recuperación
                         TextButton(
                           onPressed: _isLoading ? null : forgotPassword,
-                          child: const Text(
+                          child: Text(
                             "¿Olvidaste tu contraseña?",
                             style: TextStyle(
-                              color: Colors.white54,
+                              color: isDark ? Colors.white54 : Colors.black54,
                               fontSize: 13,
                               decoration: TextDecoration.underline,
                             ),
@@ -544,22 +551,22 @@ class _LoginPageState extends State<LoginPage> {
                           children: [
                             Expanded(
                               child: Divider(
-                                color: Colors.white.withValues(alpha: 0.2),
+                                color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.2),
                               ),
                             ),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
                               child: Text(
                                 "O continúa con",
                                 style: TextStyle(
-                                  color: Colors.white54,
+                                  color: isDark ? Colors.white54 : Colors.black54,
                                   fontSize: 12,
                                 ),
                               ),
                             ),
                             Expanded(
                               child: Divider(
-                                color: Colors.white.withValues(alpha: 0.2),
+                                color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.2),
                               ),
                             ),
                           ],
@@ -578,9 +585,9 @@ class _LoginPageState extends State<LoginPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               "¿No tienes cuenta? ",
-                              style: TextStyle(color: Colors.white70),
+                              style: TextStyle(color: isDark ? Colors.white70 : Colors.black87),
                             ),
                             MouseRegion(
                               cursor: SystemMouseCursors.click,
@@ -593,10 +600,10 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                   );
                                 },
-                                child: const Text(
+                                child: Text(
                                   "Regístrate",
                                   style: TextStyle(
-                                    color: Color(0xFFD4AF37),
+                                    color: AppColors.primary(isDark),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -607,9 +614,9 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 20),
 
                         // Versión Abajo
-                        const Text(
+                        Text(
                           'v1.3.2 - Golden Registration',
-                          style: TextStyle(color: Colors.white24, fontSize: 11),
+                          style: TextStyle(color: isDark ? Colors.white24 : Colors.black38, fontSize: 11),
                         ),
                         const SizedBox(height: 20),
                       ],
@@ -624,3 +631,4 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
+

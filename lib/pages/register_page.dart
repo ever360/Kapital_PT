@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kapital_app/theme/theme_provider.dart';
 
@@ -341,7 +342,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               cursor: SystemMouseCursors.click,
                               child: GestureDetector(
                                 onTap: () => Navigator.pop(context),
-                                child: const Text(
+                                child: Text(
                                   "Inicia sesión",
                                   style: TextStyle(
                                     color: AppColors.primary(isDark),
