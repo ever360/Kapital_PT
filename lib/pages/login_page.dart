@@ -608,7 +608,7 @@ class _LoginPageState extends State<LoginPage> {
 
                         // Versión Abajo
                         const Text(
-                          'v1.3.1 - BugFix Blanco',
+                          'v1.3.2 - Golden Registration',
                           style: TextStyle(color: Colors.white24, fontSize: 11),
                         ),
                         const SizedBox(height: 20),
