@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:kapital_app/pages/login_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kapital_app/theme/theme_provider.dart';
+import 'package:kapital_app/pages/socio_clientes_page.dart';
 
 class SocioHomePage extends StatefulWidget {
   const SocioHomePage({super.key});
@@ -411,6 +413,14 @@ class _SocioHomePageState extends State<SocioHomePage> {
                                 backgroundColor: activa ? AppColors.primary(themeProvider.isDarkMode).withValues(alpha: 0.2) : Colors.red.withValues(alpha: 0.1),
                                 child: Icon(Icons.map, color: activa ? AppColors.primary(themeProvider.isDarkMode) : Colors.redAccent),
                               ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SocioClientesPage(ruta: ruta),
+                                  ),
+                                );
+                              },
                               title: Text(ruta['nombre'] ?? 'Sin Nombre', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
                               subtitle: Text(activa ? 'Operativa' : 'Suspendida', style: TextStyle(color: activa ? Colors.green : Colors.redAccent, fontSize: 12)),
                               trailing: ElevatedButton.icon(
