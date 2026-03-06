@@ -201,13 +201,14 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                           // Cerrar sesión del temp client para evitar basura
                           await tempClient.auth.signOut();
                           
-                          if (!mounted) return;
+                          if (!context.mounted) return;
                           Navigator.pop(context);
                           _loadDashboardData();
                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Socio creado exitosamente', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
                         }
                       } catch (e) {
                          setStateDialog(() => isCreating = false);
+                         if (!context.mounted) return;
                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
                       }
                     }
@@ -250,7 +251,7 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                   DropdownButtonFormField<String>(
                     dropdownColor: themeProvider.isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
                     style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black87),
-                    value: selectedRole,
+                    initialValue: selectedRole,
                     items: const [
                       DropdownMenuItem(value: 'cobrador', child: Text('Cobrador')),
                       DropdownMenuItem(value: 'supervisor', child: Text('Supervisor')),
@@ -262,13 +263,13 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                   const SizedBox(height: 10),
                   SwitchListTile(
                     title: Text('Aprobado (Entrada)', style: TextStyle(color: themeProvider.isDarkMode ? Colors.white70 : Colors.black87)),
-                    activeColor: AppColors.primary(themeProvider.isDarkMode),
+                    activeTrackColor: AppColors.primary(themeProvider.isDarkMode),
                     value: isApproved,
                     onChanged: (val) => setStateDialog(() => isApproved = val),
                   ),
                   SwitchListTile(
                     title: Text('Activo (Cuenta)',  style: TextStyle(color: themeProvider.isDarkMode ? Colors.white70 : Colors.black87)),
-                    activeColor: AppColors.primary(themeProvider.isDarkMode),
+                    activeTrackColor: AppColors.primary(themeProvider.isDarkMode),
                     value: isActive,
                     onChanged: (val) => setStateDialog(() => isActive = val),
                   ),

@@ -139,11 +139,11 @@ class _SocioHomePageState extends State<SocioHomePage> {
                     'is_active': true,
                   });
                   _loadData();
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ruta creada'), backgroundColor: Colors.green));
                 } catch (e) {
                   setState(() => _isLoading = false);
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
                 }
               },
@@ -275,6 +275,7 @@ class _SocioHomePageState extends State<SocioHomePage> {
                                           });
                                         });
                                       } catch (e) {
+                                        if (!context.mounted) return;
                                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
                                       }
                                     },

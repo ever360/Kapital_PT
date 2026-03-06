@@ -92,7 +92,7 @@ class _CobradorPagosPageState extends State<CobradorPagosPage> {
                   ),
                   const SizedBox(height: 15),
                   DropdownButtonFormField<String>(
-                    value: metodoSeleccionado,
+                    initialValue: metodoSeleccionado,
                     dropdownColor: isDark ? const Color(0xFF2A2A2A) : Colors.white,
                     style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                     items: const [
@@ -152,12 +152,12 @@ class _CobradorPagosPageState extends State<CobradorPagosPage> {
                       _saldoPendienteActual = nuevoSaldo;
                       _loadHistorialPagos();
                       
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pago Registrado Exitosamente'), backgroundColor: Colors.green));
 
                     } catch (e) {
                       setState(() => _isLoading = false);
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error guardando: $e')));
                     }
                   },

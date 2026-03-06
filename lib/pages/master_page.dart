@@ -116,12 +116,12 @@ class _MasterHomePageState extends State<MasterHomePage> {
                     'socios_maximos': nuevosSocios,
                   }).eq('id', empresa['id']);
                   _fetchEmpresas();
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Límites actualizados"), backgroundColor: Colors.green),
                   );
                 } catch (e) {
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text("Error: $e"), backgroundColor: Colors.redAccent),
                   );
@@ -206,7 +206,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                                 ),
                                 Switch(
                                   value: isActive,
-                                  activeColor: AppColors.primary(themeProvider.isDarkMode),
+                                  activeTrackColor: AppColors.primary(themeProvider.isDarkMode),
                                   onChanged: (val) => _toggleEmpresaStatus(empresa['id'], isActive),
                                 ),
                               ],
