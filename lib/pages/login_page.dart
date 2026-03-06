@@ -608,7 +608,7 @@ class _LoginPageState extends State<LoginPage> {
 
                         // Versión Abajo
                         const Text(
-                          'v1.1.4 - Rescate Total',
+                          'v1.3.0 - Definitiva Biometría',
                           style: TextStyle(color: Colors.white24, fontSize: 11),
                         ),
                         const SizedBox(height: 20),
