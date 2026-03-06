@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:kapital_app/theme/theme_provider.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -11,6 +11,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController nameController = TextEditingController();
+  final TextEditingController empresaController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -31,38 +32,61 @@ class _RegisterPageState extends State<RegisterPage> {
         if (!mounted) return;
 
         if (authResponse.user != null) {
-          // Verificar la cantidad de perfiles actuales
-          final res = await supabase.from('profiles').select('id');
-          final totalProfiles = res.length;
+          // 1. Contar cuántos usuarios hay globalmente usando nuestra función segura (bypasa el RLS)
+          int totalProfiles = 1; // Por defecto asumimos que no es el primero para evitar errores tontos
+          try {
+            final countRes = await supabase.rpc('get_total_profiles');
+            totalProfiles = countRes as int;
+          } catch (e) {
+            debugPrint("Aviso: No se pudo contar los perfiles. Si la BD es nueva, asuma seguridad. Error: $e");
+            // Si la función SQL aún no está cargada, podemos intentar la consulta de emergencia (que fallará por RLS si no es público)
+            final resEmergencia = await supabase.from('profiles').select('id');
+            totalProfiles = resEmergencia.length;
+          }
 
           final isFirstUser = totalProfiles == 0;
-          final String rolAsignado = isFirstUser ? 'super_admin' : 'cobrador';
-          final bool statusAsignado = isFirstUser ? true : false; // Si es el primero, entra directo (Aprobado y Activo)
+          
+          // 2. Crear la empresa (La crea Activa para el Master, e Inactiva para Admin)
+          final empresaRes = await supabase.from('empresas').insert({
+            'nombre': empresaController.text.trim(),
+            'email_contacto': emailController.text.trim(),
+            'is_active': isFirstUser ? true : false, 
+            'rutas_maximas': isFirstUser ? 9999 : 0, // Master sin límites
+          }).select('id').single();
 
+          final String nuevoEmpresaId = empresaRes['id'];
+
+          final String rolAsignado = isFirstUser ? 'master' : 'admin';
+          final bool statusAsignado = isFirstUser ? true : false; // El primero nace aprobado y activo
+
+          // 3. Crear el perfil del usuario validado
           await supabase.from('profiles').insert({
             'id': authResponse.user!.id,
             'nombre': nameController.text.trim(),
             'telefono': phoneController.text.trim(),
             'foto': null,
             'rol': rolAsignado,
-            'isApproved': statusAsignado,
+            'isApproved': statusAsignado, 
             'isActive': statusAsignado,
+            'empresa_id': nuevoEmpresaId,
           });
 
           if (!mounted) return;
 
           if (isFirstUser) {
-            ScaffoldMessenger.of(context).showSnackBar(
+             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text("¡Cuenta Súper Admin creada! Ya puedes ingresar."),
+                content: Text("¡Cuenta MASTER (DIOS) creada! Ya puedes ingresar y administrar el SaaS."),
                 backgroundColor: Colors.green,
+                duration: Duration(seconds: 4),
               ),
             );
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
+             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text("Registro exitoso. Espera aprobación de un administrador."),
+                content: Text("Solicitud enviada. Contacta al Master para activar tu cuenta/empresa."),
                 backgroundColor: Colors.blue,
+                duration: Duration(seconds: 4),
               ),
             );
           }
@@ -71,8 +95,18 @@ class _RegisterPageState extends State<RegisterPage> {
         }
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.redAccent),
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text("Error de Registro"),
+            content: Text(e.toString()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text("Entendido"),
+              )
+            ],
+          )
         );
       } finally {
         if (mounted) setState(() => _isLoading = false);
@@ -93,16 +127,18 @@ class _RegisterPageState extends State<RegisterPage> {
     return TextFormField(
       controller: controller,
       obscureText: obscure,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black87),
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white54),
-        prefixIcon: Icon(icon, color: Colors.white70),
+        hintStyle: TextStyle(color: themeProvider.isDarkMode ? Colors.white54 : Colors.black54),
+        prefixIcon: Icon(icon, color: themeProvider.isDarkMode ? Colors.white70 : Colors.black54),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.08),
+        fillColor: themeProvider.isDarkMode 
+            ? Colors.white.withValues(alpha: 0.08)
+            : Colors.black.withValues(alpha: 0.05),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -119,9 +155,9 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final isDark = themeProvider.isDarkMode;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212), // Fondo oscuro emparejado con Login
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: SafeArea(
@@ -145,7 +181,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.amber.withValues(alpha: 0.15),
+                                  color: Colors.amber.withValues(alpha: isDark ? 0.15 : 0.4),
                                   blurRadius: 30,
                                   spreadRadius: 10,
                                 ),
@@ -158,19 +194,19 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        const Text(
+                        Text(
                           "Crear Cuenta",
                           style: TextStyle(
-                            color: Colors.white,
+                            color: isDark ? Colors.white : Colors.black87,
                             fontSize: 26,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.2,
                           ),
                         ),
                         const SizedBox(height: 5),
-                        const Text(
+                        Text(
                           "Únete a Kapital y transforma tus finanzas",
-                          style: TextStyle(color: Colors.white54, fontSize: 13),
+                          style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 13),
                         ),
                         const SizedBox(height: 35),
 
@@ -184,6 +220,22 @@ class _RegisterPageState extends State<RegisterPage> {
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Por favor ingresa tu nombre';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 15),
+
+                        _buildTextField(
+                          controller: empresaController,
+                          hint: 'Nombre de tu Empresa',
+                          obscure: false,
+                          icon: Icons.business_outlined,
+                          keyboardType: TextInputType.name,
+                          textInputAction: TextInputAction.next,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Ingresa el nombre de la compañía';
                             }
                             return null;
                           },
@@ -231,7 +283,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                              color: Colors.white54,
+                              color: isDark ? Colors.white54 : Colors.black54,
                             ),
                             onPressed: () {
                               setState(() {
@@ -251,7 +303,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           width: double.infinity,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFD4AF37), // Botón dorado
+                              backgroundColor: AppColors.primary(isDark), // Botón dinámico
                               foregroundColor: Colors.black,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               elevation: 2,
@@ -281,9 +333,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               "¿Ya tienes cuenta? ",
-                              style: TextStyle(color: Colors.white70),
+                              style: TextStyle(color: isDark ? Colors.white70 : Colors.black87),
                             ),
                             MouseRegion(
                               cursor: SystemMouseCursors.click,
@@ -292,7 +344,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 child: const Text(
                                   "Inicia sesión",
                                   style: TextStyle(
-                                    color: Color(0xFFD4AF37),
+                                    color: AppColors.primary(isDark),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -313,3 +365,4 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 }
+
