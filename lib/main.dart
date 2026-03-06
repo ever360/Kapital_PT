@@ -59,40 +59,39 @@ class KapitalApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: _initFuture,
-      builder: (context, snapshot) {
-        // Mientras carga los servicios críticos, mostramos un contenedor negro
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const MaterialApp(
-            debugShowCheckedModeBanner: false,
-            home: Scaffold(backgroundColor: Color(0xFF121212), body: Center(child: CircularProgressIndicator())),
-          );
-        }
-
-        return MaterialApp(
-          title: 'Kapital',
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            useMaterial3: true,
-            primarySwatch: Colors.amber,
-            scaffoldBackgroundColor: const Color(0xFF121212),
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFFD4AF37),
-              brightness: Brightness.dark,
-              surface: const Color(0xFF1E1E1E),
-            ),
-          ),
-          initialRoute: '/',
-          routes: {
-            '/': (context) => const SplashScreen(),
-            '/login': (context) => const LoginPage(),
-            '/register': (context) => const RegisterPage(),
-            '/super_admin_home': (context) => const SuperAdminHomePage(),
-            '/socio_home': (context) => const SocioHomePage(),
-            '/cobrador_home': (context) => const CobradorHomePage(),
-          },
-        );
+    return MaterialApp(
+      title: 'Kapital',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        primarySwatch: Colors.amber,
+        scaffoldBackgroundColor: const Color(0xFF121212),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFD4AF37),
+          brightness: Brightness.dark,
+          surface: const Color(0xFF1E1E1E),
+        ),
+      ),
+      home: FutureBuilder(
+        future: _initFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              backgroundColor: Color(0xFF121212),
+              body: Center(
+                child: CircularProgressIndicator(color: Color(0xFFD4AF37)),
+              ),
+            );
+          }
+          return const SplashScreen();
+        },
+      ),
+      routes: {
+        '/login': (context) => const LoginPage(),
+        '/register': (context) => const RegisterPage(),
+        '/super_admin_home': (context) => const SuperAdminHomePage(),
+        '/socio_home': (context) => const SocioHomePage(),
+        '/cobrador_home': (context) => const CobradorHomePage(),
       },
     );
   }
