@@ -72,14 +72,15 @@ class KapitalApp extends StatelessWidget {
       listenable: themeProvider,
       builder: (context, _) {
         final bool isDark = themeProvider.isDarkMode;
+        final Color primaryColor = AppColors.primary(isDark);
 
         // Actualizar el estilo del sistema en cada cambio de tema
         SystemChrome.setSystemUIOverlayStyle(
           SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
+            statusBarColor: primaryColor, // Usar el color del tema directamente
             statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
             statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
-            systemNavigationBarColor: isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
+            systemNavigationBarColor: isDark ? const Color(0xFF121212) : primaryColor,
             systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
           ),
         );
@@ -92,10 +93,12 @@ class KapitalApp extends StatelessWidget {
           theme: ThemeData(
             useMaterial3: true,
             primarySwatch: Colors.amber,
-            scaffoldBackgroundColor: const Color(0xFFF5F5F5), // Color claro de fondo
-            appBarTheme: const AppBarTheme(
+            scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+            appBarTheme: AppBarTheme(
+              backgroundColor: AppColors.doradoKapital,
+              foregroundColor: Colors.black,
               systemOverlayStyle: SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
+                statusBarColor: AppColors.doradoKapital,
                 statusBarIconBrightness: Brightness.dark,
               ),
             ),
