@@ -12,10 +12,10 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController empresaController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  String? _imageUrl; // Para la foto opcional
   bool _obscurePassword = true;
   bool _isLoading = false;
 
@@ -47,25 +47,25 @@ class _RegisterPageState extends State<RegisterPage> {
 
           final isFirstUser = totalProfiles == 0;
           
-          // 2. Crear la empresa (La crea Activa para el Master, e Inactiva para Admin)
+          // 2. Crear la empresa AUTOMÁTICAMENTE (Nombre basado en el usuario)
           final empresaRes = await supabase.from('empresas').insert({
-            'nombre': empresaController.text.trim(),
+            'nombre': 'Kapital - ${nameController.text.trim()}',
             'email_contacto': emailController.text.trim(),
             'is_active': isFirstUser ? true : false, 
-            'rutas_maximas': isFirstUser ? 9999 : 0, // Master sin límites
+            'rutas_maximas': isFirstUser ? 9999 : 3, // 3 por defecto para nuevos admins
           }).select('id').single();
 
           final String nuevoEmpresaId = empresaRes['id'];
 
           final String rolAsignado = isFirstUser ? 'master' : 'admin';
-          final bool statusAsignado = isFirstUser ? true : false; // El primero nace aprobado y activo
+          final bool statusAsignado = isFirstUser ? true : false; 
 
           // 3. Crear el perfil del usuario validado
           await supabase.from('profiles').insert({
             'id': authResponse.user!.id,
             'nombre': nameController.text.trim(),
             'telefono': phoneController.text.trim(),
-            'foto': null,
+            'foto': _imageUrl,
             'rol': rolAsignado,
             'isApproved': statusAsignado, 
             'isActive': statusAsignado,
@@ -211,6 +211,38 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 35),
 
+                        // Avatar / Foto opcional
+                        GestureDetector(
+                          onTap: () {
+                            // TODO: Implementar selección de imagen (image_picker)
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Selección de foto disponible próximamente")));
+                          },
+                          child: Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 45,
+                                backgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                                backgroundImage: _imageUrl != null ? NetworkImage(_imageUrl!) : null,
+                                child: _imageUrl == null 
+                                  ? Icon(Icons.camera_alt_outlined, size: 30, color: isDark ? Colors.white38 : Colors.black38) 
+                                  : null,
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(color: AppColors.primary(isDark), shape: BoxShape.circle),
+                                  child: const Icon(Icons.add, size: 18, color: Colors.black),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text("Foto de perfil (Opcional)", style: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 11)),
+                        const SizedBox(height: 25),
+
                         _buildTextField(
                           controller: nameController,
                           hint: 'Nombre completo',
@@ -227,21 +259,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 15),
 
-                        _buildTextField(
-                          controller: empresaController,
-                          hint: 'Nombre de tu Empresa',
-                          obscure: false,
-                          icon: Icons.business_outlined,
-                          keyboardType: TextInputType.name,
-                          textInputAction: TextInputAction.next,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Ingresa el nombre de la compañía';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 15),
+
 
                         _buildTextField(
                           controller: emailController,
@@ -260,17 +278,25 @@ class _RegisterPageState extends State<RegisterPage> {
 
                         _buildTextField(
                           controller: phoneController,
-                          hint: 'Teléfono',
+                          hint: 'Número de Teléfono',
                           obscure: false,
                           icon: Icons.phone_outlined,
                           keyboardType: TextInputType.phone,
                           textInputAction: TextInputAction.next,
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Ingresa tu teléfono';
-                            }
+                            if (value == null || value.isEmpty) return 'Ingresa tu teléfono';
+                            if (value.length < 7) return 'Número muy corto';
                             return null;
                           },
+                        ),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Text(
+                            "A este número recibirás información importante sobre la app cuando sea necesario.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: isDark ? Colors.white38 : Colors.black45, fontSize: 11, fontStyle: FontStyle.italic),
+                          ),
                         ),
                         const SizedBox(height: 15),
 
