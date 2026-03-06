@@ -18,16 +18,9 @@ Future<void>? _initFuture;
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Hacer que la barra de notificaciones superior sea transparente
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent, // Barra superior transparente
-      statusBarIconBrightness: Brightness.light, // Iconos blancos de hora/batería
-      systemNavigationBarColor: Color(0xFF121212), // Color de la barra de navegación de abajo
-      systemNavigationBarIconBrightness: Brightness.light,
-    ),
-  );
-
+  // Configurar pantalla completa (Edge-to-Edge)
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  
   _initFuture = _initializeServices();
   runApp(const KapitalApp());
 }
@@ -78,6 +71,19 @@ class KapitalApp extends StatelessWidget {
     return ListenableBuilder(
       listenable: themeProvider,
       builder: (context, _) {
+        final bool isDark = themeProvider.isDarkMode;
+
+        // Actualizar el estilo del sistema en cada cambio de tema
+        SystemChrome.setSystemUIOverlayStyle(
+          SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+            statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+            systemNavigationBarColor: isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
+            systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          ),
+        );
+
         return MaterialApp(
           title: 'Kapital',
           debugShowCheckedModeBanner: false,
@@ -87,6 +93,12 @@ class KapitalApp extends StatelessWidget {
             useMaterial3: true,
             primarySwatch: Colors.amber,
             scaffoldBackgroundColor: const Color(0xFFF5F5F5), // Color claro de fondo
+            appBarTheme: const AppBarTheme(
+              systemOverlayStyle: SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.dark,
+              ),
+            ),
             colorScheme: ColorScheme.fromSeed(
               seedColor: AppColors.doradoKapital,
               brightness: Brightness.light,
