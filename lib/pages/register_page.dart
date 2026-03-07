@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kapital_app/theme/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -44,6 +45,8 @@ class _RegisterPageState extends State<RegisterPage> {
             final resEmergencia = await supabase.from('profiles').select('id');
             totalProfiles = resEmergencia.length;
           }
+
+          final bool isFirstUser = totalProfiles == 0;
 
           // 2. Crear el perfil del usuario (Sin empresa asignada aún)
           // El Master lo aprobará y creará su empresa manualmente después
@@ -139,6 +142,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     final size = MediaQuery.of(context).size;
     final isDark = themeProvider.isDarkMode;
 

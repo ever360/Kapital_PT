@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kapital_app/theme/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 class SuperAdminHomePage extends StatefulWidget {
   const SuperAdminHomePage({super.key});
@@ -73,41 +74,44 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
 
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
-        title: const Text("Nueva Sucursal / Socio", style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text("Rutas disponibles: $disponibles", style: const TextStyle(color: Colors.amber)),
-            const SizedBox(height: 10),
-            TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: _inputDeco("Nombre (ej: Sede Norte)")),
-            const SizedBox(height: 10),
-            TextField(controller: rutasSedeCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: _inputDeco("Rutas para esta sede")),
+      builder: (context) {
+        final themeProvider = Provider.of<ThemeProvider>(context);
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E),
+          title: const Text("Nueva Sucursal / Socio", style: TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("Rutas disponibles: $disponibles", style: const TextStyle(color: Colors.amber)),
+              const SizedBox(height: 10),
+              TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: _inputDeco("Nombre (ej: Sede Norte)")),
+              const SizedBox(height: 10),
+              TextField(controller: rutasSedeCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: _inputDeco("Rutas para esta sede")),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary(themeProvider.isDarkMode)),
+              onPressed: () async {
+                final int r = int.tryParse(rutasSedeCtrl.text) ?? 1;
+                if (r > disponibles) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Excedes tu cuota disponible")));
+                  return;
+                }
+                Navigator.pop(context);
+                await supabase.from('sucursales').insert({
+                  'nombre': nombreCtrl.text.trim(),
+                  'empresa_id': _miEmpresaId,
+                  'rutas_permitidas': r,
+                });
+                _loadDashboardData();
+              },
+              child: const Text("Crear", style: TextStyle(color: Colors.black)),
+            )
           ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary(themeProvider.isDarkMode)),
-            onPressed: () async {
-              final int r = int.tryParse(rutasSedeCtrl.text) ?? 1;
-              if (r > disponibles) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Excedes tu cuota disponible")));
-                return;
-              }
-              Navigator.pop(context);
-              await supabase.from('sucursales').insert({
-                'nombre': nombreCtrl.text.trim(),
-                'empresa_id': _miEmpresaId,
-                'rutas_permitidas': r,
-              });
-              _loadDashboardData();
-            },
-            child: const Text("Crear", style: TextStyle(color: Colors.black)),
-          )
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -128,6 +132,7 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     if (_isLoading) return const Scaffold(backgroundColor: Color(0xFF121212), body: Center(child: CircularProgressIndicator()));
     if (_miEmpresaId == null) {
       return Scaffold(
@@ -242,8 +247,6 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
       ),
     );
   }
-}
-
 }
 
 class _InfoStat extends StatelessWidget {

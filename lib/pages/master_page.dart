@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kapital_app/pages/login_page.dart';
 import 'package:kapital_app/theme/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 class MasterHomePage extends StatefulWidget {
   const MasterHomePage({super.key});
@@ -12,6 +13,8 @@ class MasterHomePage extends StatefulWidget {
 
 class _MasterHomePageState extends State<MasterHomePage> {
   final supabase = Supabase.instance.client;
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _empresas = [];
   List<Map<String, dynamic>> _usuariosPendientes = [];
 
   @override
@@ -67,6 +70,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
       context: context,
       barrierDismissible: false,
       builder: (context) {
+        final themeProvider = Provider.of<ThemeProvider>(context);
         return AlertDialog(
           backgroundColor: const Color(0xFF1E1E1E),
           title: const Text("Aprobar y Crear Empresa", style: TextStyle(color: Colors.white)),
@@ -174,6 +178,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     final bool isDark = themeProvider.isDarkMode;
     final Color primary = AppColors.primary(isDark);
 
