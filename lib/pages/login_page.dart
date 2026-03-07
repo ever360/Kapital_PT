@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:kapital_app/theme/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -313,6 +314,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildTextField({
+    required BuildContext context, // Agregamos context
     required TextEditingController controller,
     required String hint,
     required bool obscure,
@@ -322,6 +324,7 @@ class _LoginPageState extends State<LoginPage> {
     Widget? suffixIcon,
     required String? Function(String?) validator,
   }) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return TextFormField(
       controller: controller,
       obscureText: obscure,
@@ -351,10 +354,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildSocialButton(
+    BuildContext context, // Agregamos context
     String label,
     String iconPath,
     VoidCallback onPressed,
   ) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
@@ -443,6 +448,7 @@ class _LoginPageState extends State<LoginPage> {
 
                         // Formulario de Email
                         _buildTextField(
+                          context: context,
                           controller: emailController,
                           hint: 'Correo electrónico',
                           obscure: false,
@@ -463,6 +469,7 @@ class _LoginPageState extends State<LoginPage> {
 
                         // Formulario de Password
                         _buildTextField(
+                          context: context,
                           controller: passwordController,
                           hint: 'Contraseña',
                           obscure: _obscurePassword,
@@ -582,6 +589,7 @@ class _LoginPageState extends State<LoginPage> {
 
                         // Google button
                         _buildSocialButton(
+                          context,
                           'Google',
                           'assets/icons/google_icon.png',
                           _isLoading ? () {} : signInWithGoogle,

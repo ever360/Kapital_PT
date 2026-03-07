@@ -103,6 +103,7 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _buildTextField({
+    required BuildContext context, // Agregamos context
     required TextEditingController controller,
     required String hint,
     required bool obscure,
@@ -112,6 +113,7 @@ class _RegisterPageState extends State<RegisterPage> {
     Widget? suffixIcon,
     required String? Function(String?) validator,
   }) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return TextFormField(
       controller: controller,
       obscureText: obscure,
@@ -232,6 +234,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         const SizedBox(height: 25),
 
                         _buildTextField(
+                          context: context,
                           controller: nameController,
                           hint: 'Nombre completo',
                           obscure: false,
@@ -250,6 +253,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
 
                         _buildTextField(
+                          context: context,
                           controller: emailController,
                           hint: 'Correo electrónico',
                           obscure: false,
@@ -265,6 +269,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         const SizedBox(height: 15),
 
                         _buildTextField(
+                          context: context,
                           controller: phoneController,
                           hint: 'Número de Teléfono',
                           obscure: false,
@@ -289,6 +294,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         const SizedBox(height: 15),
 
                         _buildTextField(
+                          context: context,
                           controller: passwordController,
                           hint: 'Contraseña',
                           obscure: _obscurePassword,
