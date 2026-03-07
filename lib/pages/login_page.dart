@@ -42,6 +42,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _checkBiometrics() async {
+    if (kIsWeb) return; // La biometría falla silenciosamente en la Web y crashea la app (MissingPluginException)
+    
     try {
       // Pequeño delay para dar tiempo al hardware de inicializarse
       await Future.delayed(const Duration(milliseconds: 500));
