@@ -1,0 +1,50 @@
+﻿package:flutter/src/widgets/inherited_notifier.dart 108:11                        update
+package:flutter/src/widgets/framework.dart 4037:14                                updateChild
+package:flutter/src/widgets/framework.dart 5841:16                                performRebuild
+package:flutter/src/widgets/framework.dart 5982:11                                performRebuild
+package:flutter/src/widgets/framework.dart 5529:7                                 rebuild
+package:flutter/src/widgets/framework.dart 6007:5                                 update
+package:flutter/src/widgets/framework.dart 4037:14                                updateChild
+package:flutter/src/widgets/framework.dart 5841:16                                performRebuild
+package:flutter/src/widgets/framework.dart 5982:11                                performRebuild
+package:flutter/src/widgets/framework.dart 5529:7                                 rebuild
+package:flutter/src/widgets/framework.dart 6007:5                                 update
+package:flutter/src/widgets/framework.dart 4037:14                                updateChild
+package:flutter/src/widgets/framework.dart 7122:14                                update
+package:flutter/src/widgets/framework.dart 4037:14                                updateChild
+package:flutter/src/widgets/framework.dart 7122:14                                update
+package:flutter/src/widgets/framework.dart 4037:14                                updateChild
+package:flutter/src/widgets/framework.dart 5841:16                                performRebuild
+package:flutter/src/widgets/framework.dart 5529:7                                 rebuild
+package:flutter/src/widgets/framework.dart 6149:5                                 update
+package:flutter/src/widgets/framework.dart 4037:14                                updateChild
+package:flutter/src/widgets/framework.dart 5841:16                                performRebuild
+package:flutter/src/widgets/framework.dart 5529:7                                 rebuild
+package:flutter/src/widgets/framework.dart 6149:5                                 update
+package:flutter/src/widgets/framework.dart 4037:14                                updateChild
+package:flutter/src/widgets/framework.dart 5841:16                                performRebuild
+package:flutter/src/widgets/framework.dart 5982:11                                performRebuild
+package:flutter/src/widgets/framework.dart 5529:7                                 rebuild
+package:flutter/src/widgets/framework.dart 2750:14                                [_tryRebuild]
+package:flutter/src/widgets/framework.dart 2807:11                                [_flushDirtyElements]
+package:flutter/src/widgets/framework.dart 3111:17                                buildScope
+package:flutter/src/widgets/binding.dart 1302:9                                   drawFrame
+package:flutter/src/rendering/binding.dart 495:5                                  [_handlePersistentFrameCallback]
+dart-sdk/lib/_internal/js_dev_runtime/private/ddc_runtime/operations.dart 118:77  tear
+package:flutter/src/scheduler/binding.dart 1430:7                                 [_invokeFrameCallback]
+package:flutter/src/scheduler/binding.dart 1345:9                                 handleDrawFrame
+package:flutter/src/scheduler/binding.dart 1198:5                                 [_handleDrawFrame]
+dart-sdk/lib/_internal/js_dev_runtime/private/ddc_runtime/operations.dart 118:77  tear
+lib/_engine/engine/platform_dispatcher.dart 1689:5                                invoke
+lib/_engine/engine/platform_dispatcher.dart 265:5                                 invokeOnDrawFrame
+lib/_engine/engine/frame_service.dart 209:32                                      [_renderFrame]
+lib/_engine/engine/frame_service.dart 117:9                                       <fn>
+dart-sdk/lib/async/zone.dart 962:54                                               runUnary
+dart-sdk/lib/async/zone.dart 917:26                                               <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/js_allow_interop_patch.dart 224:27    _callDartFunctionFast1
+dart-sdk/lib/_internal/js_dev_runtime/patch/js_allow_interop_patch.dart 84:15     ret
+
+ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+Error checking biometrics: MissingPluginException(No implementation found for method getAvailableBiometrics on channel plugins.flutter.io/local_auth)
+Permisos de notificaciones concedidos.
+FCM Token: f1cBtflAlKRQ3ZJfV7SldA:APA91bHr2bDVye7trrQWCdjF2GSx99OVXiiau6imsDrO4YtYPhd7WFufEEcaz04mSbw14Vd68nWubp42Z0G0_A2Q5cPtvlYLSJnM3wb5-_FGPwT4eSMAadg

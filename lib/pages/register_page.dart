@@ -35,18 +35,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
         if (authResponse.user != null) {
           // 1. Contar cuántos usuarios hay globalmente usando nuestra función segura (bypasa el RLS)
-          int totalProfiles = 1; // Por defecto asumimos que no es el primero para evitar errores tontos
-          try {
-            final countRes = await supabase.rpc('get_total_profiles');
-            totalProfiles = countRes as int;
-          } catch (e) {
-            debugPrint("Aviso: No se pudo contar los perfiles. Si la BD es nueva, asuma seguridad. Error: $e");
-            // Si la función SQL aún no está cargada, podemos intentar la consulta de emergencia (que fallará por RLS si no es público)
-            final resEmergencia = await supabase.from('profiles').select('id');
-            totalProfiles = resEmergencia.length;
-          }
-
-          final bool isFirstUser = totalProfiles == 0;
+          // Verificamos si es el primer usuario en la base de datos (obsoleto por RLS).
+          // El máster ya existe, todos los nuevos deben ser admin_pendiente por defecto.
+          final bool isFirstUser = false; // Removido para evitar que todos hereden Master
 
           // 2. Crear el perfil del usuario (Sin empresa asignada aún)
           // El Master lo aprobará y creará su empresa manualmente después
@@ -55,10 +46,10 @@ class _RegisterPageState extends State<RegisterPage> {
             'nombre': nameController.text.trim(),
             'telefono': phoneController.text.trim(),
             'foto': _imageUrl,
-            'rol': isFirstUser ? 'master' : 'admin_pendiente',
-            'isApproved': isFirstUser ? true : false, 
-            'isActive': isFirstUser ? true : false,
-            'empresa_id': isFirstUser ? '00000000-0000-0000-0000-000000000000' : null,
+            'rol': 'admin_pendiente',
+            'isApproved': false, 
+            'isActive': false,
+            'empresa_id': null,
           });
 
           if (!mounted) return;

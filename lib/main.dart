@@ -5,7 +5,7 @@ import 'pages/login_page.dart';
 import 'pages/register_page.dart';
 import 'pages/splash_screen.dart';
 import 'pages/super_admin_home.dart';
-import 'pages/master_page.dart';  // El panel global que creamos
+import 'pages/master_page.dart'; // El panel global que creamos
 import 'pages/socio_home.dart';
 import 'pages/cobrador_home.dart';
 import 'services/push_notification_service.dart';
@@ -18,10 +18,10 @@ Future<void>? _initFuture;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Configurar pantalla completa (Edge-to-Edge)
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  
+
   _initFuture = _initializeServices();
   runApp(const KapitalApp());
 }
@@ -50,7 +50,8 @@ Future<void> _initializeServices() async {
   try {
     await Supabase.initialize(
       url: 'https://uvmlrxazutsocrfzueoc.supabase.co',
-      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2bWxyeGF6dXRzb2NyZnp1ZW9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3MDgzMDgsImV4cCI6MjA4NzI4NDMwOH0.vi59v3GKVnwpE7D1C8A0HEswLIJD0fqDXXZEfuNcXGA',
+      anonKey:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2bWxyeGF6dXRzb2NyZnp1ZW9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3MDgzMDgsImV4cCI6MjA4NzI4NDMwOH0.vi59v3GKVnwpE7D1C8A0HEswLIJD0fqDXXZEfuNcXGA',
     );
   } catch (e) {
     debugPrint("Supabase init error: $e");
@@ -74,86 +75,95 @@ class KapitalApp extends StatelessWidget {
       child: ListenableBuilder(
         listenable: themeProvider,
         builder: (context, _) {
-        final bool isDark = themeProvider.isDarkMode;
-        final Color primaryColor = AppColors.primary(isDark);
+          final bool isDark = themeProvider.isDarkMode;
+          final Color primaryColor = AppColors.primary(isDark);
 
-        // Actualizar el estilo del sistema en cada cambio de tema
-        SystemChrome.setSystemUIOverlayStyle(
-          SystemUiOverlayStyle(
-            statusBarColor: primaryColor, // Usar el color del tema directamente
-            statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-            statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
-            systemNavigationBarColor: isDark ? const Color(0xFF121212) : primaryColor,
-            systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-          ),
-        );
+          // Actualizar el estilo del sistema en cada cambio de tema
+          SystemChrome.setSystemUIOverlayStyle(
+            SystemUiOverlayStyle(
+              statusBarColor:
+                  primaryColor, // Usar el color del tema directamente
+              statusBarIconBrightness: isDark
+                  ? Brightness.light
+                  : Brightness.dark,
+              statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+              systemNavigationBarColor: isDark
+                  ? const Color(0xFF121212)
+                  : primaryColor,
+              systemNavigationBarIconBrightness: isDark
+                  ? Brightness.light
+                  : Brightness.dark,
+            ),
+          );
 
-        return MaterialApp(
-          title: 'Kapital',
-          debugShowCheckedModeBanner: false,
-          themeMode: themeProvider.themeMode,
-          // ============== TEMA CLARO ==============
-          theme: ThemeData(
-            useMaterial3: true,
-            primarySwatch: Colors.amber,
-            scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-            appBarTheme: AppBarTheme(
-              backgroundColor: AppColors.doradoKapital,
-              foregroundColor: Colors.black,
-              systemOverlayStyle: SystemUiOverlayStyle(
-                statusBarColor: AppColors.doradoKapital,
-                statusBarIconBrightness: Brightness.dark,
+          return MaterialApp(
+            title: 'Kapital',
+            debugShowCheckedModeBanner: false,
+            themeMode: themeProvider.themeMode,
+            // ============== TEMA CLARO ==============
+            theme: ThemeData(
+              useMaterial3: true,
+              primarySwatch: Colors.amber,
+              scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+              appBarTheme: AppBarTheme(
+                backgroundColor: AppColors.doradoKapital,
+                foregroundColor: Colors.black,
+                systemOverlayStyle: SystemUiOverlayStyle(
+                  statusBarColor: AppColors.doradoKapital,
+                  statusBarIconBrightness: Brightness.dark,
+                ),
+              ),
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: AppColors.doradoKapital,
+                brightness: Brightness.light,
+                surface: Colors.white,
+              ),
+              textTheme: const TextTheme(
+                bodyMedium: TextStyle(color: Colors.black87),
+                bodyLarge: TextStyle(color: Colors.black87),
               ),
             ),
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.doradoKapital,
-              brightness: Brightness.light,
-              surface: Colors.white,
+            // ============== TEMA OSCURO ==============
+            darkTheme: ThemeData(
+              useMaterial3: true,
+              primaryColor: AppColors.verdeSupabase,
+              scaffoldBackgroundColor: const Color(0xFF121212), // Fondo oscuro
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: AppColors.verdeSupabase,
+                brightness: Brightness.dark,
+                surface: const Color(0xFF1E1E1E),
+              ),
+              textTheme: const TextTheme(
+                bodyMedium: TextStyle(color: Colors.white),
+                bodyLarge: TextStyle(color: Colors.white),
+              ),
             ),
-            textTheme: const TextTheme(
-              bodyMedium: TextStyle(color: Colors.black87),
-              bodyLarge: TextStyle(color: Colors.black87),
+            home: FutureBuilder(
+              future: _initFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Scaffold(
+                    // El fondo ya lo toma automático del tema
+                    body: Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary(themeProvider.isDarkMode),
+                      ),
+                    ),
+                  );
+                }
+                return const SplashScreen();
+              },
             ),
-          ),
-          // ============== TEMA OSCURO ==============
-          darkTheme: ThemeData(
-            useMaterial3: true,
-            primaryColor: AppColors.verdeSupabase,
-            scaffoldBackgroundColor: const Color(0xFF121212), // Fondo oscuro
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.verdeSupabase,
-              brightness: Brightness.dark,
-              surface: const Color(0xFF1E1E1E),
-            ),
-            textTheme: const TextTheme(
-              bodyMedium: TextStyle(color: Colors.white),
-              bodyLarge: TextStyle(color: Colors.white),
-            ),
-          ),
-          home: FutureBuilder(
-            future: _initFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Scaffold(
-                  // El fondo ya lo toma automático del tema
-                  body: Center(
-                    child: CircularProgressIndicator(color: AppColors.primary(themeProvider.isDarkMode)),
-                  ),
-                );
-              }
-              return const SplashScreen();
+            routes: {
+              '/login': (context) => const LoginPage(),
+              '/register': (context) => const RegisterPage(),
+              '/super_admin_home': (context) => const SuperAdminHomePage(),
+              '/master_home': (context) => const MasterHomePage(),
+              '/socio_home': (context) => const SocioHomePage(),
+              '/cobrador_home': (context) => const CobradorHomePage(),
             },
-          ),
-          routes: {
-            '/login': (context) => const LoginPage(),
-            '/register': (context) => const RegisterPage(),
-            '/super_admin_home': (context) => const SuperAdminHomePage(),
-            '/master_home': (context) => const MasterHomePage(),
-            '/socio_home': (context) => const SocioHomePage(),
-            '/cobrador_home': (context) => const CobradorHomePage(),
-          },
-        );
-      },
+          );
+        },
       ),
     );
   }
