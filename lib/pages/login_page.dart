@@ -133,34 +133,43 @@ class _LoginPageState extends State<LoginPage> {
         final bool isActive = profile['isActive'] ?? false;
         final String rol = profile['rol'] ?? 'cobrador';
 
-        if (isApproved && isActive) {
-          final String nombre = profile['nombre'] ?? rol;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                "Bienvenido, $nombre",
-                style: const TextStyle(color: Colors.white),
+          if (isApproved && isActive) {
+            final String nombre = profile['nombre'] ?? rol;
+            final String? empresaId = profile['empresa_id'];
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  "Bienvenido, $nombre",
+                  style: const TextStyle(color: Colors.white),
+                ),
+                backgroundColor: Colors.green,
               ),
-              backgroundColor: Colors.green,
-            ),
-          );
+            );
 
-          Widget homePage;
-          if (rol == 'master') {
-            homePage = const MasterHomePage();
-          } else if (rol == 'admin' || rol == 'super_admin') {
-            homePage = const SuperAdminHomePage();
-          } else if (rol == 'socio') {
-            homePage = const SocioHomePage();
+            Widget homePage;
+            if (rol == 'master') {
+              homePage = const MasterHomePage();
+            } else if (rol == 'admin' || rol == 'super_admin' || rol == 'admin_pendiente') {
+              // Si es Admin pero no tiene empresa_id, irá a crear su empresa
+              if (empresaId == null) {
+                // TODO: Crear CrearEmpresaPage. Por ahora lo mandamos al home admin 
+                // para que el dashboard detecte el estado vacío
+                homePage = const SuperAdminHomePage();
+              } else {
+                homePage = const SuperAdminHomePage();
+              }
+            } else if (rol == 'socio') {
+              homePage = const SocioHomePage();
+            } else {
+              homePage = const CobradorHomePage();
+            }
+
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => homePage),
+            );
           } else {
-            homePage = const CobradorHomePage();
-          }
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => homePage),
-          );
-        } else {
           // Bloqueado o Inactivo
           String mensaje = !isApproved
               ? "Tu cuenta está pendiente de aprobación."
@@ -613,7 +622,7 @@ class _LoginPageState extends State<LoginPage> {
 
                         // Versión Abajo
                         Text(
-                          'v1.3.7 - SaaS Edition',
+                          'v1.4.0 - SaaS Edition',
                           style: TextStyle(color: isDark ? Colors.white24 : Colors.black38, fontSize: 11),
                         ),
                         const SizedBox(height: 20),

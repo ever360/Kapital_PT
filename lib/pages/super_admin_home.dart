@@ -14,7 +14,8 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
   bool _isLoading = true;
   Map<String, dynamic>? _miEmpresa;
   String? _miEmpresaId;
-  int _sociosActuales = 0;
+  List<Map<String, dynamic>> _sucursales = [];
+  int _rutasAsignadasTotales = 0;
 
   @override
   void initState() {
@@ -28,60 +29,86 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
       final user = supabase.auth.currentUser;
       if (user == null) return;
 
-      // 1. Obtener mi perfil para sacar el empresa_id
       final profile = await supabase.from('profiles').select().eq('id', user.id).single();
       _miEmpresaId = profile['empresa_id'];
 
       if (_miEmpresaId != null) {
-        // 2. Obtener datos de la empresa
         final empresaRes = await supabase.from('empresas').select().eq('id', _miEmpresaId!).single();
+        final sucursalesRes = await supabase.from('sucursales').select().eq('empresa_id', _miEmpresaId!);
         
-        // 3. Contar los socios actuales de esta empresa
-        final countRes = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('empresa_id', _miEmpresaId!)
-            .eq('rol', 'socio');
+        int rutasContadas = 0;
+        for (var s in sucursalesRes) {
+          rutasContadas += (s['rutas_permitidas'] as int? ?? 0);
+        }
 
         if (mounted) {
           setState(() {
             _miEmpresa = empresaRes;
-            _sociosActuales = countRes.length;
+            _sucursales = List<Map<String, dynamic>>.from(sucursalesRes);
+            _rutasAsignadasTotales = rutasContadas;
             _isLoading = false;
           });
         }
-      }
-    } catch (e) {
-      debugPrint("Error loading dashboard: $e");
-      if (mounted) {
+      } else {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al cargar datos. $e')));
       }
-    }
-  }
-
-  String _getInitials(String? name) {
-    if (name == null || name.isEmpty) return "U";
-    List<String> names = name.split(" ");
-    if (names.length >= 2) return "${names[0][0]}${names[1][0]}".toUpperCase();
-    return names[0][0].toUpperCase();
-  }
-
-  Future<void> _updateUserStatus(String id, bool isApproved, bool isActive, String rol) async {
-    try {
-      await supabase.from('profiles').update({
-        'isApproved': isApproved,
-        'isActive': isActive,
-        'rol': rol
-      }).eq('id', id);
-      
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Usuario actualizado")));
-      _loadDashboardData(); // Recargar cuentas
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error al actualizar: $e")));
+      debugPrint("Error dashboard: $e");
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _crearSucursal() async {
+    if (_miEmpresa == null) return;
+    final int maxGlobal = _miEmpresa!['total_rutas_contratadas'] ?? 1;
+    final int disponibles = maxGlobal - _rutasAsignadasTotales;
+
+    if (disponibles <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No tienes rutas disponibles para asignar a una nueva sucursal.")));
+      return;
+    }
+
+    final nombreCtrl = TextEditingController();
+    final rutasSedeCtrl = TextEditingController(text: "1");
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text("Nueva Sucursal / Socio", style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Rutas disponibles: $disponibles", style: const TextStyle(color: Colors.amber)),
+            const SizedBox(height: 10),
+            TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: _inputDeco("Nombre (ej: Sede Norte)")),
+            const SizedBox(height: 10),
+            TextField(controller: rutasSedeCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: _inputDeco("Rutas para esta sede")),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary(themeProvider.isDarkMode)),
+            onPressed: () async {
+              final int r = int.tryParse(rutasSedeCtrl.text) ?? 1;
+              if (r > disponibles) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Excedes tu cuota disponible")));
+                return;
+              }
+              Navigator.pop(context);
+              await supabase.from('sucursales').insert({
+                'nombre': nombreCtrl.text.trim(),
+                'empresa_id': _miEmpresaId,
+                'rutas_permitidas': r,
+              });
+              _loadDashboardData();
+            },
+            child: const Text("Crear", style: TextStyle(color: Colors.black)),
+          )
+        ],
+      ),
+    );
   }
 
   Future<void> _signOut() async {
@@ -90,363 +117,133 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
     Navigator.pushReplacementNamed(context, '/login');
   }
 
-  Future<void> _crearNuevoSocio() async {
-    if (_miEmpresa == null) return;
-    
-    final int sociosMaximos = _miEmpresa!['socios_maximos'] ?? 0;
-    
-    if (_sociosActuales >= sociosMaximos) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Has alcanzado el límite máximo de Socios permitidos en tu plan."),
-          backgroundColor: Colors.orange,
-        )
-      );
-      return;
-    }
-
-    final formKey = GlobalKey<FormState>();
-    final nombreCtrl = TextEditingController();
-    final emailCtrl = TextEditingController();
-    final passwordCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
-    bool isCreating = false;
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              backgroundColor: themeProvider.isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-              title: Text(
-                'Crear Nuevo Socio', 
-                style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black87)
-              ),
-              content: Form(
-                key: formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text("Disponibles: ${sociosMaximos - _sociosActuales}", style: TextStyle(color: AppColors.primary(themeProvider.isDarkMode), fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        controller: nombreCtrl,
-                        style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black87),
-                        decoration: _inputDeco('Nombre y Apellido'),
-                        validator: (v) => v!.isEmpty ? 'Requerido' : null,
-                      ),
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        controller: emailCtrl,
-                        keyboardType: TextInputType.emailAddress,
-                        style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black87),
-                        decoration: _inputDeco('Correo Electrónico'),
-                        validator: (v) => v!.contains('@') ? null : 'Correo inválido',
-                      ),
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        controller: phoneCtrl,
-                        keyboardType: TextInputType.phone,
-                        style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black87),
-                        decoration: _inputDeco('Teléfono'),
-                      ),
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        controller: passwordCtrl,
-                        obscureText: true,
-                        style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black87),
-                        decoration: _inputDeco('Contraseña (mín 6)'),
-                        validator: (v) => (v != null && v.length >= 6) ? null : 'Mínimo 6 caracteres',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isCreating ? null : () => Navigator.pop(context),
-                  child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary(themeProvider.isDarkMode),
-                    foregroundColor: Colors.black,
-                  ),
-                  onPressed: isCreating ? null : () async {
-                    if (formKey.currentState!.validate()) {
-                      setStateDialog(() => isCreating = true);
-                      try {
-                        // Usar un cliente temporal para no desloguear al Admin
-                        final tempClient = SupabaseClient('https://uvmlrxazutsocrfzueoc.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2bWxyeGF6dXRzb2NyZnp1ZW9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3MDgzMDgsImV4cCI6MjA4NzI4NDMwOH0.vi59v3GKVnwpE7D1C8A0HEswLIJD0fqDXXZEfuNcXGA');
-                        final authRes = await tempClient.auth.signUp(
-                          email: emailCtrl.text.trim(),
-                          password: passwordCtrl.text.trim()
-                        );
-                        
-                        if (authRes.user != null) {
-                          // Insertar el perfil con el cliente temporal (que ahora está logueado como el socio)
-                          await tempClient.from('profiles').insert({
-                            'id': authRes.user!.id,
-                            'nombre': nombreCtrl.text.trim(),
-                            'telefono': phoneCtrl.text.trim(),
-                            'rol': 'socio',
-                            'empresa_id': _miEmpresaId,
-                            'isApproved': true,
-                            'isActive': true,
-                          });
-                          
-                          // Cerrar sesión del temp client para evitar basura
-                          await tempClient.auth.signOut();
-                          
-                          if (!context.mounted) return;
-                          Navigator.pop(context);
-                          _loadDashboardData();
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Socio creado exitosamente', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
-                        }
-                      } catch (e) {
-                         setStateDialog(() => isCreating = false);
-                         if (!context.mounted) return;
-                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
-                      }
-                    }
-                  },
-                  child: isCreating ? const SizedBox(width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black)) : const Text('Crear'),
-                ),
-              ],
-            );
-          }
-        );
-      }
-    );
-  }
-
   InputDecoration _inputDeco(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: themeProvider.isDarkMode ? Colors.white54 : Colors.black54),
-      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: themeProvider.isDarkMode ? Colors.white24 : Colors.black26)),
-      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primary(themeProvider.isDarkMode))),
-    );
-  }
-
-  void _showEditRoleDialog(Map<String, dynamic> user) {
-    String selectedRole = user['rol'] ?? 'cobrador';
-    bool isApproved = user['isApproved'] ?? false;
-    bool isActive = user['isActive'] ?? false;
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              backgroundColor: themeProvider.isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-              title: Text('Gestionar a ${user['nombre']}', style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black87)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButtonFormField<String>(
-                    dropdownColor: themeProvider.isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
-                    style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black87),
-                    initialValue: selectedRole,
-                    items: const [
-                      DropdownMenuItem(value: 'cobrador', child: Text('Cobrador')),
-                      DropdownMenuItem(value: 'supervisor', child: Text('Supervisor')),
-                      DropdownMenuItem(value: 'socio', child: Text('Socio')),
-                    ],
-                    onChanged: (value) => setStateDialog(() => selectedRole = value!),
-                    decoration: _inputDeco('Rol del usuario'),
-                  ),
-                  const SizedBox(height: 10),
-                  SwitchListTile(
-                    title: Text('Aprobado (Entrada)', style: TextStyle(color: themeProvider.isDarkMode ? Colors.white70 : Colors.black87)),
-                    activeTrackColor: AppColors.primary(themeProvider.isDarkMode),
-                    value: isApproved,
-                    onChanged: (val) => setStateDialog(() => isApproved = val),
-                  ),
-                  SwitchListTile(
-                    title: Text('Activo (Cuenta)',  style: TextStyle(color: themeProvider.isDarkMode ? Colors.white70 : Colors.black87)),
-                    activeTrackColor: AppColors.primary(themeProvider.isDarkMode),
-                    value: isActive,
-                    onChanged: (val) => setStateDialog(() => isActive = val),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary(themeProvider.isDarkMode), foregroundColor: Colors.black),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _updateUserStatus(user['id'], isApproved, isActive, selectedRole);
-                  },
-                  child: const Text('Guardar'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildBadge(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
-      ),
+      labelStyle: const TextStyle(color: Colors.white54),
+      enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.amber)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = themeProvider.isDarkMode;
+    if (_isLoading) return const Scaffold(backgroundColor: Color(0xFF121212), body: Center(child: CircularProgressIndicator()));
+    if (_miEmpresaId == null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF121212),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.hourglass_empty, size: 80, color: Colors.amber),
+              const SizedBox(height: 20),
+              const Text("Esperando aprobación del Master", style: TextStyle(color: Colors.white, fontSize: 18)),
+              const SizedBox(height: 10),
+              const Text("Tu cuenta está registrada pero no tiene empresa asignada.", style: TextStyle(color: Colors.white54)),
+              const SizedBox(height: 20),
+              ElevatedButton(onPressed: _signOut, child: const Text("Cerrar Sesión")),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: const Text('Panel de Empresa', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        foregroundColor: isDark ? Colors.white : Colors.black87,
+        title: Text(_miEmpresa?['nombre'] ?? 'Dashboard', style: const TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF1A1A1A),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadDashboardData),
-          IconButton(icon: const Icon(Icons.logout), onPressed: _signOut, tooltip: "Cerrar sesión"),
+          IconButton(icon: const Icon(Icons.refresh, color: Colors.white), onPressed: _loadDashboardData),
+          IconButton(icon: const Icon(Icons.logout, color: Colors.white), onPressed: _signOut),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _crearNuevoSocio,
+        onPressed: _crearSucursal,
         backgroundColor: AppColors.primary(themeProvider.isDarkMode),
+        label: const Text("Nueva Sucursal", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         icon: const Icon(Icons.add_business, color: Colors.black),
-        label: const Text("Nuevo Socio", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
       ),
-      body: _isLoading 
-          ? Center(child: CircularProgressIndicator(color: AppColors.primary(themeProvider.isDarkMode)))
-          : RefreshIndicator(
-              onRefresh: _loadDashboardData,
-              color: AppColors.primary(themeProvider.isDarkMode),
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Dashboard Card
-                    if (_miEmpresa != null)
-                      Container(
-                        margin: const EdgeInsets.all(16),
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [AppColors.primary(themeProvider.isDarkMode).withValues(alpha: 0.8), const Color(0xFFB5952A).withValues(alpha: 0.9)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(color: AppColors.primary(themeProvider.isDarkMode).withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 5))
-                          ]
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _miEmpresa!['nombre'] ?? 'Mi Empresa',
-                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
-                            ),
-                            const SizedBox(height: 15),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                _InfoStat(title: "Rutas Máximas", value: "${_miEmpresa!['rutas_maximas'] ?? 0}"),
-                                _InfoStat(title: "Socios", value: "$_sociosActuales / ${_miEmpresa!['socios_maximos'] ?? 0}"),
-                              ],
-                            )
-                          ],
-                        ),
-                      ),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      child: Text(
-                        "Mi Equipo",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87),
-                      ),
-                    ),
-
-                    // Lista de Empleados
-                    StreamBuilder<List<Map<String, dynamic>>>(
-                      stream: supabase.from('profiles').stream(primaryKey: ['id']).eq('empresa_id', _miEmpresaId ?? '').order('nombre'),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) return const SizedBox.shrink();
-                        
-                        final team = snapshot.data!;
-                        if (team.isEmpty) {
-                          return const Padding(
-                            padding: EdgeInsets.all(20),
-                            child: Center(child: Text("Aún no tienes equipo registrado.")),
-                          );
-                        }
-
-                        return ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: team.length,
-                          itemBuilder: (context, index) {
-                            final user = team[index];
-                            final isApproved = user['isApproved'] ?? false;
-                            final isActive = user['isActive'] ?? false;
-                            final String rol = (user['rol'] ?? '').toUpperCase();
-                            
-                            // No mostrarse a sí mismo si no queremos, o mostrarlo con otro estilo.
-                            // Aquí se mostrarán todos.
-                            
-                            return Card(
-                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                              elevation: isDark ? 0 : 1,
-                              color: isDark ? const Color(0xFF232323) : Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor: AppColors.primary(themeProvider.isDarkMode).withValues(alpha: 0.2),
-                                  child: Text(_getInitials(user['nombre']), style: TextStyle(color: AppColors.primary(themeProvider.isDarkMode), fontWeight: FontWeight.bold)),
-                                ),
-                                title: Text(user['nombre'] ?? 'Sin Nombre', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
-                                subtitle: Wrap(
-                                  spacing: 6,
-                                  runSpacing: 6,
-                                  children: [
-                                    _buildBadge(rol, Colors.blueGrey),
-                                    _buildBadge(isActive ? 'Activo' : 'Inactivo', isActive ? Colors.green : Colors.red),
-                                    _buildBadge(isApproved ? 'Aprobado' : 'Pendiente', isApproved ? Colors.blue : Colors.orange),
-                                  ],
-                                ),
-                                trailing: IconButton(
-                                  icon: const Icon(Icons.settings, color: Colors.grey),
-                                  onPressed: () => _showEditRoleDialog(user),
-                                ),
-                              ),
-                            );
-                          },
-                        );
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildQuotaCard(),
+            const SizedBox(height: 25),
+            const Text("Mis Sucursales / Sedes", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 15),
+            if (_sucursales.isEmpty)
+              const Center(child: Padding(padding: EdgeInsets.all(20), child: Text("No tienes sucursales creadas.", style: TextStyle(color: Colors.white54))))
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _sucursales.length,
+                itemBuilder: (context, index) {
+                  final s = _sucursales[index];
+                  return Card(
+                    color: const Color(0xFF1E1E1E),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    child: ListTile(
+                      leading: const Icon(Icons.store, color: Colors.amber),
+                      title: Text(s['nombre'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      subtitle: Text("Rutas Permitidas: ${s['rutas_permitidas']}", style: const TextStyle(color: Colors.white54)),
+                      trailing: const Icon(Icons.chevron_right, color: Colors.white24),
+                      onTap: () {
+                        // Navegar a gestión de la sucursal (próximamente)
                       },
                     ),
-                    const SizedBox(height: 80), // Padding para el FAB
-                  ],
-                ),
+                  );
+                },
               ),
-            ),
+          ],
+        ),
+      ),
     );
   }
+
+  Widget _buildQuotaCard() {
+    final int maxGlobal = _miEmpresa?['total_rutas_contratadas'] ?? 0;
+    final double progreso = maxGlobal > 0 ? _rutasAsignadasTotales / maxGlobal : 0;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Cuota de Rutas", style: TextStyle(color: Colors.white70, fontSize: 14)),
+              Text("$_rutasAsignadasTotales / $maxGlobal", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+            ],
+          ),
+          const SizedBox(height: 15),
+          LinearProgressIndicator(
+            value: progreso,
+            backgroundColor: Colors.white10,
+            color: Colors.amber,
+            minHeight: 8,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            "Has distribuido el ${(progreso * 100).toInt()}% de tus rutas contratadas.",
+            style: const TextStyle(color: Colors.white38, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 }
 
 class _InfoStat extends StatelessWidget {

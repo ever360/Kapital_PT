@@ -45,31 +45,17 @@ class _RegisterPageState extends State<RegisterPage> {
             totalProfiles = resEmergencia.length;
           }
 
-          final isFirstUser = totalProfiles == 0;
-          
-          // 2. Crear la empresa AUTOMÁTICAMENTE (Nombre basado en el usuario)
-          final empresaRes = await supabase.from('empresas').insert({
-            'nombre': 'Kapital - ${nameController.text.trim()}',
-            'email_contacto': emailController.text.trim(),
-            'is_active': isFirstUser ? true : false, 
-            'rutas_maximas': isFirstUser ? 9999 : 3, // 3 por defecto para nuevos admins
-          }).select('id').single();
-
-          final String nuevoEmpresaId = empresaRes['id'];
-
-          final String rolAsignado = isFirstUser ? 'master' : 'admin';
-          final bool statusAsignado = isFirstUser ? true : false; 
-
-          // 3. Crear el perfil del usuario validado
+          // 2. Crear el perfil del usuario (Sin empresa asignada aún)
+          // El Master lo aprobará y creará su empresa manualmente después
           await supabase.from('profiles').insert({
             'id': authResponse.user!.id,
             'nombre': nameController.text.trim(),
             'telefono': phoneController.text.trim(),
             'foto': _imageUrl,
-            'rol': rolAsignado,
-            'isApproved': statusAsignado, 
-            'isActive': statusAsignado,
-            'empresa_id': nuevoEmpresaId,
+            'rol': isFirstUser ? 'master' : 'admin_pendiente',
+            'isApproved': isFirstUser ? true : false, 
+            'isActive': isFirstUser ? true : false,
+            'empresa_id': isFirstUser ? '00000000-0000-0000-0000-000000000000' : null,
           });
 
           if (!mounted) return;
@@ -77,17 +63,15 @@ class _RegisterPageState extends State<RegisterPage> {
           if (isFirstUser) {
              ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text("¡Cuenta MASTER (DIOS) creada! Ya puedes ingresar y administrar el SaaS."),
+                content: Text("¡Cuenta MASTER (DIOS) creada! Ya puedes ingresar."),
                 backgroundColor: Colors.green,
-                duration: Duration(seconds: 4),
               ),
             );
           } else {
              ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text("Solicitud enviada. Contacta al Master para activar tu cuenta/empresa."),
+                content: Text("Solicitud enviada exitosamente. El Master revisará tu cuenta pronto."),
                 backgroundColor: Colors.blue,
-                duration: Duration(seconds: 4),
               ),
             );
           }
@@ -383,7 +367,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                         // Versión Abajo
                         Text(
-                          'v1.3.7 - SaaS Edition',
+                          'v1.4.0 - SaaS Edition',
                           style: TextStyle(color: isDark ? Colors.white24 : Colors.black38, fontSize: 11),
                         ),
                         const SizedBox(height: 20),
