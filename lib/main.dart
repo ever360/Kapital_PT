@@ -9,7 +9,8 @@ import 'pages/master_page.dart';  // El panel global que creamos
 import 'pages/socio_home.dart';
 import 'pages/cobrador_home.dart';
 import 'services/push_notification_service.dart';
-import 'theme/theme_provider.dart'; // Controlador de Temas
+import 'package:kapital_app/theme/theme_provider.dart'; // Controlador de Temas
+import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 
 // Futuro global para inicialización
@@ -68,9 +69,11 @@ class KapitalApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: themeProvider,
-      builder: (context, _) {
+    return ChangeNotifierProvider.value(
+      value: themeProvider,
+      child: ListenableBuilder(
+        listenable: themeProvider,
+        builder: (context, _) {
         final bool isDark = themeProvider.isDarkMode;
         final Color primaryColor = AppColors.primary(isDark);
 

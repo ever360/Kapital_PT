@@ -42,20 +42,24 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _checkBiometrics() async {
-    if (kIsWeb) return; // La biometría falla silenciosamente en la Web y crashea la app (MissingPluginException)
-    
+    if (kIsWeb)
+      return; // La biometría falla silenciosamente en la Web y crashea la app (MissingPluginException)
+
     try {
       // Pequeño delay para dar tiempo al hardware de inicializarse
       await Future.delayed(const Duration(milliseconds: 500));
       final canCheck = await auth.canCheckBiometrics;
       final isDeviceSupported = await auth.isDeviceSupported();
       final availableBiometrics = await auth.getAvailableBiometrics();
-      
-      debugPrint("Biometrics: canCheck=$canCheck, isSupported=$isDeviceSupported, types=$availableBiometrics");
-      
+
+      debugPrint(
+        "Biometrics: canCheck=$canCheck, isSupported=$isDeviceSupported, types=$availableBiometrics",
+      );
+
       if (mounted) {
         setState(() {
-          _canCheckBiometrics = (canCheck || availableBiometrics.isNotEmpty) && isDeviceSupported;
+          _canCheckBiometrics =
+              (canCheck || availableBiometrics.isNotEmpty) && isDeviceSupported;
         });
       }
     } catch (e) {
@@ -90,7 +94,10 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  Future<void> _checkProfileExistsAndRedirect(User user, {bool isManual = false}) async {
+  Future<void> _checkProfileExistsAndRedirect(
+    User user, {
+    bool isManual = false,
+  }) async {
     // Solo activamos el estado de carga visual si es un login manual
     if (mounted && isManual) setState(() => _isLoading = true);
 
@@ -136,43 +143,45 @@ class _LoginPageState extends State<LoginPage> {
         final bool isActive = profile['isActive'] ?? false;
         final String rol = profile['rol'] ?? 'cobrador';
 
-          if (isApproved && isActive) {
-            final String nombre = profile['nombre'] ?? rol;
-            final String? empresaId = profile['empresa_id'];
+        if (isApproved && isActive) {
+          final String nombre = profile['nombre'] ?? rol;
+          final String? empresaId = profile['empresa_id'];
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  "Bienvenido, $nombre",
-                  style: const TextStyle(color: Colors.white),
-                ),
-                backgroundColor: Colors.green,
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "Bienvenido, $nombre",
+                style: const TextStyle(color: Colors.white),
               ),
-            );
+              backgroundColor: Colors.green,
+            ),
+          );
 
-            Widget homePage;
-            if (rol == 'master') {
-              homePage = const MasterHomePage();
-            } else if (rol == 'admin' || rol == 'super_admin' || rol == 'admin_pendiente') {
-              // Si es Admin pero no tiene empresa_id, irá a crear su empresa
-              if (empresaId == null) {
-                // TODO: Crear CrearEmpresaPage. Por ahora lo mandamos al home admin 
-                // para que el dashboard detecte el estado vacío
-                homePage = const SuperAdminHomePage();
-              } else {
-                homePage = const SuperAdminHomePage();
-              }
-            } else if (rol == 'socio') {
-              homePage = const SocioHomePage();
+          Widget homePage;
+          if (rol == 'master') {
+            homePage = const MasterHomePage();
+          } else if (rol == 'admin' ||
+              rol == 'super_admin' ||
+              rol == 'admin_pendiente') {
+            // Si es Admin pero no tiene empresa_id, irá a crear su empresa
+            if (empresaId == null) {
+              // TODO: Crear CrearEmpresaPage. Por ahora lo mandamos al home admin
+              // para que el dashboard detecte el estado vacío
+              homePage = const SuperAdminHomePage();
             } else {
-              homePage = const CobradorHomePage();
+              homePage = const SuperAdminHomePage();
             }
-
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => homePage),
-            );
+          } else if (rol == 'socio') {
+            homePage = const SocioHomePage();
           } else {
+            homePage = const CobradorHomePage();
+          }
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => homePage),
+          );
+        } else {
           // Bloqueado o Inactivo
           String mensaje = !isApproved
               ? "Tu cuenta está pendiente de aprobación."
@@ -330,16 +339,23 @@ class _LoginPageState extends State<LoginPage> {
     return TextFormField(
       controller: controller,
       obscureText: obscure,
-      style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black87),
+      style: TextStyle(
+        color: themeProvider.isDarkMode ? Colors.white : Colors.black87,
+      ),
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: themeProvider.isDarkMode ? Colors.white54 : Colors.black54),
-        prefixIcon: Icon(icon, color: themeProvider.isDarkMode ? Colors.white70 : Colors.black54),
+        hintStyle: TextStyle(
+          color: themeProvider.isDarkMode ? Colors.white54 : Colors.black54,
+        ),
+        prefixIcon: Icon(
+          icon,
+          color: themeProvider.isDarkMode ? Colors.white70 : Colors.black54,
+        ),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: themeProvider.isDarkMode 
+        fillColor: themeProvider.isDarkMode
             ? Colors.white.withValues(alpha: 0.08)
             : Colors.black.withValues(alpha: 0.05),
         border: OutlineInputBorder(
@@ -369,13 +385,15 @@ class _LoginPageState extends State<LoginPage> {
         label: Text(
           label,
           style: TextStyle(
-            color: themeProvider.isDarkMode ? Colors.white : Colors.black87, 
-            fontSize: 16
+            color: themeProvider.isDarkMode ? Colors.white : Colors.black87,
+            fontSize: 16,
           ),
         ),
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14),
-          side: BorderSide(color: themeProvider.isDarkMode ? Colors.white30 : Colors.black26),
+          side: BorderSide(
+            color: themeProvider.isDarkMode ? Colors.white30 : Colors.black26,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -418,7 +436,9 @@ class _LoginPageState extends State<LoginPage> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.amber.withValues(alpha: isDark ? 0.15 : 0.4),
+                                  color: Colors.amber.withValues(
+                                    alpha: isDark ? 0.15 : 0.4,
+                                  ),
                                   blurRadius: 30,
                                   spreadRadius: 10,
                                 ),
@@ -444,7 +464,10 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 6),
                         Text(
                           "Bienvenido de nuevo a Kapital",
-                          style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 14),
+                          style: TextStyle(
+                            color: isDark ? Colors.white54 : Colors.black54,
+                            fontSize: 14,
+                          ),
                         ),
                         const SizedBox(height: 35),
 
@@ -494,7 +517,9 @@ class _LoginPageState extends State<LoginPage> {
                                   _obscurePassword
                                       ? Icons.visibility_outlined
                                       : Icons.visibility_off_outlined,
-                                  color: isDark ? Colors.white54 : Colors.black54,
+                                  color: isDark
+                                      ? Colors.white54
+                                      : Colors.black54,
                                 ),
                                 onPressed: () => setState(
                                   () => _obscurePassword = !_obscurePassword,
@@ -516,7 +541,9 @@ class _LoginPageState extends State<LoginPage> {
                           width: double.infinity,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary(isDark), // Color primario dinámico
+                              backgroundColor: AppColors.primary(
+                                isDark,
+                              ), // Color primario dinámico
                               foregroundColor:
                                   Colors.black, // Texto oscuro sobre dorado
                               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -567,22 +594,30 @@ class _LoginPageState extends State<LoginPage> {
                           children: [
                             Expanded(
                               child: Divider(
-                                color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.2),
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.2)
+                                    : Colors.black.withValues(alpha: 0.2),
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                              ),
                               child: Text(
                                 "O continúa con",
                                 style: TextStyle(
-                                  color: isDark ? Colors.white54 : Colors.black54,
+                                  color: isDark
+                                      ? Colors.white54
+                                      : Colors.black54,
                                   fontSize: 12,
                                 ),
                               ),
                             ),
                             Expanded(
                               child: Divider(
-                                color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.2),
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.2)
+                                    : Colors.black.withValues(alpha: 0.2),
                               ),
                             ),
                           ],
@@ -604,7 +639,9 @@ class _LoginPageState extends State<LoginPage> {
                           children: [
                             Text(
                               "¿No tienes cuenta? ",
-                              style: TextStyle(color: isDark ? Colors.white70 : Colors.black87),
+                              style: TextStyle(
+                                color: isDark ? Colors.white70 : Colors.black87,
+                              ),
                             ),
                             MouseRegion(
                               cursor: SystemMouseCursors.click,
@@ -633,7 +670,10 @@ class _LoginPageState extends State<LoginPage> {
                         // Versión Abajo
                         Text(
                           'v1.4.5 - SaaS Edition',
-                          style: TextStyle(color: isDark ? Colors.white24 : Colors.black38, fontSize: 11),
+                          style: TextStyle(
+                            color: isDark ? Colors.white24 : Colors.black38,
+                            fontSize: 11,
+                          ),
                         ),
                         const SizedBox(height: 20),
                       ],
@@ -648,4 +688,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-
