@@ -377,7 +377,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                         // Versión Abajo
                         Text(
-                          'v1.4.4 - SaaS Edition',
+                          'v1.4.5 - SaaS Edition',
                           style: TextStyle(color: isDark ? Colors.white24 : Colors.black38, fontSize: 11),
                         ),
                         const SizedBox(height: 20),
