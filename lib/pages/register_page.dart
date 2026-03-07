@@ -145,7 +145,6 @@ class _RegisterPageState extends State<RegisterPage> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
     final size = MediaQuery.of(context).size;
-    final isDark = themeProvider.isDarkMode;
 
     return Scaffold(
       body: GestureDetector(
