@@ -141,6 +141,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                     'rol': 'admin',
                     'isApproved': true,
                     'isActive': true,
+                    'rutas_maximas': totalRutas, // Guardamos la cuota en el perfil también
                   }).eq('id', usuario['id']);
 
                   _refreshData();
