@@ -66,8 +66,7 @@ class _LoginPageState extends State<LoginPage> {
       final Session? session = data.session;
 
       if (event == AuthChangeEvent.signedIn && session != null) {
-        // En WEB, Google SignIn puede disparar varios eventos, asegurar que no haya un loop
-        _checkProfileExistsAndRedirect(session.user);
+        _checkProfileExistsAndRedirect(session.user, isManual: false);
       }
     });
 
@@ -75,7 +74,7 @@ class _LoginPageState extends State<LoginPage> {
     Future.delayed(Duration.zero, () {
       final session = supabase.auth.currentSession;
       if (session != null) {
-        _checkProfileExistsAndRedirect(session.user);
+        _checkProfileExistsAndRedirect(session.user, isManual: false);
       }
     });
   }
@@ -88,10 +87,9 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  Future<void> _checkProfileExistsAndRedirect(User user) async {
-    // No bloqueamos aquí, porque loginWithEmail() ya puso _isLoading = true
-    // y necesitamos que esta función se ejecute para terminar la redirección.
-    if (mounted) setState(() => _isLoading = true);
+  Future<void> _checkProfileExistsAndRedirect(User user, {bool isManual = false}) async {
+    // Solo activamos el estado de carga visual si es un login manual
+    if (mounted && isManual) setState(() => _isLoading = true);
 
     try {
       // Pequeño delay de 1.5 segundos para dar tiempo a que RegisterPage guarde en la BD.
@@ -615,7 +613,7 @@ class _LoginPageState extends State<LoginPage> {
 
                         // Versión Abajo
                         Text(
-                          'v1.3.6 - SaaS Edition',
+                          'v1.3.7 - SaaS Edition',
                           style: TextStyle(color: isDark ? Colors.white24 : Colors.black38, fontSize: 11),
                         ),
                         const SizedBox(height: 20),
