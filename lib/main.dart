@@ -154,6 +154,7 @@ class KapitalApp extends StatelessWidget {
           },
         );
       },
+      ),
     );
   }
 }
