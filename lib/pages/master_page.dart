@@ -59,53 +59,68 @@ class _MasterHomePageState extends State<MasterHomePage> {
   }
 
   Future<void> _aprobarYCrearEmpresa(Map<String, dynamic> usuario) async {
+    final _formKey = GlobalKey<FormState>();
     final TextEditingController empresaNameCtrl = TextEditingController(text: "Kapital - ${usuario['nombre']}");
     final TextEditingController rutasCtrl = TextEditingController(text: "1");
 
     await showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1E1E1E),
           title: const Text("Aprobar y Crear Empresa", style: TextStyle(color: Colors.white)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Asignar empresa a: ${usuario['nombre']}", style: const TextStyle(color: Colors.white54)),
-              const SizedBox(height: 15),
-              TextField(
-                controller: empresaNameCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: "Nombre de la Empresa",
-                  labelStyle: TextStyle(color: Colors.white54),
-                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+          content: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("Asignar recursos a: ${usuario['nombre']}", style: const TextStyle(color: Colors.white54, fontSize: 13)),
+                const SizedBox(height: 15),
+                TextFormField(
+                  controller: empresaNameCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    labelText: "Nombre Comercial de la Empresa",
+                    labelStyle: TextStyle(color: Colors.white54),
+                    enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
                 ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: rutasCtrl,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: "Cuota Total de Rutas",
-                  labelStyle: TextStyle(color: Colors.white54),
-                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: rutasCtrl,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    labelText: "Cupo de Rutas (Cuota)",
+                    labelStyle: TextStyle(color: Colors.amber),
+                    hintText: "Eje: 5",
+                    hintStyle: TextStyle(color: Colors.white24),
+                    enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Campo obligatorio';
+                    if (int.tryParse(v) == null) return 'Debe ser un número';
+                    if (int.parse(v) < 1) return 'Mínimo 1 ruta';
+                    return null;
+                  },
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Cancelar"),
+              child: const Text("Cancelar", style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary(themeProvider.isDarkMode)),
               onPressed: () async {
+                if (!_formKey.currentState!.validate()) return;
+                
                 final String name = empresaNameCtrl.text.trim();
-                final int totalRutas = int.tryParse(rutasCtrl.text) ?? 1;
-                if (name.isEmpty) return;
+                final int totalRutas = int.parse(rutasCtrl.text.trim());
                 
                 Navigator.pop(context);
                 setState(() => _isLoading = true);
@@ -131,7 +146,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                   _refreshData();
                   if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Usuario aprobado y empresa vinculada"), backgroundColor: Colors.green),
+                    const SnackBar(content: Text("Acceso concedido y empresa configurada"), backgroundColor: Colors.green),
                   );
                 } catch (e) {
                   if (!mounted) return;
@@ -142,7 +157,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                   if (mounted) setState(() => _isLoading = false);
                 }
               },
-              child: const Text("Confirmar", style: TextStyle(color: Colors.black)),
+              child: const Text("Confirmar Aprobación", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
             ),
           ],
         );
