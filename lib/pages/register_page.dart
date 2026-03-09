@@ -35,10 +35,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
         if (authResponse.user != null) {
           // 1. Contar cuántos usuarios hay globalmente usando nuestra función segura (bypasa el RLS)
-          // Verificamos si es el primer usuario en la base de datos (obsoleto por RLS).
-          // El máster ya existe, todos los nuevos deben ser admin_pendiente por defecto.
-          final bool isFirstUser = false; // Removido para evitar que todos hereden Master
-
           // 2. Crear el perfil del usuario (Sin empresa asignada aún)
           // El Master lo aprobará y creará su empresa manualmente después
           await supabase.from('profiles').insert({
@@ -54,21 +50,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
           if (!mounted) return;
 
-          if (isFirstUser) {
-             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("¡Cuenta MASTER (DIOS) creada! Ya puedes ingresar."),
-                backgroundColor: Colors.green,
-              ),
-            );
-          } else {
-             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("Solicitud enviada exitosamente. El Master revisará tu cuenta pronto."),
-                backgroundColor: Colors.blue,
-              ),
-            );
-          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Solicitud enviada exitosamente. El Master revisará tu cuenta pronto."),
+              backgroundColor: Colors.blue,
+            ),
+          );
 
           Navigator.pop(context); // Volver al login
         }

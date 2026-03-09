@@ -47,17 +47,26 @@ class _MasterHomePageState extends State<MasterHomePage> {
 
   Future<void> _fetchUsuariosPendientes() async {
     try {
+      // DEBUG: Ver todos los perfiles visibles para el Master
+      final allProfiles = await supabase.from('profiles').select();
+      debugPrint('===== DEBUG MASTER =====');
+      debugPrint('Total perfiles visibles: ${allProfiles.length}');
+      for (var p in allProfiles) {
+        debugPrint('  -> ID: ${p['id']}, Rol: ${p['rol']}, Nombre: ${p['nombre']}, Approved: ${p['isApproved']}');
+      }
+
       final res = await supabase
           .from('profiles')
           .select()
-          .eq('rol', 'admin_pendiente')
-          .order('created_at', ascending: false);
+          .eq('rol', 'admin_pendiente');
+      debugPrint('Pendientes encontrados: ${res.length}');
+      debugPrint('========================');
       if (!mounted) return;
       setState(() {
         _usuariosPendientes = List<Map<String, dynamic>>.from(res);
       });
     } catch (e) {
-      debugPrint('Error usuarios: $e');
+      debugPrint('ERROR usuarios pendientes: $e');
     }
   }
 
