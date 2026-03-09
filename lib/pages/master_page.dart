@@ -214,7 +214,6 @@ class _MasterHomePageState extends State<MasterHomePage>
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: roles.map((r) {
-              // ignore: deprecated_member_use
               return RadioListTile<String>(
                 title: Text(_getRolLabel(r)),
                 value: r,
@@ -258,7 +257,14 @@ class _MasterHomePageState extends State<MasterHomePage>
     final empresaCtrl = TextEditingController(
       text: 'Kapital - ${user['nombre']}',
     );
-    final rutasCtrl = TextEditingController(text: '1');
+    final rutasMaxCtrl = TextEditingController(
+      text: '5',
+    ); // Rutas pagadas por defecto
+
+    // Calcular fechas
+    final now = DateTime.now().toUtc();
+    final fechaPago = now.toIso8601String();
+    final fechaVenc = now.add(const Duration(days: 30)).toIso8601String();
 
     await showDialog(
       context: context,
@@ -359,13 +365,13 @@ class _MasterHomePageState extends State<MasterHomePage>
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
-                  controller: rutasCtrl,
+                  controller: rutasMaxCtrl,
                   keyboardType: TextInputType.number,
                   style: TextStyle(
                     color: isDark ? Colors.white : Colors.black87,
                   ),
                   decoration: InputDecoration(
-                    labelText: 'Cupo de Rutas (Membresía)',
+                    labelText: 'Rutas Máximas Pagadas',
                     labelStyle: TextStyle(color: AppColors.primary(isDark)),
                     prefixIcon: Icon(
                       Icons.route,
@@ -387,6 +393,44 @@ class _MasterHomePageState extends State<MasterHomePage>
                     }
                     return null;
                   },
+                ),
+                const SizedBox(height: 12),
+                // Mostrar fechas calculadas
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.03),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Fechas de Membresía:',
+                        style: TextStyle(
+                          color: isDark ? Colors.white70 : Colors.black87,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Pago: ${_formatDate(fechaPago)}',
+                        style: TextStyle(
+                          color: isDark ? Colors.white54 : Colors.black54,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        'Vence: ${_formatDate(fechaVenc)}',
+                        style: TextStyle(
+                          color: isDark ? Colors.white54 : Colors.black54,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -420,15 +464,15 @@ class _MasterHomePageState extends State<MasterHomePage>
                 Navigator.pop(ctx);
                 setState(() => _isLoading = true);
                 try {
-                  // Crear empresa
+                  // Crear empresa con rutas máximas y fechas
                   final empRes = await supabase
                       .from('empresas')
                       .insert({
                         'nombre': empresaCtrl.text.trim(),
-                        'total_rutas_contratadas': int.parse(
-                          rutasCtrl.text.trim(),
-                        ),
+                        'rutas_maximas': int.parse(rutasMaxCtrl.text.trim()),
                         'is_active': true,
+                        'fecha_pago': fechaPago,
+                        'fecha_vencimiento': fechaVenc,
                       })
                       .select('id')
                       .single();

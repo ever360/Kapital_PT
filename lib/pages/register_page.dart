@@ -278,8 +278,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           validator: (value) {
-                            if (value == null || value.isEmpty)
+                            if (value == null || value.isEmpty) {
                               return 'Ingresa tu correo';
+                            }
                             if (!value.contains('@')) return 'Correo inválido';
                             return null;
                           },
@@ -295,8 +296,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           keyboardType: TextInputType.phone,
                           textInputAction: TextInputAction.next,
                           validator: (value) {
-                            if (value == null || value.isEmpty)
+                            if (value == null || value.isEmpty) {
                               return 'Ingresa tu teléfono';
+                            }
                             if (value.length < 7) return 'Número muy corto';
                             return null;
                           },
@@ -338,10 +340,12 @@ class _RegisterPageState extends State<RegisterPage> {
                             },
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty)
+                            if (value == null || value.isEmpty) {
                               return 'Ingresa una contraseña';
-                            if (value.length < 6)
+                            }
+                            if (value.length < 6) {
                               return 'Debe tener al menos 6 caracteres';
+                            }
                             return null;
                           },
                         ),

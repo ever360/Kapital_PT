@@ -83,8 +83,9 @@ class _SocioHomePageState extends State<SocioHomePage> {
   }
 
   Future<void> _crearRuta() async {
-    if (_miEmpresa == null || _miEmpresaId == null || _miSocioId == null)
+    if (_miEmpresa == null || _miEmpresaId == null || _miSocioId == null) {
       return;
+    }
 
     final int rutasMaximas = _miEmpresa!['rutas_maximas'] ?? 0;
 
@@ -113,7 +114,10 @@ class _SocioHomePageState extends State<SocioHomePage> {
             children: [
               Text(
                 "Rutas Disponibles en Planta: ${rutasMaximas - _rutasHermanasTotales}",
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber,
+                ),
               ),
               const SizedBox(height: 10),
               TextField(
