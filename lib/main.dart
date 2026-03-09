@@ -56,7 +56,10 @@ Future<void> _initializeServices() async {
   } catch (e) {
     debugPrint("Supabase init error: $e");
   }
-
+  // 2. Orientación y Estilo Full Screen
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  
   // 3. Inicializar Notificaciones
   try {
     PushNotificationService.initialize();
@@ -100,39 +103,131 @@ class KapitalApp extends StatelessWidget {
             title: 'Kapital',
             debugShowCheckedModeBanner: false,
             themeMode: themeProvider.themeMode,
-            // ============== TEMA CLARO ==============
+            // ============== TEMA CLARO (DORADO) ==============
             theme: ThemeData(
               useMaterial3: true,
-              primarySwatch: Colors.amber,
+              brightness: Brightness.light,
+              primaryColor: AppColors.doradoKapital,
               scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-              appBarTheme: AppBarTheme(
-                backgroundColor: AppColors.doradoKapital,
-                foregroundColor: Colors.black,
-                systemOverlayStyle: SystemUiOverlayStyle(
-                  statusBarColor: AppColors.doradoKapital,
-                  statusBarIconBrightness: Brightness.dark,
-                ),
-              ),
               colorScheme: ColorScheme.fromSeed(
                 seedColor: AppColors.doradoKapital,
                 brightness: Brightness.light,
+                primary: AppColors.doradoKapital,
                 surface: Colors.white,
+                onPrimary: Colors.black,
               ),
+              appBarTheme: AppBarTheme(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black87,
+                elevation: 0,
+                surfaceTintColor: Colors.transparent,
+                systemOverlayStyle: SystemUiOverlayStyle(
+                  statusBarColor: AppColors.doradoKapital,
+                  statusBarIconBrightness: Brightness.dark,
+                  systemNavigationBarColor: Colors.white,
+                  systemNavigationBarIconBrightness: Brightness.dark,
+                ),
+              ),
+              tabBarTheme: TabBarThemeData(
+                indicatorColor: AppColors.doradoKapital,
+                labelColor: AppColors.doradoKapital,
+                unselectedLabelColor: Colors.black38,
+              ),
+              elevatedButtonTheme: ElevatedButtonThemeData(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.doradoKapital,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              floatingActionButtonTheme: FloatingActionButtonThemeData(
+                backgroundColor: AppColors.doradoKapital,
+                foregroundColor: Colors.black,
+              ),
+              switchTheme: SwitchThemeData(
+                thumbColor: WidgetStateProperty.resolveWith((states) =>
+                    states.contains(WidgetState.selected) ? AppColors.doradoKapital : Colors.grey),
+                trackColor: WidgetStateProperty.resolveWith((states) =>
+                    states.contains(WidgetState.selected) ? AppColors.doradoKapital.withValues(alpha: 0.4) : Colors.grey.withValues(alpha: 0.3)),
+              ),
+              cardTheme: CardThemeData(
+                color: Colors.white,
+                elevation: 1,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              dialogTheme: DialogThemeData(
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+              progressIndicatorTheme: ProgressIndicatorThemeData(
+                color: AppColors.doradoKapital,
+              ),
+              iconTheme: const IconThemeData(color: Colors.black54),
               textTheme: const TextTheme(
                 bodyMedium: TextStyle(color: Colors.black87),
                 bodyLarge: TextStyle(color: Colors.black87),
               ),
             ),
-            // ============== TEMA OSCURO ==============
+            // ============== TEMA OSCURO (VERDE MENTA) ==============
             darkTheme: ThemeData(
               useMaterial3: true,
+              brightness: Brightness.dark,
               primaryColor: AppColors.verdeSupabase,
-              scaffoldBackgroundColor: const Color(0xFF121212), // Fondo oscuro
+              scaffoldBackgroundColor: const Color(0xFF0D0D0D),
               colorScheme: ColorScheme.fromSeed(
                 seedColor: AppColors.verdeSupabase,
                 brightness: Brightness.dark,
-                surface: const Color(0xFF1E1E1E),
+                primary: AppColors.verdeSupabase,
+                surface: const Color(0xFF1A1A1A),
+                onPrimary: Colors.black,
               ),
+              appBarTheme: AppBarTheme(
+                backgroundColor: const Color(0xFF1A1A1A),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                surfaceTintColor: Colors.transparent,
+                systemOverlayStyle: SystemUiOverlayStyle(
+                  statusBarColor: const Color(0xFF1A1A1A),
+                  statusBarIconBrightness: Brightness.light,
+                  systemNavigationBarColor: const Color(0xFF0D0D0D),
+                  systemNavigationBarIconBrightness: Brightness.light,
+                ),
+              ),
+              tabBarTheme: TabBarThemeData(
+                indicatorColor: AppColors.verdeSupabase,
+                labelColor: AppColors.verdeSupabase,
+                unselectedLabelColor: Colors.white38,
+              ),
+              elevatedButtonTheme: ElevatedButtonThemeData(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.verdeSupabase,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              floatingActionButtonTheme: FloatingActionButtonThemeData(
+                backgroundColor: AppColors.verdeSupabase,
+                foregroundColor: Colors.black,
+              ),
+              switchTheme: SwitchThemeData(
+                thumbColor: WidgetStateProperty.resolveWith((states) =>
+                    states.contains(WidgetState.selected) ? AppColors.verdeSupabase : Colors.grey),
+                trackColor: WidgetStateProperty.resolveWith((states) =>
+                    states.contains(WidgetState.selected) ? AppColors.verdeSupabase.withValues(alpha: 0.4) : Colors.grey.withValues(alpha: 0.3)),
+              ),
+              cardTheme: CardThemeData(
+                color: const Color(0xFF1A1A1A),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              dialogTheme: DialogThemeData(
+                backgroundColor: const Color(0xFF1E1E1E),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+              progressIndicatorTheme: ProgressIndicatorThemeData(
+                color: AppColors.verdeSupabase,
+              ),
+              iconTheme: const IconThemeData(color: Colors.white54),
               textTheme: const TextTheme(
                 bodyMedium: TextStyle(color: Colors.white),
                 bodyLarge: TextStyle(color: Colors.white),

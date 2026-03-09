@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kapital_app/theme/theme_provider.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -22,42 +23,35 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Splash full screen style
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-      ),
-    );
+    // Splash full screen style - Truly immersive
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
     _controller = AnimationController(
-      duration: const Duration(seconds: 3),
       vsync: this,
+      duration: const Duration(seconds: 4),
     );
 
-    _radiusAnimation = Tween<double>(
-      begin: 0.0,
-      end: 2.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _radiusAnimation = Tween<double>(begin: 0.0, end: 2.2).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutQuart),
+    );
 
     _fadeLogo = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.5, 1.0, curve: Curves.easeIn),
+      curve: const Interval(0.4, 0.8, curve: Curves.easeIn),
     );
 
     _controller.forward();
 
-    // Después de 3 segundos, verifica sesión y navega
-    Timer(const Duration(seconds: 3), () async {
-      final supabase = Supabase.instance.client;
-      final session = supabase.auth.currentSession;
-
+    // Redirección con validación de sesión
+    Future.delayed(const Duration(seconds: 4), () async {
       if (!mounted) return;
 
-      if (session != null) {
-        // Ya hay sesión, el listener en login_page o la lógica aquí puede redirigir
-        // Para simplificar, mandamos a login y la lógica de login_page se encargará
-        // del redireccionamiento basado en el perfil que ya existe.
+      // Restaurar modo normal antes de salir
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+      final supabase = Supabase.instance.client;
+      if (supabase.auth.currentSession != null) {
+        // Redirigir según sesión si es necesario, por ahora a login que maneja el redireccionamiento interno
         Navigator.pushReplacementNamed(context, '/login');
       } else {
         Navigator.pushReplacementNamed(context, '/login');
@@ -73,66 +67,96 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+    final tp = Provider.of<ThemeProvider>(context);
+    final isDark = tp.isDarkMode;
+    final primaryColor = AppColors.primary(isDark);
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
       body: AnimatedBuilder(
         animation: _radiusAnimation,
         builder: (context, child) {
-            final isDark = themeProvider.isDarkMode;
-            final primaryColor = AppColors.primary(isDark);
-            
-            return Container(
-              width: screenWidth,
-              height: screenHeight,
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.center,
-                  radius: _radiusAnimation.value,
-                  colors: isDark 
-                      ? [primaryColor.withValues(alpha: 0.3), const Color(0xFF121212)] 
-                      : [primaryColor, Colors.white],
-                  stops: const [0.0, 1.0],
-                ),
+          return Container(
+            width: size.width,
+            height: size.height,
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.center,
+                radius: _radiusAnimation.value,
+                colors: isDark
+                    ? [
+                        primaryColor.withValues(alpha: 0.25),
+                        const Color(0xFF0D0D0D),
+                      ]
+                    : [primaryColor.withValues(alpha: 0.8), Colors.white],
+                stops: const [0.0, 1.0],
               ),
-            child: _radiusAnimation.value >= 1.5
-                ? Column(
+            ),
+            child: Stack(
+              children: [
+                Center(
+                  child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       FadeTransition(
                         opacity: _fadeLogo,
-                        child: Image.asset(
-                          'assets/logoKapital.png',
-                          width: 150,
-                          height: 150,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      const ShimmerText(
-                        text: "Kapital",
-                        style: TextStyle(
-                          fontSize: 42,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        "Más que real, una experiencia única",
-                        style: TextStyle(
-                          fontSize: 18, 
-                          color: isDark ? Colors.white70 : Colors.black87
+                        child: Hero(
+                          tag: 'logo',
+                          child: Image.asset(
+                            'assets/logoKapital.png',
+                            width: 160,
+                            height: 160,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 30),
-                      CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(isDark ? primaryColor : Colors.white),
-                        strokeWidth: 3,
+                      FadeTransition(
+                        opacity: _fadeLogo,
+                        child: Column(
+                          children: [
+                            ShimmerText(
+                              text: "Kapital",
+                              style: TextStyle(
+                                fontSize: 48,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : Colors.black87,
+                                letterSpacing: 4,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              "Más que real, una experiencia única",
+                              style: TextStyle(
+                                fontSize: 16,
+                                letterSpacing: 1.2,
+                                color: isDark ? Colors.white60 : Colors.black45,
+                                fontWeight: FontWeight.w300,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
-                  )
-                : null,
+                  ),
+                ),
+                Positioned(
+                  bottom: 50,
+                  left: 0,
+                  right: 0,
+                  child: FadeTransition(
+                    opacity: _fadeLogo,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          isDark ? primaryColor : AppColors.doradoKapital,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           );
         },
       ),
@@ -175,8 +199,9 @@ class _ShimmerTextState extends State<ShimmerText>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        final primaryColor = AppColors.primary(themeProvider.isDarkMode);
-        
+        final tp = Provider.of<ThemeProvider>(context);
+        final primaryColor = AppColors.primary(tp.isDarkMode);
+
         return ShaderMask(
           shaderCallback: (bounds) {
             return LinearGradient(

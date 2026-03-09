@@ -34,26 +34,26 @@ class _RegisterPageState extends State<RegisterPage> {
         if (!mounted) return;
 
         if (authResponse.user != null) {
-          // 1. Contar cuántos usuarios hay globalmente usando nuestra función segura (bypasa el RLS)
-          // 2. Crear el perfil del usuario (Sin empresa asignada aún)
-          // El Master lo aprobará y creará su empresa manualmente después
+          // Crear el perfil del usuario aprobado y activo
           await supabase.from('profiles').insert({
             'id': authResponse.user!.id,
             'nombre': nameController.text.trim(),
             'telefono': phoneController.text.trim(),
             'foto': _imageUrl,
-            'rol': 'admin_pendiente',
-            'isApproved': false, 
-            'isActive': false,
-            'empresa_id': null,
+            'rol': 'super_admin',
+            'isApproved': true,
+            'isActive': true,
+            'empresa_id': null, // El Master asignará empresa después
           });
 
           if (!mounted) return;
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Solicitud enviada exitosamente. El Master revisará tu cuenta pronto."),
-              backgroundColor: Colors.blue,
+              content: Text(
+                "Registro exitoso. ¡Bienvenido a Kapital! El Master te asignará una empresa pronto.",
+              ),
+              backgroundColor: Colors.green,
             ),
           );
 
@@ -70,9 +70,9 @@ class _RegisterPageState extends State<RegisterPage> {
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 child: const Text("Entendido"),
-              )
+              ),
             ],
-          )
+          ),
         );
       } finally {
         if (mounted) setState(() => _isLoading = false);
@@ -95,16 +95,23 @@ class _RegisterPageState extends State<RegisterPage> {
     return TextFormField(
       controller: controller,
       obscureText: obscure,
-      style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black87),
+      style: TextStyle(
+        color: themeProvider.isDarkMode ? Colors.white : Colors.black87,
+      ),
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: themeProvider.isDarkMode ? Colors.white54 : Colors.black54),
-        prefixIcon: Icon(icon, color: themeProvider.isDarkMode ? Colors.white70 : Colors.black54),
+        hintStyle: TextStyle(
+          color: themeProvider.isDarkMode ? Colors.white54 : Colors.black54,
+        ),
+        prefixIcon: Icon(
+          icon,
+          color: themeProvider.isDarkMode ? Colors.white70 : Colors.black54,
+        ),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: themeProvider.isDarkMode 
+        fillColor: themeProvider.isDarkMode
             ? Colors.white.withValues(alpha: 0.08)
             : Colors.black.withValues(alpha: 0.05),
         border: OutlineInputBorder(
@@ -150,7 +157,9 @@ class _RegisterPageState extends State<RegisterPage> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.amber.withValues(alpha: isDark ? 0.15 : 0.4),
+                                  color: Colors.amber.withValues(
+                                    alpha: isDark ? 0.15 : 0.4,
+                                  ),
                                   blurRadius: 30,
                                   spreadRadius: 10,
                                 ),
@@ -175,7 +184,10 @@ class _RegisterPageState extends State<RegisterPage> {
                         const SizedBox(height: 5),
                         Text(
                           "Únete a Kapital y transforma tus finanzas",
-                          style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 13),
+                          style: TextStyle(
+                            color: isDark ? Colors.white54 : Colors.black54,
+                            fontSize: 13,
+                          ),
                         ),
                         const SizedBox(height: 35),
 
@@ -183,32 +195,61 @@ class _RegisterPageState extends State<RegisterPage> {
                         GestureDetector(
                           onTap: () {
                             // TODO: Implementar selección de imagen (image_picker)
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Selección de foto disponible próximamente")));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  "Selección de foto disponible próximamente",
+                                ),
+                              ),
+                            );
                           },
                           child: Stack(
                             children: [
                               CircleAvatar(
                                 radius: 45,
-                                backgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
-                                backgroundImage: _imageUrl != null ? NetworkImage(_imageUrl!) : null,
-                                child: _imageUrl == null 
-                                  ? Icon(Icons.camera_alt_outlined, size: 30, color: isDark ? Colors.white38 : Colors.black38) 
-                                  : null,
+                                backgroundColor: isDark
+                                    ? Colors.white10
+                                    : Colors.black.withValues(alpha: 0.05),
+                                backgroundImage: _imageUrl != null
+                                    ? NetworkImage(_imageUrl!)
+                                    : null,
+                                child: _imageUrl == null
+                                    ? Icon(
+                                        Icons.camera_alt_outlined,
+                                        size: 30,
+                                        color: isDark
+                                            ? Colors.white38
+                                            : Colors.black38,
+                                      )
+                                    : null,
                               ),
                               Positioned(
                                 bottom: 0,
                                 right: 0,
                                 child: Container(
                                   padding: const EdgeInsets.all(4),
-                                  decoration: BoxDecoration(color: AppColors.primary(isDark), shape: BoxShape.circle),
-                                  child: const Icon(Icons.add, size: 18, color: Colors.black),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary(isDark),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.add,
+                                    size: 18,
+                                    color: Colors.black,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 10),
-                        Text("Foto de perfil (Opcional)", style: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 11)),
+                        Text(
+                          "Foto de perfil (Opcional)",
+                          style: TextStyle(
+                            color: isDark ? Colors.white38 : Colors.black38,
+                            fontSize: 11,
+                          ),
+                        ),
                         const SizedBox(height: 25),
 
                         _buildTextField(
@@ -228,8 +269,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 15),
 
-
-
                         _buildTextField(
                           context: context,
                           controller: emailController,
@@ -239,7 +278,8 @@ class _RegisterPageState extends State<RegisterPage> {
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           validator: (value) {
-                            if (value == null || value.isEmpty) return 'Ingresa tu correo';
+                            if (value == null || value.isEmpty)
+                              return 'Ingresa tu correo';
                             if (!value.contains('@')) return 'Correo inválido';
                             return null;
                           },
@@ -255,7 +295,8 @@ class _RegisterPageState extends State<RegisterPage> {
                           keyboardType: TextInputType.phone,
                           textInputAction: TextInputAction.next,
                           validator: (value) {
-                            if (value == null || value.isEmpty) return 'Ingresa tu teléfono';
+                            if (value == null || value.isEmpty)
+                              return 'Ingresa tu teléfono';
                             if (value.length < 7) return 'Número muy corto';
                             return null;
                           },
@@ -266,7 +307,11 @@ class _RegisterPageState extends State<RegisterPage> {
                           child: Text(
                             "A este número recibirás información importante sobre la app cuando sea necesario.",
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: isDark ? Colors.white38 : Colors.black45, fontSize: 11, fontStyle: FontStyle.italic),
+                            style: TextStyle(
+                              color: isDark ? Colors.white38 : Colors.black45,
+                              fontSize: 11,
+                              fontStyle: FontStyle.italic,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 15),
@@ -281,7 +326,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           textInputAction: TextInputAction.done,
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                              _obscurePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
                               color: isDark ? Colors.white54 : Colors.black54,
                             ),
                             onPressed: () {
@@ -291,8 +338,10 @@ class _RegisterPageState extends State<RegisterPage> {
                             },
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty) return 'Ingresa una contraseña';
-                            if (value.length < 6) return 'Debe tener al menos 6 caracteres';
+                            if (value == null || value.isEmpty)
+                              return 'Ingresa una contraseña';
+                            if (value.length < 6)
+                              return 'Debe tener al menos 6 caracteres';
                             return null;
                           },
                         ),
@@ -302,7 +351,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           width: double.infinity,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary(isDark), // Botón dinámico
+                              backgroundColor: AppColors.primary(
+                                isDark,
+                              ), // Botón dinámico
                               foregroundColor: Colors.black,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               elevation: 2,
@@ -315,7 +366,10 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ? const SizedBox(
                                     height: 20,
                                     width: 20,
-                                    child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      color: Colors.black,
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Text(
                                     "Registrarse",
@@ -334,7 +388,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           children: [
                             Text(
                               "¿Ya tienes cuenta? ",
-                              style: TextStyle(color: isDark ? Colors.white70 : Colors.black87),
+                              style: TextStyle(
+                                color: isDark ? Colors.white70 : Colors.black87,
+                              ),
                             ),
                             MouseRegion(
                               cursor: SystemMouseCursors.click,
@@ -356,7 +412,10 @@ class _RegisterPageState extends State<RegisterPage> {
                         // Versión Abajo
                         Text(
                           'v1.4.5 - SaaS Edition',
-                          style: TextStyle(color: isDark ? Colors.white24 : Colors.black38, fontSize: 11),
+                          style: TextStyle(
+                            color: isDark ? Colors.white24 : Colors.black38,
+                            fontSize: 11,
+                          ),
                         ),
                         const SizedBox(height: 20),
                       ],
@@ -371,4 +430,3 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 }
-

@@ -1,0 +1,26 @@
+﻿Analyzing login_page.dart...                                    
+
+   info - Statements in an if should be enclosed in a block - lib\pages\login_page.dart:46:7 - curly_braces_in_flow_control_structures
+   info - Don't use 'BuildContext's across async gaps - lib\pages\login_page.dart:173:32 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\pages\login_page.dart:202:13 - use_build_context_synchronously
+
+flutter : 3 issues 
+found. (ran in 2.7s)
+En línea: 1 Carácter: 1
++ flutter analyze lib/p
+ages/login_page.dart 
+2>&1 | Out-File 
+-Encoding u ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (3 issues foun   
+ d. (ran in 2.7s):S    
+tring) [], RemoteE    
+xception
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 

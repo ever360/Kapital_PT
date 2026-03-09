@@ -1,0 +1,28 @@
+﻿Analyzing 2 items...                                            
+
+   info - Statements in an if should be enclosed in a block - lib\pages\login_page.dart:46:7 - curly_braces_in_flow_control_structures
+   info - Don't use 'BuildContext's across async gaps - lib\pages\login_page.dart:173:32 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\pages\login_page.dart:202:13 - use_build_context_synchronously
+  error - Undefined name 'Provider' - lib\pages\splash_screen.dart:69:16 - undefined_identifier
+
+flutter : 4 issues 
+found. (ran in 3.3s)
+En línea: 1 Carácter: 1
++ flutter analyze lib/p
+ages/login_page.dart li
+b/pages/splash_screen.d
+ar ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (4 issues foun   
+ d. (ran in 3.3s):S    
+tring) [], RemoteE    
+xception
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 

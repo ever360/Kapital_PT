@@ -107,52 +107,19 @@ class _SocioHomePageState extends State<SocioHomePage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: themeProvider.isDarkMode
-              ? const Color(0xFF1E1E1E)
-              : Colors.white,
-          title: Text(
-            'Crear Nueva Ruta',
-            style: TextStyle(
-              color: themeProvider.isDarkMode ? Colors.white : Colors.black87,
-            ),
-          ),
+          title: const Text('Crear Nueva Ruta'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 "Rutas Disponibles en Planta: ${rutasMaximas - _rutasHermanasTotales}",
-                style: TextStyle(
-                  color: AppColors.primary(themeProvider.isDarkMode),
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: nombreCtrl,
-                style: TextStyle(
-                  color: themeProvider.isDarkMode
-                      ? Colors.white
-                      : Colors.black87,
-                ),
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Nombre o Ciudad de la Ruta',
-                  labelStyle: TextStyle(
-                    color: themeProvider.isDarkMode
-                        ? Colors.white54
-                        : Colors.black54,
-                  ),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: themeProvider.isDarkMode
-                          ? Colors.white24
-                          : Colors.black26,
-                    ),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: AppColors.primary(themeProvider.isDarkMode),
-                    ),
-                  ),
                 ),
               ),
             ],
@@ -160,16 +127,9 @@ class _SocioHomePageState extends State<SocioHomePage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancelar',
-                style: TextStyle(color: Colors.grey),
-              ),
+              child: const Text('Cerrar'),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary(themeProvider.isDarkMode),
-                foregroundColor: Colors.black,
-              ),
               onPressed: () async {
                 final nombreRuta = nombreCtrl.text.trim();
                 if (nombreRuta.isEmpty) return;

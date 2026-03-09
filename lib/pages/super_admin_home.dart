@@ -77,16 +77,15 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
       builder: (context) {
         final themeProvider = Provider.of<ThemeProvider>(context);
         return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E1E),
-          title: const Text("Nueva Sucursal / Socio", style: TextStyle(color: Colors.white)),
+          title: const Text("Nueva Sucursal / Socio"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Rutas disponibles: $disponibles", style: const TextStyle(color: Colors.amber)),
+              Text("Rutas disponibles: $disponibles", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber)),
               const SizedBox(height: 10),
-              TextField(controller: nombreCtrl, style: const TextStyle(color: Colors.white), decoration: _inputDeco("Nombre (ej: Sede Norte)")),
+              TextField(controller: nombreCtrl, decoration: _inputDeco("Nombre (ej: Sede Norte)")),
               const SizedBox(height: 10),
-              TextField(controller: rutasSedeCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: _inputDeco("Rutas para esta sede")),
+              TextField(controller: rutasSedeCtrl, keyboardType: TextInputType.number, decoration: _inputDeco("Rutas para esta sede")),
             ],
           ),
           actions: [

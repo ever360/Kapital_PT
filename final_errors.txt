@@ -16,34 +16,8 @@ warning - The value of the local variable 'isDark' isn't used - lib\pages\master
    info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre - lib\pages\master_page.dart:160:17 - deprecated_member_use
    info - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre - lib\pages\master_page.dart:536:25 - deprecated_member_use
    info - Statements in an if should be enclosed in a block - lib\pages\socio_home.dart:87:7 - curly_braces_in_flow_control_structures
-  error - Undefined name 'Provider' - lib\pages\splash_screen.dart:70:16 - undefined_identifier
-  error - Undefined name 'Provider' - lib\pages\splash_screen.dart:199:20 - undefined_identifier
-  error - Expected to find ';' - lib\pages\splash_screen.dart:199:32 - expected_token
-  error - Undefined name 'ThemeProv' - lib\pages\splash_screen.dart:199:32 - undefined_identifier
-warning - The value of the local variable 'tp' isn't used - lib\pages\splash_screen.dart:199:55 - unused_local_variable
-  error - The name 'tp' is already defined - lib\pages\splash_screen.dart:199:55 - duplicate_definition
-  error - Undefined name 'Provider' - lib\pages\splash_screen.dart:199:60 - undefined_identifier
    info - The imported package 'supabase' isn't a dependency of the importing package - test_supabase.dart:1:8 - depend_on_referenced_packages
    info - Don't invoke 'print' in production code - test_supabase.dart:11:5 - avoid_print
    info - Don't invoke 'print' in production code - test_supabase.dart:13:7 - avoid_print
    info - Don't invoke 'print' in production code - test_supabase.dart:16:5 - avoid_print
 
-flutter : 27 issues 
-found. (ran in 3.5s)
-En línea: 1 Carácter: 1
-+ flutter analyze 
---no-pub 2>&1 | 
-Out-File -Encoding 
-utf8 analysis_utf8 ...
-+ ~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~
-    + CategoryInfo     
-         : NotSpecifi  
-  ed: (27 issues fou   
- nd. (ran in 3.5s):    
-String) [], Remote    
-Exception
-    + FullyQualifiedEr 
-   rorId : NativeComm  
-  andError
- 
