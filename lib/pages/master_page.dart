@@ -35,6 +35,8 @@ class _MasterHomePageState extends State<MasterHomePage>
   }
 
   void _setupRealtime() {
+    // Temporalmente comentado para debug
+    /*
     _profilesChannel = supabase.channel('profiles_changes');
     _profilesChannel
         .onPostgresChanges(
@@ -54,19 +56,24 @@ class _MasterHomePageState extends State<MasterHomePage>
           callback: (payload) => _refreshData(),
         )
         .subscribe();
+    */
   }
 
   @override
   void dispose() {
-    _profilesChannel.unsubscribe();
-    _empresasChannel.unsubscribe();
+    // _profilesChannel.unsubscribe();
+    // _empresasChannel.unsubscribe();
     _tabController.dispose();
     super.dispose();
   }
 
   Future<void> _refreshData() async {
     setState(() => _isLoading = true);
-    await Future.wait([_fetchEmpresas(), _fetchUsuarios()]);
+    try {
+      await Future.wait([_fetchEmpresas(), _fetchUsuarios()]);
+    } catch (e) {
+      debugPrint('Error refreshing data: $e');
+    }
     if (mounted) setState(() => _isLoading = false);
   }
 
@@ -77,6 +84,8 @@ class _MasterHomePageState extends State<MasterHomePage>
       setState(() => _empresas = List<Map<String, dynamic>>.from(res));
     } catch (e) {
       debugPrint('Error empresas: $e');
+      if (!mounted) return;
+      setState(() => _empresas = []);
     }
   }
 
@@ -93,6 +102,11 @@ class _MasterHomePageState extends State<MasterHomePage>
       });
     } catch (e) {
       debugPrint('Error usuarios: $e');
+      if (!mounted) return;
+      setState(() {
+        _todosUsuarios = [];
+        _pendientes = [];
+      });
     }
   }
 
@@ -164,6 +178,49 @@ class _MasterHomePageState extends State<MasterHomePage>
     if (empresaId == null) return null;
     final emp = _empresas.where((e) => e['id'] == empresaId).toList();
     return emp.isNotEmpty ? emp.first['nombre'] : null;
+  }
+
+  // ============== VENCIMIENTOS Y ALERTAS ==============
+
+  Map<String, dynamic> _getVencimientoStatus(Map<String, dynamic> empresa) {
+    final fechaVenc = empresa['fecha_vencimiento'];
+    if (fechaVenc == null) {
+      return {'status': 'unknown', 'days': 0, 'color': Colors.grey};
+    }
+
+    final vencDate = DateTime.parse(fechaVenc).toLocal();
+    final now = DateTime.now();
+    final diff = vencDate.difference(now).inDays;
+
+    if (diff < 0) {
+      return {'status': 'vencido', 'days': diff.abs(), 'color': Colors.red};
+    } else if (diff <= 7) {
+      return {'status': 'proximo', 'days': diff, 'color': Colors.orange};
+    } else {
+      return {'status': 'activo', 'days': diff, 'color': Colors.green};
+    }
+  }
+
+  String _formatDate(String? isoDate) {
+    if (isoDate == null) return 'N/A';
+    final date = DateTime.parse(isoDate).toLocal();
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  List<Map<String, dynamic>> _getAlertas() {
+    final alertas = <Map<String, dynamic>>[];
+    for (final emp in _empresas) {
+      final status = _getVencimientoStatus(emp);
+      if (status['status'] == 'vencido' || status['status'] == 'proximo') {
+        alertas.add({
+          'tipo': status['status'] == 'vencido' ? 'vencimiento' : 'aviso',
+          'empresa': emp['nombre'],
+          'dias': status['days'],
+          'color': status['color'],
+        });
+      }
+    }
+    return alertas;
   }
 
   // ============== ACCIONES ==============
@@ -515,7 +572,7 @@ class _MasterHomePageState extends State<MasterHomePage>
 
   Future<void> _editarEmpresa(Map<String, dynamic> emp) async {
     final rutasCtrl = TextEditingController(
-      text: '${emp['total_rutas_contratadas'] ?? 1}',
+      text: '${emp['rutas_maximas'] ?? 1}',
     );
     final notasCtrl = TextEditingController(text: emp['notas_master'] ?? '');
 
@@ -605,9 +662,9 @@ class _MasterHomePageState extends State<MasterHomePage>
                         .update({
                           'fecha_pago': now,
                           'fecha_vencimiento': vencimiento,
-                          'total_rutas_contratadas':
+                          'rutas_maximas':
                               int.tryParse(rutasCtrl.text) ??
-                              emp['total_rutas_contratadas'],
+                              emp['rutas_maximas'],
                           'notas_master': notasCtrl.text.trim(),
                         })
                         .eq('id', emp['id']);
@@ -638,9 +695,8 @@ class _MasterHomePageState extends State<MasterHomePage>
                 await supabase
                     .from('empresas')
                     .update({
-                      'total_rutas_contratadas':
-                          int.tryParse(rutasCtrl.text) ??
-                          emp['total_rutas_contratadas'],
+                      'rutas_maximas':
+                          int.tryParse(rutasCtrl.text) ?? emp['rutas_maximas'],
                       'notas_master': notasCtrl.text.trim(),
                     })
                     .eq('id', emp['id']);
@@ -775,6 +831,75 @@ class _MasterHomePageState extends State<MasterHomePage>
     );
   }
 
+  Widget _buildAlertasSection(bool isDark, Color primary) {
+    final alertas = _getAlertas();
+    if (alertas.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+              const SizedBox(width: 8),
+              Text(
+                'Alertas de Vencimiento',
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...alertas.map(
+            (alerta) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: alerta['color'].withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: alerta['color'].withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    alerta['tipo'] == 'vencimiento'
+                        ? Icons.error
+                        : Icons.warning,
+                    color: alerta['color'],
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${alerta['empresa']}: ${alerta['tipo'] == 'vencimiento' ? 'Vencida hace ${alerta['dias']} días' : 'Vence en ${alerta['dias']} días'}',
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ============== TAB: EMPRESAS ==============
 
   Widget _buildEmpresasTab(bool isDark, Color primary) {
@@ -805,6 +930,7 @@ class _MasterHomePageState extends State<MasterHomePage>
           final ownerName = ownerList.isNotEmpty
               ? ownerList.first['nombre']
               : 'Sin asignar';
+          final status = _getVencimientoStatus(emp);
 
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
@@ -879,16 +1005,25 @@ class _MasterHomePageState extends State<MasterHomePage>
                         isDark,
                       ),
                       _chip(
-                        '📍 ${emp['total_rutas_contratadas'] ?? 0} rutas',
+                        '📍 ${emp['rutas_maximas'] ?? 0} rutas',
                         primary,
                         isDark,
                       ),
-                      if (fechaVenc != null)
-                        _chip(
-                          '💳 Vence: ${_formatDate(fechaVenc)}',
-                          Colors.blueAccent,
-                          isDark,
-                        ),
+                      if (fechaVenc != null) ...[
+                        () {
+                          final icon = status['status'] == 'vencido'
+                              ? '🔴'
+                              : status['status'] == 'proximo'
+                              ? '🟠'
+                              : '🟢';
+                          final text = status['status'] == 'vencido'
+                              ? 'Vencida'
+                              : status['status'] == 'proximo'
+                              ? 'Vence en ${status['days']}d'
+                              : 'Activa';
+                          return _chip('$icon $text', status['color'], isDark);
+                        }(),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -1219,28 +1354,5 @@ class _MasterHomePageState extends State<MasterHomePage>
         ),
       ),
     );
-  }
-
-  String _formatDate(String isoDate) {
-    try {
-      final d = DateTime.parse(isoDate);
-      final months = [
-        'Ene',
-        'Feb',
-        'Mar',
-        'Abr',
-        'May',
-        'Jun',
-        'Jul',
-        'Ago',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dic',
-      ];
-      return '${d.day} ${months[d.month - 1]} ${d.year}';
-    } catch (_) {
-      return isoDate;
-    }
   }
 }
