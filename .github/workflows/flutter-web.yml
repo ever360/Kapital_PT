@@ -20,7 +20,7 @@ jobs:
       with:
         channel: 'stable'
     - run: flutter pub get
-    - run: flutter build web --release
+    - run: flutter build web --release --base-href /Kapital_PT/
     - name: Deploy to GitHub Pages
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
       uses: peaceiris/actions-gh-pages@v3
