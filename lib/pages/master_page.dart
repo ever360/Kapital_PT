@@ -35,8 +35,6 @@ class _MasterHomePageState extends State<MasterHomePage>
   }
 
   void _setupRealtime() {
-    // Temporalmente comentado para debug
-    /*
     _profilesChannel = supabase.channel('profiles_changes');
     _profilesChannel
         .onPostgresChanges(
@@ -56,13 +54,12 @@ class _MasterHomePageState extends State<MasterHomePage>
           callback: (payload) => _refreshData(),
         )
         .subscribe();
-    */
   }
 
   @override
   void dispose() {
-    // _profilesChannel.unsubscribe();
-    // _empresasChannel.unsubscribe();
+    _profilesChannel.unsubscribe();
+    _empresasChannel.unsubscribe();
     _tabController.dispose();
     super.dispose();
   }
@@ -820,12 +817,22 @@ class _MasterHomePageState extends State<MasterHomePage>
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: primary))
-          : TabBarView(
-              controller: _tabController,
+          : Column(
               children: [
-                _buildEmpresasTab(isDark, primary),
-                _buildPendientesTab(isDark, primary),
-                _buildUsuariosTab(isDark, primary),
+                // Sección de alertas
+                if (_getAlertas().isNotEmpty)
+                  _buildAlertasSection(isDark, primary),
+                // Tabs
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildEmpresasTab(isDark, primary),
+                      _buildPendientesTab(isDark, primary),
+                      _buildUsuariosTab(isDark, primary),
+                    ],
+                  ),
+                ),
               ],
             ),
     );
