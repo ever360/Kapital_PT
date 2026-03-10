@@ -721,7 +721,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       // Versión Abajo
                       Text(
-                        'v1.5.2 - Premium SaaS Edition',
+                        'v1.5.3 - Premium SaaS Edition',
                         style: TextStyle(
                           color: isDark ? Colors.white24 : Colors.black38,
                           fontSize: 11,
