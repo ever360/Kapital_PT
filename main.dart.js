@@ -98721,18 +98721,19 @@ return A.r($async$BM,r)},
 B3(a,b,c,d,e){return this.ai_(a,b,c,d,e)},
 ai_(a,b,c,d,e){var s=0,r=A.t(t.PN),q,p=this,o,n,m,l
 var $async$B3=A.u(function(f,g){if(f===1)return A.p(g,r)
-for(;;)switch(s){case 0:n=t.N
-m=A.X(["provider",A.b6e(a)],n,n)
-l=p.ay
-s=l===B.eh?3:4
+for(;;)switch(s){case 0:m=t.N
+l=A.X(["provider",A.b6e(a)],m,m)
+l.m(0,"redirect_to",c)
+o=p.ay
+s=o===B.eh?3:4
 break
-case 3:o=A.aNX()
+case 3:n=A.aNX()
 s=5
-return A.m(p.ax.p6("supabase.auth.token-code-verifier",o),$async$B3)
-case 5:m.M(0,A.X(["flow_type",l.b,"code_challenge",A.aNW(o),"code_challenge_method","s256"],n,n))
-case 4:n=A.LL(null,null,m).f
-if(n==null)n=""
-q=new A.Sc(e+"?"+n)
+return A.m(p.ax.p6("supabase.auth.token-code-verifier",n),$async$B3)
+case 5:l.M(0,A.X(["flow_type",o.b,"code_challenge",A.aNW(n),"code_challenge_method","s256"],m,m))
+case 4:m=A.LL(null,null,l).f
+if(m==null)m=""
+q=new A.Sc(e+"?"+m)
 s=1
 break
 case 1:return A.q(q,r)}})
@@ -100020,7 +100021,7 @@ var $async$zM=A.u(function(a,b){if(a===1){o.push(b)
 s=p}for(;;)switch(s){case 0:n.S(new A.aAM(n))
 p=4
 s=7
-return A.m(A.Qj(n.x.gdg(),B.Sf,null),$async$zM)
+return A.m(A.Qj(n.x.gdg(),B.Sf,"https://ever360.github.io/Kapital_PT/"),$async$zM)
 case 7:p=2
 s=6
 break
