@@ -300,7 +300,9 @@ class _LoginPageState extends State<LoginPage> {
     try {
       await supabase.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: kIsWeb ? null : 'io.supabase.flutter://login-callback',
+        redirectTo: kIsWeb
+            ? 'https://ever360.github.io/Kapital_PT/'
+            : 'io.supabase.flutter://login-callback',
       );
     } catch (e) {
       if (!mounted) return;
