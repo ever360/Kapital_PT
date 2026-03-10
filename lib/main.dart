@@ -84,14 +84,17 @@ class KapitalApp extends StatelessWidget {
           // Actualizar el estilo del sistema en cada cambio de tema
           SystemChrome.setSystemUIOverlayStyle(
             SystemUiOverlayStyle(
-              statusBarColor: Colors.transparent, // Transparente: el fondo de la app cubre hasta la status bar
+              // Mismo color que el fondo del Scaffold para que se vea continuo
+              statusBarColor: isDark
+                  ? const Color(0xFF0D0D0D)
+                  : const Color(0xFFF5F5F5),
               statusBarIconBrightness: isDark
                   ? Brightness.light
                   : Brightness.dark,
               statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
               systemNavigationBarColor: isDark
                   ? const Color(0xFF0D0D0D)
-                  : Colors.white,
+                  : const Color(0xFFF5F5F5),
               systemNavigationBarIconBrightness: isDark
                   ? Brightness.light
                   : Brightness.dark,
@@ -121,9 +124,9 @@ class KapitalApp extends StatelessWidget {
                 elevation: 0,
                 surfaceTintColor: Colors.transparent,
                 systemOverlayStyle: const SystemUiOverlayStyle(
-                  statusBarColor: Colors.transparent,
+                  statusBarColor: Color(0xFFF5F5F5),
                   statusBarIconBrightness: Brightness.dark,
-                  systemNavigationBarColor: Colors.white,
+                  systemNavigationBarColor: Color(0xFFF5F5F5),
                   systemNavigationBarIconBrightness: Brightness.dark,
                 ),
               ),
@@ -186,7 +189,7 @@ class KapitalApp extends StatelessWidget {
                 elevation: 0,
                 surfaceTintColor: Colors.transparent,
                 systemOverlayStyle: const SystemUiOverlayStyle(
-                  statusBarColor: Colors.transparent,
+                  statusBarColor: Color(0xFF0D0D0D),
                   statusBarIconBrightness: Brightness.light,
                   systemNavigationBarColor: Color(0xFF0D0D0D),
                   systemNavigationBarIconBrightness: Brightness.light,
