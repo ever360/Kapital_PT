@@ -98232,7 +98232,7 @@ i=e.gbL()?B.pL:B.d2
 i=A.dU(A.aPc(f,j,k,A.aPe(g,g,g,g,g,g,g,g,g,g,g,g,B.qd,g,new A.bS(A.bA(16),B.n),new A.aM(i,1,B.x,-1),g,g,g,g)),g,1/0)
 f=A.a3("\xbfNo tienes cuenta? ",g,g,g,g,A.a6(g,g,c?B.U:B.m,g,g,g,g,g,g,g,g,g,g,g,g,g,g,!0,g,g,g,g,g,g,g,g),g,g)
 f=A.cK(A.b([f,A.hq(A.ix(g,A.a3("Reg\xedstrate",g,g,g,g,A.a6(g,g,c?B.H:B.G,g,g,g,g,g,g,g,g,g,g,g,B.F,g,g,!0,g,g,g,g,g,g,g,g),g,g),B.O,!1,g,g,g,g,g,g,g,g,g,g,g,g,g,g,new A.ay7(a0),g,g,g,g,g,g),B.e_,g,g,g,g)],r),B.C,B.co,B.E,0)
-return A.iP(s,b,A.ix(g,A.tj(A.cM(new A.dN(B.ov,new A.bi(B.l8,A.aIV(A.bM(A.b([B.bN,a,B.cP,d,B.D8,q,B.na,p,B.c6,o,B.n9,n,B.cu,m,B.cu,l,B.hp,i,B.n9,f,B.c6,A.a3("v1.5.0 - Premium SaaS Edition",g,g,g,g,A.a6(g,g,c?B.cB:B.bm,g,g,g,g,g,g,g,g,11,g,g,g,g,g,!0,g,g,g,g,g,g,g,g),g,g),B.c6],r),B.C,B.co,B.E),h.d),g),g),g,g),g,B.O,g,g,B.ae),B.O,!1,g,g,g,g,g,g,g,g,g,g,g,g,g,g,new A.ay8(a0),g,g,g,g,g,g),g)}}
+return A.iP(s,b,A.ix(g,A.tj(A.cM(new A.dN(B.ov,new A.bi(B.l8,A.aIV(A.bM(A.b([B.bN,a,B.cP,d,B.D8,q,B.na,p,B.c6,o,B.n9,n,B.cu,m,B.cu,l,B.hp,i,B.n9,f,B.c6,A.a3("v1.5.1 - Premium SaaS Edition",g,g,g,g,A.a6(g,g,c?B.cB:B.bm,g,g,g,g,g,g,g,g,11,g,g,g,g,g,!0,g,g,g,g,g,g,g,g),g,g),B.c6],r),B.C,B.co,B.E),h.d),g),g),g,g),g,B.O,g,g,B.ae),B.O,!1,g,g,g,g,g,g,g,g,g,g,g,g,g,g,new A.ay8(a0),g,g,g,g,g,g),g)}}
 A.axZ.prototype={
 $1(a){var s=a.b
 if(a.a===B.cX&&s!=null)this.a.la(s.r,!1)},
