@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:js' as js;
 
 class ThemeProvider extends ChangeNotifier {
   static const _storage = FlutterSecureStorage();
@@ -34,6 +37,17 @@ class ThemeProvider extends ChangeNotifier {
     if (mode == ThemeMode.light) saveVal = 'light';
     if (mode == ThemeMode.dark) saveVal = 'dark';
     await _storage.write(key: 'theme_mode', value: saveVal);
+    // Actualizar el color de la barra en PWA (solo web)
+    if (kIsWeb) {
+      final color = isDarkMode ? '#0D0D0D' : '#F5F5F5';
+      js.context.callMethod('eval', [
+        "(function(){"
+        "var m=document.getElementById('theme-color-meta');"
+        "if(m)m.setAttribute('content','$color');"
+        "document.documentElement.style.backgroundColor='$color';"
+        "})()"
+      ]);
+    }
   }
 
   Future<void> toggleTheme() async {
