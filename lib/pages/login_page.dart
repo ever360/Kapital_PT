@@ -41,22 +41,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _checkBiometrics() async {
-    if (kIsWeb) {
-      // La biometría falla silenciosamente en la Web y crashea la app (MissingPluginException)
-      return;
-    }
-
+    if (kIsWeb) return;
     try {
-      // Pequeño delay para dar tiempo al hardware de inicializarse
       await Future.delayed(const Duration(milliseconds: 500));
       final canCheck = await auth.canCheckBiometrics;
       final isDeviceSupported = await auth.isDeviceSupported();
       final availableBiometrics = await auth.getAvailableBiometrics();
-
-      debugPrint(
-        "Biometrics: canCheck=$canCheck, isSupported=$isDeviceSupported, types=$availableBiometrics",
-      );
-
       if (mounted) {
         setState(() {
           _canCheckBiometrics =
@@ -72,13 +62,10 @@ class _LoginPageState extends State<LoginPage> {
     _authStateSubscription = supabase.auth.onAuthStateChange.listen((data) {
       final AuthChangeEvent event = data.event;
       final Session? session = data.session;
-
       if (event == AuthChangeEvent.signedIn && session != null) {
         _checkProfileExistsAndRedirect(session.user, isManual: false);
       }
     });
-
-    // Validar si ya hay sesión activa al abrir
     Future.delayed(Duration.zero, () {
       final session = supabase.auth.currentSession;
       if (session != null) {
@@ -99,32 +86,22 @@ class _LoginPageState extends State<LoginPage> {
     User user, {
     bool isManual = false,
   }) async {
-    // Solo activamos el estado de carga visual si es un login manual
     if (mounted && isManual) setState(() => _isLoading = true);
-
     try {
-      // Pequeño delay de 1.5 segundos para dar tiempo a que RegisterPage guarde en la BD.
-      // Si fue login con Google, 1.5s no afecta mucho la UX.
       await Future.delayed(const Duration(milliseconds: 1500));
-
       final profile = await supabase
           .from('profiles')
           .select()
           .eq('id', user.id)
           .maybeSingle();
-
       if (!mounted) return;
 
       if (profile == null) {
-        // Verificamos de donde viene la autenticación
         final provider = user.appMetadata['provider'] ?? '';
-
         if (provider == 'google') {
-          // No tiene perfil: llevar al formulario de registro con email pre-llenado
           final String? googleEmail = user.email;
           final String? googleName = user.userMetadata?['full_name'] as String?
               ?? user.userMetadata?['name'] as String?;
-
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -136,8 +113,6 @@ class _LoginPageState extends State<LoginPage> {
             ),
           );
         } else {
-          // Es un registro por correo que quizá falló la DB, lo dejamos quieto
-          // o lo deslogueamos. Error 422 prevéncion
           final messenger = ScaffoldMessenger.of(context);
           await supabase.auth.signOut();
           messenger.showSnackBar(
@@ -149,7 +124,6 @@ class _LoginPageState extends State<LoginPage> {
           setState(() => _isLoading = false);
         }
       } else {
-        // Ya tiene perfil, evaluamos si está aprobado
         final bool isApproved = profile['isApproved'] ?? false;
         final bool isActive = profile['isActive'] ?? false;
         final String rol = profile['rol'] ?? 'cobrador';
@@ -158,7 +132,6 @@ class _LoginPageState extends State<LoginPage> {
           final String nombre = profile['nombre'] ?? rol;
           final String? empresaId = profile['empresa_id'];
 
-          // BLOQUEO POR EMPRESA: verificar si la empresa está activa
           if (rol != 'master' && empresaId != null) {
             try {
               final empresa = await supabase
@@ -204,33 +177,24 @@ class _LoginPageState extends State<LoginPage> {
           } else if (rol == 'admin' ||
               rol == 'super_admin' ||
               rol == 'admin_pendiente') {
-            // Si es Admin pero no tiene empresa_id, irá a crear su empresa
-            if (empresaId == null) {
-              homePage = const SuperAdminHomePage();
-            } else {
-              homePage = const SuperAdminHomePage();
-            }
+            homePage = const SuperAdminHomePage();
           } else if (rol == 'socio') {
             homePage = const SocioHomePage();
           } else {
             homePage = const CobradorHomePage();
           }
-
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => homePage),
           );
         } else {
-          // Bloqueado o Inactivo
           String mensaje = !isApproved
               ? "Tu cuenta está pendiente de aprobación."
               : "Tu cuenta está inactiva.";
-
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(mensaje), backgroundColor: Colors.redAccent),
           );
-
           await supabase.auth.signOut();
           if (mounted) setState(() => _isLoading = false);
         }
@@ -250,13 +214,7 @@ class _LoginPageState extends State<LoginPage> {
       try {
         final email = emailController.text.trim();
         final password = passwordController.text.trim();
-
-        await supabase.auth.signInWithPassword(
-          email: email,
-          password: password,
-        );
-
-        // Guardar credenciales para biometría futura
+        await supabase.auth.signInWithPassword(email: email, password: password);
         await storage.write(key: 'user_email', value: email);
         await storage.write(key: 'user_password', value: password);
       } catch (e) {
@@ -283,7 +241,6 @@ class _LoginPageState extends State<LoginPage> {
       );
       return;
     }
-
     setState(() => _isLoading = true);
     try {
       await supabase.auth.resetPasswordForEmail(
@@ -311,25 +268,20 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final String? savedEmail = await storage.read(key: 'user_email');
       final String? savedPassword = await storage.read(key: 'user_password');
-
       if (savedEmail == null || savedPassword == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              "Inicia sesión manualmente una vez para activar la huella.",
-            ),
+            content: Text("Inicia sesión manualmente una vez para activar la huella."),
           ),
         );
         return;
       }
-
       final bool didAuthenticate = await auth.authenticate(
         localizedReason: 'Inicia sesión en Kapital con tu huella',
         persistAcrossBackgrounding: true,
         biometricOnly: true,
       );
-
       if (didAuthenticate) {
         setState(() => _isLoading = true);
         await supabase.auth.signInWithPassword(
@@ -339,9 +291,7 @@ class _LoginPageState extends State<LoginPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error biométrico: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error biométrico: $e")));
     }
   }
 
@@ -365,7 +315,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildTextField({
-    required BuildContext context, // Agregamos context
+    required BuildContext context,
     required TextEditingController controller,
     required String hint,
     required bool obscure,
@@ -412,7 +362,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildSocialButton(
-    BuildContext context, // Agregamos context
+    BuildContext context,
     String label,
     String iconPath,
     VoidCallback onPressed,
@@ -453,287 +403,292 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: isDark
           ? const Color(0xFF0D0D0D)
           : const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: () => themeProvider.toggleTheme(),
-            icon: Icon(
-              isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-              color: isDark ? AppColors.verdeSupabase : AppColors.doradoKapital,
-            ),
-            tooltip: isDark ? 'Modo Claro' : 'Modo Oscuro',
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
+      extendBodyBehindAppBar: true,
+      extendBody: true,
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
-        child: SingleChildScrollView(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 450,
-              ), // Formulario centrado
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 10),
-
-                      // Logo centrado y brillante
-                      Hero(
-                        tag: 'logo',
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.amber.withValues(
-                                  alpha: isDark ? 0.15 : 0.4,
-                                ),
-                                blurRadius: 30,
-                                spreadRadius: 10,
-                              ),
-                            ],
-                          ),
-                          child: Image.asset(
-                            'assets/logoKapital.png',
-                            height: size.height * 0.14,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 12),
-                      Text(
-                        "Iniciar Sesión",
-                        style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black87,
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        "Bienvenido de nuevo a Kapital",
-                        style: TextStyle(
-                          color: isDark ? Colors.white54 : Colors.black54,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 35),
-
-                      // Formulario de Email
-                      _buildTextField(
-                        context: context,
-                        controller: emailController,
-                        hint: 'Correo electrónico',
-                        obscure: false,
-                        icon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor ingresa tu correo';
-                          }
-                          if (!value.contains('@')) {
-                            return 'Correo inválido';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Formulario de Password
-                      _buildTextField(
-                        context: context,
-                        controller: passwordController,
-                        hint: 'Contraseña',
-                        obscure: _obscurePassword,
-                        icon: Icons.lock_outline,
-                        keyboardType: TextInputType.text,
-                        textInputAction: TextInputAction.done,
-                        suffixIcon: Row(
-                          mainAxisSize: MainAxisSize.min,
+        child: Stack(
+          children: [
+            // Contenido principal
+            SingleChildScrollView(
+              child: SafeArea(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 450),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            if (_canCheckBiometrics)
-                              IconButton(
-                                icon: Icon(
-                                  Icons.fingerprint,
-                                  color: AppColors.primary(isDark),
+                            const SizedBox(height: 10),
+
+                            // Logo
+                            Hero(
+                              tag: 'logo',
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.amber.withValues(
+                                        alpha: isDark ? 0.15 : 0.4,
+                                      ),
+                                      blurRadius: 30,
+                                      spreadRadius: 10,
+                                    ),
+                                  ],
                                 ),
-                                onPressed: authenticateWithBiometrics,
-                              ),
-                            IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
-                                color: isDark ? Colors.white54 : Colors.black54,
-                              ),
-                              onPressed: () => setState(
-                                () => _obscurePassword = !_obscurePassword,
-                              ),
-                            ),
-                          ],
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Ingresa tu contraseña';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 30),
-
-                      // Botón Login Principal
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary(
-                              isDark,
-                            ), // Color primario dinámico
-                            foregroundColor:
-                                Colors.black, // Texto oscuro sobre dorado
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          onPressed: _isLoading ? null : loginWithEmail,
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.black,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text(
-                                  "Entrar",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1,
-                                  ),
+                                child: Image.asset(
+                                  'assets/logoKapital.png',
+                                  height: size.height * 0.14,
                                 ),
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-
-                      // Enlace de Recuperación
-                      TextButton(
-                        onPressed: _isLoading ? null : forgotPassword,
-                        child: Text(
-                          "¿Olvidaste tu contraseña?",
-                          style: TextStyle(
-                            color: isDark ? Colors.white54 : Colors.black54,
-                            fontSize: 13,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 15),
-
-                      // Separador
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Divider(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.2)
-                                  : Colors.black.withValues(alpha: 0.2),
+                              ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: Text(
-                              "O continúa con",
+
+                            const SizedBox(height: 12),
+                            Text(
+                              "Iniciar Sesión",
+                              style: TextStyle(
+                                color: isDark ? Colors.white : Colors.black87,
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              "Bienvenido de nuevo a Kapital",
                               style: TextStyle(
                                 color: isDark ? Colors.white54 : Colors.black54,
-                                fontSize: 12,
+                                fontSize: 14,
                               ),
                             ),
-                          ),
-                          Expanded(
-                            child: Divider(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.2)
-                                  : Colors.black.withValues(alpha: 0.2),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 25),
+                            const SizedBox(height: 35),
 
-                      // Google button
-                      _buildSocialButton(
-                        context,
-                        'Google',
-                        'assets/icons/google_icon.png',
-                        _isLoading ? () {} : signInWithGoogle,
-                      ),
-                      const SizedBox(height: 30),
-
-                      // Register link
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "¿No tienes cuenta? ",
-                            style: TextStyle(
-                              color: isDark ? Colors.white70 : Colors.black87,
-                            ),
-                          ),
-                          MouseRegion(
-                            cursor: SystemMouseCursors.click,
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const RegisterPage(),
-                                  ),
-                                );
+                            // Email
+                            _buildTextField(
+                              context: context,
+                              controller: emailController,
+                              hint: 'Correo electrónico',
+                              obscure: false,
+                              icon: Icons.email_outlined,
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Por favor ingresa tu correo';
+                                }
+                                if (!value.contains('@')) return 'Correo inválido';
+                                return null;
                               },
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Contraseña
+                            _buildTextField(
+                              context: context,
+                              controller: passwordController,
+                              hint: 'Contraseña',
+                              obscure: _obscurePassword,
+                              icon: Icons.lock_outline,
+                              keyboardType: TextInputType.text,
+                              textInputAction: TextInputAction.done,
+                              suffixIcon: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (_canCheckBiometrics)
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.fingerprint,
+                                        color: AppColors.primary(isDark),
+                                      ),
+                                      onPressed: authenticateWithBiometrics,
+                                    ),
+                                  IconButton(
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility_outlined
+                                          : Icons.visibility_off_outlined,
+                                      color: isDark ? Colors.white54 : Colors.black54,
+                                    ),
+                                    onPressed: () => setState(
+                                      () => _obscurePassword = !_obscurePassword,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Ingresa tu contraseña';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 30),
+
+                            // Botón Entrar
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary(isDark),
+                                  foregroundColor: Colors.black,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                onPressed: _isLoading ? null : loginWithEmail,
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.black,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text(
+                                        "Entrar",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 1,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            const SizedBox(height: 15),
+
+                            // Olvidé contraseña
+                            TextButton(
+                              onPressed: _isLoading ? null : forgotPassword,
                               child: Text(
-                                "Regístrate",
+                                "¿Olvidaste tu contraseña?",
                                 style: TextStyle(
-                                  color: AppColors.primary(isDark),
-                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? Colors.white54 : Colors.black54,
+                                  fontSize: 13,
+                                  decoration: TextDecoration.underline,
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
+                            const SizedBox(height: 15),
 
-                      // Versión Abajo
-                      Text(
-                        'v1.5.3 - Premium SaaS Edition',
-                        style: TextStyle(
-                          color: isDark ? Colors.white24 : Colors.black38,
-                          fontSize: 11,
+                            // Separador
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Divider(
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.2)
+                                        : Colors.black.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                  child: Text(
+                                    "O continúa con",
+                                    style: TextStyle(
+                                      color: isDark ? Colors.white54 : Colors.black54,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Divider(
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.2)
+                                        : Colors.black.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 25),
+
+                            // Google
+                            _buildSocialButton(
+                              context,
+                              'Google',
+                              'assets/icons/google_icon.png',
+                              _isLoading ? () {} : signInWithGoogle,
+                            ),
+                            const SizedBox(height: 30),
+
+                            // Registro
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "¿No tienes cuenta? ",
+                                  style: TextStyle(
+                                    color: isDark ? Colors.white70 : Colors.black87,
+                                  ),
+                                ),
+                                MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const RegisterPage(),
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      "Regístrate",
+                                      style: TextStyle(
+                                        color: AppColors.primary(isDark),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Versión
+                            Text(
+                              'v1.5.3 - Premium SaaS Edition',
+                              style: TextStyle(
+                                color: isDark ? Colors.white24 : Colors.black38,
+                                fontSize: 11,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 20),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
+
+            // Botón de tema flotante arriba a la derecha (sin AppBar)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: IconButton(
+                    onPressed: () => themeProvider.toggleTheme(),
+                    icon: Icon(
+                      isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                      color: isDark ? AppColors.verdeSupabase : AppColors.doradoKapital,
+                    ),
+                    tooltip: isDark ? 'Modo Claro' : 'Modo Oscuro',
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
