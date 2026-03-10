@@ -6,7 +6,6 @@ import 'package:kapital_app/pages/super_admin_home.dart';
 import 'package:kapital_app/pages/master_page.dart';
 import 'package:kapital_app/pages/socio_home.dart';
 import 'package:kapital_app/pages/cobrador_home.dart';
-import 'package:kapital_app/pages/completar_perfil_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -121,10 +120,20 @@ class _LoginPageState extends State<LoginPage> {
         final provider = user.appMetadata['provider'] ?? '';
 
         if (provider == 'google') {
-          // No tiene perfil, completarlo (Viene de Google)
+          // No tiene perfil: llevar al formulario de registro con email pre-llenado
+          final String? googleEmail = user.email;
+          final String? googleName = user.userMetadata?['full_name'] as String?
+              ?? user.userMetadata?['name'] as String?;
+
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => CompletarPerfilPage(user: user)),
+            MaterialPageRoute(
+              builder: (_) => RegisterPage(
+                emailFromGoogle: googleEmail,
+                nameFromGoogle: googleName,
+                googleUser: user,
+              ),
+            ),
           );
         } else {
           // Es un registro por correo que quizá falló la DB, lo dejamos quieto

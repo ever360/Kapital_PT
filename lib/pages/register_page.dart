@@ -4,7 +4,17 @@ import 'package:kapital_app/theme/theme_provider.dart';
 import 'package:provider/provider.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+  /// Si viene de Google, estos campos vienen pre-llenados
+  final String? emailFromGoogle;
+  final String? nameFromGoogle;
+  final User? googleUser;
+
+  const RegisterPage({
+    super.key,
+    this.emailFromGoogle,
+    this.nameFromGoogle,
+    this.googleUser,
+  });
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -16,49 +26,95 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  String? _imageUrl; // Para la foto opcional
+  String? _imageUrl;
   bool _obscurePassword = true;
   bool _isLoading = false;
 
+  bool get _isGoogleFlow => widget.googleUser != null;
+
   final supabase = Supabase.instance.client;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-llenar datos si vienen de Google
+    if (widget.emailFromGoogle != null) {
+      emailController.text = widget.emailFromGoogle!;
+    }
+    if (widget.nameFromGoogle != null) {
+      nameController.text = widget.nameFromGoogle!;
+    }
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   Future<void> signUp() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
-        final authResponse = await supabase.auth.signUp(
-          email: emailController.text.trim(),
-          password: passwordController.text.trim(),
-        );
-
-        if (!mounted) return;
-
-        if (authResponse.user != null) {
-          // Crear el perfil del usuario aprobado y activo
-          await supabase.from('profiles').insert({
-            'id': authResponse.user!.id,
+        if (_isGoogleFlow) {
+          // Usuario ya autenticado con Google: solo insertar perfil
+          await supabase.from('profiles').upsert({
+            'id': widget.googleUser!.id,
             'nombre': nameController.text.trim(),
             'telefono': phoneController.text.trim(),
             'foto': _imageUrl,
-            'rol': 'super_admin',
-            'isApproved': true,
-            'isActive': true,
-            'empresa_id': null, // El Master asignará empresa después
+            'rol': 'admin_pendiente',
+            'isApproved': false,
+            'isActive': false,
+            'empresa_id': null,
           });
+        } else {
+          // Registro normal con email/password
+          final authResponse = await supabase.auth.signUp(
+            email: emailController.text.trim(),
+            password: passwordController.text.trim(),
+          );
 
           if (!mounted) return;
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                "Registro exitoso. ¡Bienvenido a Kapital! El Master te asignará una empresa pronto.",
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
-
-          Navigator.pop(context); // Volver al login
+          if (authResponse.user != null) {
+            await supabase.from('profiles').insert({
+              'id': authResponse.user!.id,
+              'nombre': nameController.text.trim(),
+              'telefono': phoneController.text.trim(),
+              'foto': _imageUrl,
+              'rol': 'admin_pendiente',
+              'isApproved': false,  // El Master debe aprobar
+              'isActive': false,
+              'empresa_id': null,
+            });
+          } else {
+            if (mounted) setState(() => _isLoading = false);
+            return;
+          }
         }
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "✅ Solicitud enviada. El Master revisará tu registro y te dará acceso pronto.",
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 5),
+          ),
+        );
+
+        // Si fue Google, también cerramos sesión para que espere aprobación
+        if (_isGoogleFlow) {
+          await supabase.auth.signOut();
+        }
+
+        Navigator.pop(context); // Volver al login
       } catch (e) {
         if (!mounted) return;
         showDialog(
@@ -81,7 +137,7 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _buildTextField({
-    required BuildContext context, // Agregamos context
+    required BuildContext context,
     required TextEditingController controller,
     required String hint,
     required bool obscure,
@@ -89,12 +145,14 @@ class _RegisterPageState extends State<RegisterPage> {
     required TextInputType keyboardType,
     required TextInputAction textInputAction,
     Widget? suffixIcon,
+    bool readOnly = false,
     required String? Function(String?) validator,
   }) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     return TextFormField(
       controller: controller,
       obscureText: obscure,
+      readOnly: readOnly,
       style: TextStyle(
         color: themeProvider.isDarkMode ? Colors.white : Colors.black87,
       ),
@@ -109,11 +167,19 @@ class _RegisterPageState extends State<RegisterPage> {
           icon,
           color: themeProvider.isDarkMode ? Colors.white70 : Colors.black54,
         ),
-        suffixIcon: suffixIcon,
+        suffixIcon: suffixIcon ?? (readOnly
+            ? Icon(Icons.lock_outline_rounded,
+                size: 16,
+                color: themeProvider.isDarkMode ? Colors.white30 : Colors.black26)
+            : null),
         filled: true,
-        fillColor: themeProvider.isDarkMode
-            ? Colors.white.withValues(alpha: 0.08)
-            : Colors.black.withValues(alpha: 0.05),
+        fillColor: readOnly
+            ? (themeProvider.isDarkMode
+                ? Colors.white.withValues(alpha: 0.04)
+                : Colors.black.withValues(alpha: 0.03))
+            : (themeProvider.isDarkMode
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.05)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -173,7 +239,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 20),
                         Text(
-                          "Crear Cuenta",
+                          _isGoogleFlow ? "Completa tu registro" : "Crear Cuenta",
                           style: TextStyle(
                             color: isDark ? Colors.white : Colors.black87,
                             fontSize: 26,
@@ -183,18 +249,48 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          "Únete a Kapital y transforma tus finanzas",
+                          _isGoogleFlow
+                              ? "Solo falta tu teléfono para continuar"
+                              : "Únete a Kapital y transforma tus finanzas",
                           style: TextStyle(
                             color: isDark ? Colors.white54 : Colors.black54,
                             fontSize: 13,
                           ),
                         ),
+
+                        // Badge de Google si aplica
+                        if (_isGoogleFlow) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.07)
+                                  : Colors.black.withValues(alpha: 0.04),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Image.asset('assets/icons/google_icon.png', height: 16),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Conectado con Google',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: isDark ? Colors.white60 : Colors.black54,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+
                         const SizedBox(height: 35),
 
                         // Avatar / Foto opcional
                         GestureDetector(
                           onTap: () {
-                            // TODO: Implementar selección de imagen (image_picker)
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
@@ -252,6 +348,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 25),
 
+                        // Nombre
                         _buildTextField(
                           context: context,
                           controller: nameController,
@@ -269,11 +366,13 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 15),
 
+                        // Email (solo lectura si viene de Google)
                         _buildTextField(
                           context: context,
                           controller: emailController,
                           hint: 'Correo electrónico',
                           obscure: false,
+                          readOnly: _isGoogleFlow,
                           icon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
@@ -287,6 +386,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 15),
 
+                        // Teléfono
                         _buildTextField(
                           context: context,
                           controller: phoneController,
@@ -294,7 +394,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           obscure: false,
                           icon: Icons.phone_outlined,
                           keyboardType: TextInputType.phone,
-                          textInputAction: TextInputAction.next,
+                          textInputAction: _isGoogleFlow
+                              ? TextInputAction.done
+                              : TextInputAction.next,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Ingresa tu teléfono';
@@ -318,46 +420,48 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 15),
 
-                        _buildTextField(
-                          context: context,
-                          controller: passwordController,
-                          hint: 'Contraseña',
-                          obscure: _obscurePassword,
-                          icon: Icons.lock_outline,
-                          keyboardType: TextInputType.text,
-                          textInputAction: TextInputAction.done,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                              color: isDark ? Colors.white54 : Colors.black54,
+                        // Contraseña (oculto si es flujo Google)
+                        if (!_isGoogleFlow) ...[
+                          _buildTextField(
+                            context: context,
+                            controller: passwordController,
+                            hint: 'Contraseña',
+                            obscure: _obscurePassword,
+                            icon: Icons.lock_outline,
+                            keyboardType: TextInputType.text,
+                            textInputAction: TextInputAction.done,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                color: isDark ? Colors.white54 : Colors.black54,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Ingresa una contraseña';
+                              }
+                              if (value.length < 6) {
+                                return 'Debe tener al menos 6 caracteres';
+                              }
+                              return null;
                             },
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Ingresa una contraseña';
-                            }
-                            if (value.length < 6) {
-                              return 'Debe tener al menos 6 caracteres';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 35),
+                          const SizedBox(height: 35),
+                        ] else
+                          const SizedBox(height: 20),
 
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary(
-                                isDark,
-                              ), // Botón dinámico
+                              backgroundColor: AppColors.primary(isDark),
                               foregroundColor: Colors.black,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               elevation: 2,
@@ -375,9 +479,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Text(
-                                    "Registrarse",
-                                    style: TextStyle(
+                                : Text(
+                                    _isGoogleFlow ? "Completar Registro" : "Registrarse",
+                                    style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 1,
@@ -413,9 +517,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 25),
 
-                        // Versión Abajo
                         Text(
-                          'v1.4.5 - SaaS Edition',
+                          'v1.5.0 - SaaS Edition',
                           style: TextStyle(
                             color: isDark ? Colors.white24 : Colors.black38,
                             fontSize: 11,
