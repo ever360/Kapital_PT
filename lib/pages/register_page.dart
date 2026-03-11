@@ -109,12 +109,15 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
         );
 
-        // Si fue Google, también cerramos sesión para que espere aprobación
+        // Si fue Google, cerramos sesión para que espere aprobación
         if (_isGoogleFlow) {
+          final nav = Navigator.of(context);
           await supabase.auth.signOut();
+          if (!mounted) return;
+          nav.pushNamedAndRemoveUntil('/login', (route) => false);
+        } else {
+          Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
         }
-
-        Navigator.pop(context); // Volver al login
       } catch (e) {
         if (!mounted) return;
         showDialog(
