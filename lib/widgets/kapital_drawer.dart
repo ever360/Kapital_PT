@@ -129,7 +129,7 @@ class KapitalDrawer extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Text(
-                'v1.1.0 - Foundation',
+                'v1.2.0 - Foundation',
                 style: TextStyle(
                   color: isDark ? Colors.white24 : Colors.black26,
                   fontSize: 10,
