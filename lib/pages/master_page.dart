@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kapital_app/pages/login_page.dart';
 import 'package:kapital_app/theme/theme_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:kapital_app/widgets/kapital_drawer.dart';
 
 // Se ignoran advertencias de miembros obsoletos usados en este archivo, especialmente
 // RadioListTile.groupValue/onChanged y Switch.activeColor.
@@ -734,6 +735,7 @@ class _MasterHomePageState extends State<MasterHomePage>
       backgroundColor: isDark
           ? const Color(0xFF0D0D0D)
           : const Color(0xFFF5F5F5),
+      drawer: const KapitalDrawer(),
       appBar: AppBar(
         title: Row(
           children: [

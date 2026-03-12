@@ -198,11 +198,21 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
       backgroundColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5),
       drawer: const KapitalDrawer(),
       appBar: AppBar(
-        title: Text(_miEmpresa?['nombre'] ?? 'Dashboard', style: const TextStyle(color: Colors.white)),
-        backgroundColor: const Color(0xFF1A1A1A),
+        title: Text(
+          _miEmpresa?['nombre'] ?? 'DASHBOARD',
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
+        ),
+        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        elevation: 0,
         actions: [
-          IconButton(icon: const Icon(Icons.refresh, color: Colors.white), onPressed: _loadDashboardData),
-          IconButton(icon: const Icon(Icons.logout, color: Colors.white), onPressed: _signOut),
+          IconButton(
+            icon: Icon(Icons.refresh, color: isDark ? Colors.white70 : Colors.black54),
+            onPressed: _loadDashboardData,
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(

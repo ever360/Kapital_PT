@@ -426,16 +426,22 @@ class _SocioHomePageState extends State<SocioHomePage> {
     return Scaffold(
       drawer: const KapitalDrawer(),
       appBar: AppBar(
-        title: const Text(
-          'Mi Oficina - SOCIO',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          'MI OFICINA - SOCIO',
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
         ),
-        backgroundColor: Colors.transparent,
+        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         elevation: 0,
         centerTitle: true,
-        foregroundColor: isDark ? Colors.white : Colors.black87,
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
+          IconButton(
+            icon: Icon(Icons.refresh, color: isDark ? Colors.white70 : Colors.black54),
+            onPressed: _loadData,
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(

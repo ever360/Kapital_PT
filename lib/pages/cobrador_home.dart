@@ -121,19 +121,30 @@ class _CobradorHomePageState extends State<CobradorHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
     final primary = AppColors.primary(isDark);
 
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5),
       drawer: const KapitalDrawer(),
       appBar: AppBar(
-        title: const Text('Mi Asignación', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
+        title: Text(
+          'MI ASIGNACIÓN',
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
+        ),
+        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         elevation: 0,
         centerTitle: true,
-        foregroundColor: isDark ? Colors.white : Colors.black87,
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadDashboard),
+          IconButton(
+            icon: Icon(Icons.refresh, color: isDark ? Colors.white70 : Colors.black54),
+            onPressed: _loadDashboard,
+          ),
         ],
       ),
       body: _isLoading 
