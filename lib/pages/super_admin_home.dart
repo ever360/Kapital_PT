@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kapital_app/theme/theme_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:kapital_app/widgets/kapital_drawer.dart';
 
 class SuperAdminHomePage extends StatefulWidget {
   const SuperAdminHomePage({super.key});
@@ -135,26 +136,66 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
     if (_isLoading) return const Scaffold(backgroundColor: Color(0xFF121212), body: Center(child: CircularProgressIndicator()));
     if (_miEmpresaId == null) {
       return Scaffold(
-        backgroundColor: const Color(0xFF121212),
+        backgroundColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5),
+        appBar: AppBar(
+          title: const Text("Bienvenido"),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+        drawer: const KapitalDrawer(),
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.hourglass_empty, size: 80, color: Colors.amber),
-              const SizedBox(height: 20),
-              const Text("Esperando aprobación del Master", style: TextStyle(color: Colors.white, fontSize: 18)),
-              const SizedBox(height: 10),
-              const Text("Tu cuenta está registrada pero no tiene empresa asignada.", style: TextStyle(color: Colors.white54)),
-              const SizedBox(height: 20),
-              ElevatedButton(onPressed: _signOut, child: const Text("Cerrar Sesión")),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.business_center_outlined, size: 80, color: AppColors.primary(isDark)),
+                const SizedBox(height: 24),
+                Text(
+                  "¡Cuenta Aprobada!",
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "Tu cuenta ha sido aprobada por el Master. Ahora debes configurar tu empresa para empezar a gestionar tus rutas.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isDark ? Colors.white54 : Colors.black54,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  maxHeight: 55,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.add_business_outlined, color: Colors.black),
+                    label: const Text(
+                      "Configurar mi Empresa",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () => Navigator.pushNamed(context, '/crear_empresa'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: _signOut,
+                  child: const Text("Cerrar Sesión", style: TextStyle(color: Colors.redAccent)),
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5),
+      drawer: const KapitalDrawer(),
       appBar: AppBar(
         title: Text(_miEmpresa?['nombre'] ?? 'Dashboard', style: const TextStyle(color: Colors.white)),
         backgroundColor: const Color(0xFF1A1A1A),

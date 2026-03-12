@@ -12,6 +12,7 @@ import 'services/push_notification_service.dart';
 import 'package:kapital_app/theme/theme_provider.dart'; // Controlador de Temas
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
+import 'pages/crear_empresa_page.dart';
 
 // Futuro global para inicialización
 Future<void>? _initFuture;
@@ -258,6 +259,7 @@ class KapitalApp extends StatelessWidget {
               '/master_home': (context) => const MasterHomePage(),
               '/socio_home': (context) => const SocioHomePage(),
               '/cobrador_home': (context) => const CobradorHomePage(),
+              '/crear_empresa': (context) => const CrearEmpresaPage(),
             },
           );
         },

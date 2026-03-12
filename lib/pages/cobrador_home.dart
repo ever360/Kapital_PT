@@ -1,6 +1,8 @@
+```dart
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kapital_app/theme/theme_provider.dart';
+import 'package:kapital_app/widgets/kapital_drawer.dart';
 import 'cobrador_clientes_page.dart'; // Crearemos esta pantalla luego
 
 class CobradorHomePage extends StatefulWidget {
@@ -124,6 +126,7 @@ class _CobradorHomePageState extends State<CobradorHomePage> {
     final primary = AppColors.primary(isDark);
 
     return Scaffold(
+      drawer: const KapitalDrawer(),
       appBar: AppBar(
         title: const Text('Mi Asignación', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
@@ -132,7 +135,6 @@ class _CobradorHomePageState extends State<CobradorHomePage> {
         foregroundColor: isDark ? Colors.white : Colors.black87,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadDashboard),
-          IconButton(icon: const Icon(Icons.logout), onPressed: _signOut, tooltip: "Cerrar sesión"),
         ],
       ),
       body: _isLoading 

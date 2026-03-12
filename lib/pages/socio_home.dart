@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kapital_app/theme/theme_provider.dart';
 import 'package:kapital_app/pages/socio_clientes_page.dart';
+import 'package:kapital_app/widgets/kapital_drawer.dart';
 
 class SocioHomePage extends StatefulWidget {
   const SocioHomePage({super.key});
@@ -423,6 +424,7 @@ class _SocioHomePageState extends State<SocioHomePage> {
     final isDark = themeProvider.isDarkMode;
 
     return Scaffold(
+      drawer: const KapitalDrawer(),
       appBar: AppBar(
         title: const Text(
           'Mi Oficina - SOCIO',
@@ -434,11 +436,6 @@ class _SocioHomePageState extends State<SocioHomePage> {
         foregroundColor: isDark ? Colors.white : Colors.black87,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _signOut,
-            tooltip: "Cerrar sesión",
-          ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
