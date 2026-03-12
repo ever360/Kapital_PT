@@ -413,11 +413,6 @@ class _SocioHomePageState extends State<SocioHomePage> {
     );
   }
 
-  Future<void> _signOut() async {
-    await supabase.auth.signOut();
-    if (!mounted) return;
-    Navigator.pushReplacementNamed(context, '/login');
-  }
 
   @override
   Widget build(BuildContext context) {

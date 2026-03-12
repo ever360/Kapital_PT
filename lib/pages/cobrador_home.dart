@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
 import 'package:kapital_app/theme/theme_provider.dart';
 import 'package:kapital_app/widgets/kapital_drawer.dart';
 import 'cobrador_clientes_page.dart'; // Crearemos esta pantalla luego
@@ -107,11 +108,6 @@ class _CobradorHomePageState extends State<CobradorHomePage> {
     }
   }
 
-  Future<void> _signOut() async {
-    await supabase.auth.signOut();
-    if (!mounted) return;
-    Navigator.pushReplacementNamed(context, '/login');
-  }
 
   // Utilidad para formatear divisas simple
   String _formatDinero(double valor) {

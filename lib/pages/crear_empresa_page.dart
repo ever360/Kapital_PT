@@ -205,7 +205,7 @@ class _CrearEmpresaPageState extends State<CrearEmpresaPage> {
             hintStyle: TextStyle(color: isDark ? Colors.white24 : Colors.black26),
             prefixIcon: Icon(icon, color: AppColors.primary(isDark), size: 20),
             filled: true,
-            fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+            fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,

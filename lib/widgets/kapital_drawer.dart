@@ -64,8 +64,6 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
-    final user = Supabase.instance.client.auth.currentUser;
-    final email = user?.email ?? 'usuario@kapital.com';
     final primaryColor = isDark ? Colors.amber : const Color(0xFFD4AF37);
 
     return Drawer(
@@ -204,7 +202,7 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
                       ),
                     ),
                     value: isDark,
-                    activeColor: Colors.amber,
+                    activeThumbColor: Colors.amber,
                     secondary: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
