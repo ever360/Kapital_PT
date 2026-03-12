@@ -133,7 +133,8 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    if (_isLoading) return const Scaffold(backgroundColor: Color(0xFF121212), body: Center(child: CircularProgressIndicator()));
+    final isDark = themeProvider.isDarkMode;
+    if (_isLoading) return Scaffold(backgroundColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5), body: Center(child: CircularProgressIndicator(color: AppColors.primary(isDark))));
     if (_miEmpresaId == null) {
       return Scaffold(
         backgroundColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5),
@@ -171,7 +172,7 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                 const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
-                  maxHeight: 55,
+                  height: 55,
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.add_business_outlined, color: Colors.black),
                     label: const Text(

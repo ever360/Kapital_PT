@@ -47,7 +47,7 @@ class KapitalDrawer extends StatelessWidget {
               ),
             ),
             currentAccountPicture: CircleAvatar(
-              backgroundColor: isDark ? Colors.amber.withOpacity(0.2) : Colors.amber.withOpacity(0.1),
+              backgroundColor: isDark ? Colors.amber.withValues(alpha: 0.2) : Colors.amber.withValues(alpha: 0.1),
               child: const Icon(Icons.person_outline, color: Colors.amber, size: 40),
             ),
           ),
