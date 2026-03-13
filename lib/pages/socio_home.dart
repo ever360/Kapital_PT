@@ -88,7 +88,7 @@ class _SocioHomePageState extends State<SocioHomePage> {
       return;
     }
 
-    final int rutasMaximas = _miEmpresa!['rutas_maximas'] ?? 0;
+    final int rutasMaximas = _miEmpresa!['total_rutas_contratadas'] ?? 0;
 
     // Validar el límite GLOBAL de la empresa, no solo las del socio
     if (_rutasHermanasTotales >= rutasMaximas) {
@@ -525,7 +525,7 @@ class _SocioHomePageState extends State<SocioHomePage> {
                                   ),
                                 ),
                                 Text(
-                                  "$_rutasHermanasTotales / ${_miEmpresa!['rutas_maximas'] ?? 0}",
+                                  "$_rutasHermanasTotales / ${_miEmpresa!['total_rutas_contratadas'] ?? 0}",
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,

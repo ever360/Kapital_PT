@@ -13,6 +13,7 @@ import 'package:kapital_app/theme/theme_provider.dart'; // Controlador de Temas
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'pages/crear_empresa_page.dart';
+import 'pages/gestion_equipo_page.dart';
 
 // Futuro global para inicialización
 Future<void>? _initFuture;
@@ -80,15 +81,13 @@ class KapitalApp extends StatelessWidget {
         listenable: themeProvider,
         builder: (context, _) {
           final bool isDark = themeProvider.isDarkMode;
-          final Color primaryColor = AppColors.primary(isDark);
 
           // Actualizar el estilo del sistema en cada cambio de tema
           SystemChrome.setSystemUIOverlayStyle(
             SystemUiOverlayStyle(
               // Mismo color que el fondo del Scaffold para que se vea continuo
-              statusBarColor: isDark
-                  ? const Color(0xFF0D0D0D)
-                  : const Color(0xFFF5F5F5),
+              // Barra de estado transparente para Edge-to-Edge real
+              statusBarColor: Colors.transparent,
               statusBarIconBrightness: isDark
                   ? Brightness.light
                   : Brightness.dark,
@@ -125,7 +124,7 @@ class KapitalApp extends StatelessWidget {
                 elevation: 0,
                 surfaceTintColor: Colors.transparent,
                 systemOverlayStyle: const SystemUiOverlayStyle(
-                  statusBarColor: Color(0xFFF5F5F5),
+                  statusBarColor: Colors.transparent,
                   statusBarIconBrightness: Brightness.dark,
                   systemNavigationBarColor: Color(0xFFF5F5F5),
                   systemNavigationBarIconBrightness: Brightness.dark,
@@ -190,7 +189,7 @@ class KapitalApp extends StatelessWidget {
                 elevation: 0,
                 surfaceTintColor: Colors.transparent,
                 systemOverlayStyle: const SystemUiOverlayStyle(
-                  statusBarColor: Color(0xFF0D0D0D),
+                  statusBarColor: Colors.transparent,
                   statusBarIconBrightness: Brightness.light,
                   systemNavigationBarColor: Color(0xFF0D0D0D),
                   systemNavigationBarIconBrightness: Brightness.light,
@@ -260,6 +259,7 @@ class KapitalApp extends StatelessWidget {
               '/socio_home': (context) => const SocioHomePage(),
               '/cobrador_home': (context) => const CobradorHomePage(),
               '/crear_empresa': (context) => const CrearEmpresaPage(),
+              '/gestion_equipo': (context) => const GestionEquipoPage(),
             },
           );
         },

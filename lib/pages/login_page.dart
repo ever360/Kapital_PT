@@ -656,7 +656,7 @@ class _LoginPageState extends State<LoginPage> {
 
                             // Versión
                             Text(
-                              'v1.2.1 - Navigation Update',
+                              'v1.2.2 - Premium UI Update',
                               style: TextStyle(
                                 color: isDark ? Colors.white24 : Colors.black38,
                                 fontSize: 11,

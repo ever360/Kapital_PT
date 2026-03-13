@@ -18,6 +18,8 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
   String? _miEmpresaId;
   List<Map<String, dynamic>> _sucursales = [];
   int _rutasAsignadasTotales = 0;
+  int _usuariosActivos = 0;
+  int _totalAlcanzable = 0;
 
   @override
   void initState() {
@@ -38,6 +40,13 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
         final empresaRes = await supabase.from('empresas').select().eq('id', _miEmpresaId!).single();
         final sucursalesRes = await supabase.from('sucursales').select().eq('empresa_id', _miEmpresaId!);
         
+        // 3. Contar usuarios activos de la empresa
+        final profilesRes = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('empresa_id', _miEmpresaId!)
+            .eq('isActive', true);
+        
         int rutasContadas = 0;
         for (var s in sucursalesRes) {
           rutasContadas += (s['rutas_permitidas'] as int? ?? 0);
@@ -48,6 +57,8 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
             _miEmpresa = empresaRes;
             _sucursales = List<Map<String, dynamic>>.from(sucursalesRes);
             _rutasAsignadasTotales = rutasContadas;
+            _usuariosActivos = profilesRes.length;
+            _totalAlcanzable = empresaRes['total_rutas_contratadas'] ?? 0;
             _isLoading = false;
           });
         }
@@ -227,6 +238,8 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildQuotaCard(),
+            const SizedBox(height: 16),
+            _buildTeamCard(),
             const SizedBox(height: 25),
             const Text("Mis Sucursales / Sedes", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 15),
@@ -295,6 +308,97 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
             style: const TextStyle(color: Colors.white38, fontSize: 12),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTeamCard() {
+    final double progreso = _totalAlcanzable > 0 ? _usuariosActivos / _totalAlcanzable : 0;
+    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
+
+    return InkWell(
+      onTap: () async {
+        await Navigator.pushNamed(context, '/gestion_equipo');
+        _loadDashboardData();
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Gestión de Equipo",
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Usuarios Activos: $_usuariosActivos / $_totalAlcanzable",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.group_add_rounded, color: Colors.amber, size: 24),
+                ),
+              ],
+            ),
+            const SizedBox(height: 15),
+            LinearProgressIndicator(
+              value: progreso,
+              backgroundColor: Colors.white10,
+              color: progreso >= 1.0 ? Colors.redAccent : Colors.greenAccent,
+              minHeight: 6,
+              borderRadius: BorderRadius.circular(3),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  progreso >= 1.0 
+                    ? "Cupo agotado" 
+                    : "Tienes ${_totalAlcanzable - _usuariosActivos} cupos libres",
+                  style: TextStyle(
+                    color: progreso >= 1.0 ? Colors.redAccent : Colors.white38,
+                    fontSize: 12,
+                  ),
+                ),
+                const Text(
+                  "Administrar ➜",
+                  style: TextStyle(color: Colors.amber, fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -43,6 +43,27 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
     Navigator.pushReplacementNamed(context, '/login');
   }
 
+  String _getInitials(String nombre) {
+    if (nombre.isEmpty) return '??';
+    final parts = nombre.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return parts[0].substring(0, parts[0].length >= 2 ? 2 : 1).toUpperCase();
+  }
+
+  Color _getAvatarColor(String nombre) {
+    final colors = [
+      AppColors.verdeSupabase,
+      Colors.blueAccent,
+      Colors.purpleAccent,
+      Colors.orangeAccent,
+      Colors.pinkAccent,
+      Colors.tealAccent,
+    ];
+    return colors[nombre.hashCode.abs() % colors.length].withValues(alpha: 0.8);
+  }
+
   String _getRolLabel(String rol) {
     switch (rol.toLowerCase()) {
       case 'master':
@@ -64,7 +85,7 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
-    final primaryColor = isDark ? Colors.amber : const Color(0xFFD4AF37);
+    final primaryColor = AppColors.primary(isDark);
 
     return Drawer(
       backgroundColor: isDark ? const Color(0xFF0D0D0D) : Colors.white,
@@ -104,9 +125,16 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
                   child: CircleAvatar(
                     radius: 30,
                     backgroundColor: isDark
-                        ? Colors.white10
-                        : Colors.black.withValues(alpha: 0.05),
-                    child: Icon(Icons.person, color: primaryColor, size: 30),
+                        ? _getAvatarColor(_nombre).withValues(alpha: 0.1)
+                        : primaryColor.withValues(alpha: 0.1),
+                    child: Text(
+                      _getInitials(_nombre),
+                      style: TextStyle(
+                        color: isDark ? _getAvatarColor(_nombre) : primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -202,7 +230,7 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
                       ),
                     ),
                     value: isDark,
-                    activeThumbColor: Colors.amber,
+                    activeThumbColor: AppColors.verdeSupabase,
                     secondary: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -269,7 +297,7 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'KAPITAL • v1.2.1',
+                  'KAPITAL • v1.2.2',
                   style: TextStyle(
                     color: isDark ? Colors.white24 : Colors.black26,
                     fontSize: 10,

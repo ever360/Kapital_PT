@@ -524,7 +524,7 @@ class _MasterHomePageState extends State<MasterHomePage>
                       .from('empresas')
                       .insert({
                         'nombre': empresaCtrl.text.trim(),
-                        'rutas_maximas': int.parse(rutasMaxCtrl.text.trim()),
+                        'total_rutas_contratadas': int.parse(rutasMaxCtrl.text.trim()),
                         'is_active': true,
                         'fecha_pago': fechaPago,
                         'fecha_vencimiento': fechaVenc,
@@ -570,7 +570,7 @@ class _MasterHomePageState extends State<MasterHomePage>
 
   Future<void> _editarEmpresa(Map<String, dynamic> emp) async {
     final rutasCtrl = TextEditingController(
-      text: '${emp['rutas_maximas'] ?? 1}',
+      text: '${emp['total_rutas_contratadas'] ?? 1}',
     );
     final notasCtrl = TextEditingController(text: emp['notas_master'] ?? '');
 
@@ -660,9 +660,9 @@ class _MasterHomePageState extends State<MasterHomePage>
                         .update({
                           'fecha_pago': now,
                           'fecha_vencimiento': vencimiento,
-                          'rutas_maximas':
+                          'total_rutas_contratadas':
                               int.tryParse(rutasCtrl.text) ??
-                              emp['rutas_maximas'],
+                              emp['total_rutas_contratadas'],
                           'notas_master': notasCtrl.text.trim(),
                         })
                         .eq('id', emp['id']);
@@ -693,8 +693,8 @@ class _MasterHomePageState extends State<MasterHomePage>
                 await supabase
                     .from('empresas')
                     .update({
-                      'rutas_maximas':
-                          int.tryParse(rutasCtrl.text) ?? emp['rutas_maximas'],
+                      'total_rutas_contratadas':
+                          int.tryParse(rutasCtrl.text) ?? emp['total_rutas_contratadas'],
                       'notas_master': notasCtrl.text.trim(),
                     })
                     .eq('id', emp['id']);
