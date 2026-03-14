@@ -20,13 +20,25 @@
   <!-- Script para aplicar el color de la barra de estado según el tema guardado -->
   <script>
     (function () {
-      // flutter_secure_storage en web guarda en localStorage con este prefijo
-      const theme = localStorage.getItem('flutter.theme_mode');
-      const isDark = theme === 'dark' ||
-        (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      const color = isDark ? '#0D0D0D' : '#F5F5F5';
-      document.getElementById('theme-color-meta').setAttribute('content', color);
-      document.documentElement.style.backgroundColor = color;
+      function applyThemeColor(isDark) {
+        const color = isDark ? '#0D0D0D' : '#F5F5F5';
+        const meta = document.getElementById('theme-color-meta');
+        if (meta) meta.setAttribute('content', color);
+        document.documentElement.style.backgroundColor = color;
+        document.body.style.backgroundColor = color;
+      }
+
+      // Función global para que Flutter la llame
+      window.updatePWATheme = function(isDark) {
+        applyThemeColor(isDark);
+      };
+
+      // Inicialización rápida
+      const savedTheme = localStorage.getItem('flutter.theme_mode') || localStorage.getItem('app_theme');
+      const isDark = savedTheme === 'dark' ||
+        (savedTheme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      
+      applyThemeColor(isDark);
     })();
   </script>
 
