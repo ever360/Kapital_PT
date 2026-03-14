@@ -239,11 +239,14 @@ class KapitalApp extends StatelessWidget {
               future: _initFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
+                  final bool isDark = themeProvider.isDarkMode;
                   return Scaffold(
-                    // El fondo ya lo toma automático del tema
+                    backgroundColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5),
+                    extendBodyBehindAppBar: true,
+                    extendBody: true,
                     body: Center(
                       child: CircularProgressIndicator(
-                        color: AppColors.primary(themeProvider.isDarkMode),
+                        color: AppColors.primary(isDark),
                       ),
                     ),
                   );

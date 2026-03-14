@@ -80,8 +80,8 @@ class _SplashScreenState extends State<SplashScreen>
         animation: _radiusAnimation,
         builder: (context, child) {
           return Container(
-            width: size.width,
-            height: size.height,
+            width: double.infinity,
+            height: double.infinity,
             decoration: BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment.center,

@@ -656,7 +656,7 @@ class _LoginPageState extends State<LoginPage> {
 
                             // Versión
                             Text(
-                              'v1.2.6 - Hotfix Theme & Full Screen',
+                              'v1.2.7 - Full Immersive PWA Update',
                               style: TextStyle(
                                 color: isDark ? Colors.white24 : Colors.black38,
                                 fontSize: 11,
