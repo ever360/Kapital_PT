@@ -24,7 +24,7 @@
         const color = isDark ? '#0D0D0D' : '#F5F5F5';
         const meta = document.getElementById('theme-color-meta');
         if (meta) meta.setAttribute('content', color);
-        document.documentElement.style.backgroundColor = color;
+        document.documentElement.style.setProperty('--app-bg', color);
         document.body.style.backgroundColor = color;
       }
 
@@ -35,15 +35,13 @@
 
       // Inicialización rápida
       const savedTheme = localStorage.getItem('flutter.theme_mode') || localStorage.getItem('app_theme');
-      const isDark = savedTheme === 'dark' ||
-        (savedTheme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      const isDark = savedTheme === '"dark"' || savedTheme === 'dark' ||
+        (savedTheme !== '"light"' && savedTheme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
       
       applyThemeColor(isDark);
     })();
   </script>
 
-
-  <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Kapital">
@@ -60,16 +58,29 @@
 
 <body>
   <style>
-    /* Edge-to-edge: el contenido de Flutter ocupa toda la pantalla incluyendo la status bar */
+    :root {
+      --app-bg: #F5F5F5;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --app-bg: #0D0D0D;
+      }
+    }
+
     html,
     body {
       margin: 0;
       padding: 0;
-      width: 100%;
-      height: 100%;
-      /* Eliminamos los paddings de safe-area para permitir edge-to-edge real */
-      box-sizing: border-box;
+      width: 100vw;
+      height: 100vh;
+      background-color: var(--app-bg) !important;
+      overflow: hidden;
+      position: fixed;
     }
+
+    /* Edge-to-edge: el contenido de Flutter ocupa toda la pantalla incluyendo la status bar */
+    /* Eliminamos los paddings de safe-area para permitir edge-to-edge real */
+    /* box-sizing: border-box; */ /* This was removed as it's not needed with 100vw/100vh and fixed positioning */
 
     /* Flutter canvas ocupa todo */
     flt-glass-pane,
