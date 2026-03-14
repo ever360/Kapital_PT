@@ -73,6 +73,9 @@ class _SplashScreenState extends State<SplashScreen>
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      extendBody: true,
+      resizeToAvoidBottomInset: false,
       body: AnimatedBuilder(
         animation: _radiusAnimation,
         builder: (context, child) {

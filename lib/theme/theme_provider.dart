@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'web_theme_utils_stub.dart'
+    if (dart.library.js) 'web_theme_utils_web.dart';
 
 class ThemeProvider extends ChangeNotifier {
   static const _storage = FlutterSecureStorage();
@@ -35,23 +37,20 @@ class ThemeProvider extends ChangeNotifier {
     String saveVal = 'system';
     if (mode == ThemeMode.light) saveVal = 'light';
     if (mode == ThemeMode.dark) saveVal = 'dark';
+    
+    // Guardar en secure storage para la app
     await _storage.write(key: 'theme_mode', value: saveVal);
+
     // Actualizar el color de la barra en PWA (solo web)
     if (kIsWeb) {
-      _updateWebThemeColor(isDarkMode);
+      saveThemeToWebStorage(saveVal);
+      updateWebPWATheme(isDarkMode);
     }
   }
 
   Future<void> toggleTheme() async {
     final mode = isDarkMode ? ThemeMode.light : ThemeMode.dark;
     await setTheme(mode);
-  }
-
-  void _updateWebThemeColor(bool isDark) {
-    // This code only runs on web
-    if (!kIsWeb) return;
-    // Web theme color update intentionally simplified
-    // Full implementation would require dart:js which breaks Android builds
   }
 }
 
