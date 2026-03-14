@@ -23,8 +23,8 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Splash full screen style - Truly immersive
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    // Splash full screen style - Edge-to-Edge consistente
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
     _controller = AnimationController(
       vsync: this,
