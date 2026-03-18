@@ -74,17 +74,117 @@ class _GestionEquipoPageState extends State<GestionEquipoPage> {
 
     try {
       await supabase.from('profiles').update({'isActive': newValue}).eq('id', empleado['id']);
-      _loadData();
+      await _loadData();
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
+
+  Future<void> _addUser(String email, String role) async {
+    setState(() => _isLoading = true);
+    try {
+      // 1. Buscar si el usuario existe
+      final res = await supabase.from('profiles').select().eq('email', email.trim().toLowerCase()).maybeSingle();
+
+      if (res == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("El usuario no está registrado en la plataforma. Debe registrarse primero.")),
+          );
+        }
+      } else {
+        if (res['empresa_id'] != null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Este usuario ya pertenece a otra empresa.")),
+            );
+          }
+        } else {
+          // Vincular a esta empresa y asignar rol
+          await supabase.from('profiles').update({
+            'empresa_id': _empresaId,
+            'rol': role,
+            'isActive': false, // Se crea inactivo por defecto para control de cupo
+            'isApproved': true, // Al ser invitado por el admin, ya está aprobado
+          }).eq('id', res['id']);
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("✅ ${res['nombre']} vinculado correctamente como $role.")),
+            );
+          }
+        }
+      }
+      await _loadData();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showAddUserDialog() {
+    final emailController = TextEditingController();
+    String selectedRole = 'cobrador';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text("Añadir Personal"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: "Email del usuario",
+                  hintText: "ejemplo@correo.com",
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 20),
+              DropdownButtonFormField<String>(
+                value: selectedRole,
+                decoration: const InputDecoration(labelText: "Rol asignado"),
+                items: const [
+                  DropdownMenuItem(value: 'cobrador', child: Text("Cobrador")),
+                  DropdownMenuItem(value: 'socio', child: Text("Socio")),
+                ],
+                onChanged: (val) {
+                  if (val != null) setDialogState(() => selectedRole = val);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+            ElevatedButton(
+              onPressed: () {
+                if (emailController.text.isNotEmpty) {
+                  Navigator.pop(context);
+                  _addUser(emailController.text, selectedRole);
+                }
+              },
+              child: const Text("Vincular"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  bool get _isNearLimit => _usuariosActivos >= _cupoTotal;
+  bool get _isAtLimit => _usuariosActivos > 0 && _usuariosActivos == _cupoTotal;
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
     final primary = AppColors.primary(isDark);
+    final warningColor = Colors.orange;
+    final dangerColor = Colors.redAccent;
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5),
@@ -92,6 +192,13 @@ class _GestionEquipoPageState extends State<GestionEquipoPage> {
         title: const Text("Gestión de Equipo"),
         backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         elevation: 0,
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAddUserDialog,
+        backgroundColor: primary,
+        foregroundColor: Colors.black,
+        icon: const Icon(Icons.person_add_alt_1_rounded),
+        label: const Text("Añadir Personal"),
       ),
       body: _isLoading 
         ? Center(child: CircularProgressIndicator(color: primary))
@@ -105,10 +212,19 @@ class _GestionEquipoPageState extends State<GestionEquipoPage> {
                   gradient: LinearGradient(
                     colors: isDark 
                       ? [const Color(0xFF2A2A2A), const Color(0xFF1E1E1E)]
-                      : [primary.withValues(alpha: 0.1), Colors.white],
+                      : [
+                          _isAtLimit 
+                            ? dangerColor.withValues(alpha: 0.1) 
+                            : (_isNearLimit ? warningColor.withValues(alpha: 0.1) : primary.withValues(alpha: 0.1)),
+                          Colors.white
+                        ],
                   ),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: primary.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: _isAtLimit 
+                      ? dangerColor.withValues(alpha: 0.4) 
+                      : (_isNearLimit ? warningColor.withValues(alpha: 0.4) : primary.withValues(alpha: 0.2)),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -116,15 +232,37 @@ class _GestionEquipoPageState extends State<GestionEquipoPage> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Cupo de Usuarios Activos", style: TextStyle(color: isDark ? Colors.white70 : Colors.black54, fontSize: 13)),
+                        Text(
+                          "Cupo de Usuarios Activos", 
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.black54, 
+                            fontSize: 13
+                          )
+                        ),
                         const SizedBox(height: 4),
                         Text(
                           "$_usuariosActivos / $_cupoTotal",
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: primary),
+                          style: TextStyle(
+                            fontSize: 24, 
+                            fontWeight: FontWeight.bold, 
+                            color: _isAtLimit ? dangerColor : (_isNearLimit ? warningColor : primary)
+                          ),
                         ),
+                        if (_isAtLimit)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              "⚠️ Cupo lleno", 
+                              style: TextStyle(color: dangerColor, fontSize: 10, fontWeight: FontWeight.bold)
+                            ),
+                          ),
                       ],
                     ),
-                    Icon(Icons.group_rounded, color: primary, size: 40),
+                    Icon(
+                      _isAtLimit ? Icons.warning_amber_rounded : Icons.group_rounded, 
+                      color: _isAtLimit ? dangerColor : (_isNearLimit ? warningColor : primary), 
+                      size: 40
+                    ),
                   ],
                 ),
               ),
@@ -134,7 +272,7 @@ class _GestionEquipoPageState extends State<GestionEquipoPage> {
                 child: _empleados.isEmpty 
                   ? const Center(child: Text("No hay empleados registrados."))
                   : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       itemCount: _empleados.length,
                       itemBuilder: (context, index) {
                         final emp = _empleados[index];
@@ -171,6 +309,7 @@ class _GestionEquipoPageState extends State<GestionEquipoPage> {
                       },
                     ),
               ),
+              const SizedBox(height: 80), // Espacio para el FAB extendido
             ],
           ),
     );

@@ -149,58 +149,134 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
     if (_miEmpresaId == null) {
       return Scaffold(
         backgroundColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5),
+        extendBodyBehindAppBar: true,
+        extendBody: true,
+        drawer: const KapitalDrawer(),
         appBar: AppBar(
-          title: const Text("Bienvenido"),
           backgroundColor: Colors.transparent,
           elevation: 0,
+          foregroundColor: isDark ? Colors.white : Colors.black87,
         ),
-        drawer: const KapitalDrawer(),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.business_center_outlined, size: 80, color: AppColors.primary(isDark)),
-                const SizedBox(height: 24),
-                Text(
-                  "¡Cuenta Aprobada!",
-                  style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black87,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+        body: Stack(
+          children: [
+            // Elementos decorativos de fondo
+            if (isDark) ...[
+              Positioned(
+                top: -50,
+                right: -50,
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primary(true).withValues(alpha: 0.05),
                   ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  "Tu cuenta ha sido aprobada por el Master. Ahora debes configurar tu empresa para empezar a gestionar tus rutas.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: isDark ? Colors.white54 : Colors.black54,
-                    fontSize: 15,
+              ),
+              Positioned(
+                bottom: 100,
+                left: -100,
+                child: Container(
+                  width: 300,
+                  height: 300,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primary(true).withValues(alpha: 0.03),
                   ),
                 ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.add_business_outlined, color: Colors.black),
-                    label: const Text(
-                      "Configurar mi Empresa",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () => Navigator.pushNamed(context, '/crear_empresa'),
+              ),
+            ],
+            
+            // Contenido Central
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Icono con efecto de elevación
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary(isDark).withValues(alpha: 0.2),
+                              blurRadius: 40,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.business_center_rounded,
+                          size: 64,
+                          color: AppColors.primary(isDark),
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      
+                      // Textos con tipografía mejorada
+                      Text(
+                        "¡Bienvenido a la Familia!",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "Tu cuenta ha sido aprobada con éxito. El siguiente paso es configurar tu empresa para empezar a gestionar tus rutas y equipo.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: isDark ? Colors.white60 : Colors.black54,
+                          fontSize: 16,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+                      
+                      // Botón de Acción Principal (Premium)
+                      SizedBox(
+                        width: double.infinity,
+                        height: 60,
+                        child: ElevatedButton.icon(
+                          onPressed: () => Navigator.pushNamed(context, '/crear_empresa'),
+                          icon: const Icon(Icons.add_business_rounded, color: Colors.black, size: 24),
+                          label: const Text(
+                            "Configurar mi Empresa",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary(isDark),
+                            elevation: 8,
+                            shadowColor: AppColors.primary(isDark).withValues(alpha: 0.4),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Botón Secundario
+                      TextButton.icon(
+                        onPressed: _signOut,
+                        icon: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 18),
+                        label: const Text(
+                          "Cerrar Sesión",
+                          style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: _signOut,
-                  child: const Text("Cerrar Sesión", style: TextStyle(color: Colors.redAccent)),
-                ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       );
     }
@@ -274,15 +350,26 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
   }
 
   Widget _buildQuotaCard() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+    final primary = AppColors.primary(isDark);
     final int maxGlobal = _miEmpresa?['total_rutas_contratadas'] ?? 0;
     final double progreso = maxGlobal > 0 ? _rutasAsignadasTotales / maxGlobal : 0;
+    final bool isAtLimit = _rutasAsignadasTotales >= maxGlobal;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
+        boxShadow: isDark ? null : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,22 +377,22 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Cuota de Rutas", style: TextStyle(color: Colors.white70, fontSize: 14)),
-              Text("$_rutasAsignadasTotales / $maxGlobal", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+              Text("Cuota de Rutas", style: TextStyle(color: isDark ? Colors.white70 : Colors.black54, fontSize: 13)),
+              Text("$_rutasAsignadasTotales / $maxGlobal", style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 18)),
             ],
           ),
           const SizedBox(height: 15),
           LinearProgressIndicator(
             value: progreso,
-            backgroundColor: Colors.white10,
-            color: Colors.amber,
+            backgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+            color: isAtLimit ? Colors.orange : primary,
             minHeight: 8,
             borderRadius: BorderRadius.circular(4),
           ),
           const SizedBox(height: 10),
           Text(
             "Has distribuido el ${(progreso * 100).toInt()}% de tus rutas contratadas.",
-            style: const TextStyle(color: Colors.white38, fontSize: 12),
+            style: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 12),
           ),
         ],
       ),
@@ -313,8 +400,11 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
   }
 
   Widget _buildTeamCard() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+    final primary = AppColors.primary(isDark);
     final double progreso = _totalAlcanzable > 0 ? _usuariosActivos / _totalAlcanzable : 0;
-    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
+    final bool isAtLimit = _usuariosActivos >= _totalAlcanzable && _totalAlcanzable > 0;
 
     return InkWell(
       onTap: () async {
@@ -327,7 +417,11 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+          border: Border.all(
+            color: isAtLimit 
+              ? Colors.redAccent.withValues(alpha: 0.3) 
+              : primary.withValues(alpha: 0.3)
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),
@@ -345,15 +439,15 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "Gestión de Equipo",
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                      style: TextStyle(color: isDark ? Colors.white70 : Colors.black54, fontSize: 13),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       "Usuarios Activos: $_usuariosActivos / $_totalAlcanzable",
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -363,18 +457,22 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.1),
+                    color: (isAtLimit ? Colors.redAccent : primary).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.group_add_rounded, color: Colors.amber, size: 24),
+                  child: Icon(
+                    isAtLimit ? Icons.warning_amber_rounded : Icons.group_add_rounded, 
+                    color: isAtLimit ? Colors.redAccent : primary, 
+                    size: 24
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 15),
             LinearProgressIndicator(
               value: progreso,
-              backgroundColor: Colors.white10,
-              color: progreso >= 1.0 ? Colors.redAccent : Colors.greenAccent,
+              backgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+              color: isAtLimit ? Colors.redAccent : Colors.greenAccent,
               minHeight: 6,
               borderRadius: BorderRadius.circular(3),
             ),
@@ -383,17 +481,17 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  progreso >= 1.0 
+                  isAtLimit 
                     ? "Cupo agotado" 
                     : "Tienes ${_totalAlcanzable - _usuariosActivos} cupos libres",
                   style: TextStyle(
-                    color: progreso >= 1.0 ? Colors.redAccent : Colors.white38,
+                    color: isAtLimit ? Colors.redAccent : (isDark ? Colors.white38 : Colors.black38),
                     fontSize: 12,
                   ),
                 ),
-                const Text(
+                Text(
                   "Administrar ➜",
-                  style: TextStyle(color: Colors.amber, fontSize: 12, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: primary, fontSize: 12, fontWeight: FontWeight.bold),
                 ),
               ],
             ),

@@ -735,6 +735,8 @@ class _MasterHomePageState extends State<MasterHomePage>
       backgroundColor: isDark
           ? const Color(0xFF0D0D0D)
           : const Color(0xFFF5F5F5),
+      extendBodyBehindAppBar: true,
+      extendBody: true,
       drawer: const KapitalDrawer(),
       appBar: AppBar(
         title: Row(
@@ -764,8 +766,11 @@ class _MasterHomePageState extends State<MasterHomePage>
             ),
           ],
         ),
-        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        backgroundColor: isDark 
+            ? const Color(0xFF1A1A1A).withValues(alpha: 0.8) 
+            : Colors.white.withValues(alpha: 0.8),
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: primary,

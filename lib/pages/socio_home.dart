@@ -419,6 +419,8 @@ class _SocioHomePageState extends State<SocioHomePage> {
     final isDark = themeProvider.isDarkMode;
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      extendBody: true,
       drawer: const KapitalDrawer(),
       appBar: AppBar(
         title: Text(
@@ -429,8 +431,11 @@ class _SocioHomePageState extends State<SocioHomePage> {
             letterSpacing: 1.2,
           ),
         ),
-        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        backgroundColor: isDark 
+            ? const Color(0xFF1A1A1A).withValues(alpha: 0.8) 
+            : Colors.white.withValues(alpha: 0.8),
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: true,
         actions: [
           IconButton(

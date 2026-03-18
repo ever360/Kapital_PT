@@ -197,20 +197,29 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
                   context,
                   icon: Icons.person_rounded,
                   title: 'Mi Perfil',
-                  onTap: () => Navigator.pop(context),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Perfil próximamente")));
+                  },
                 ),
                 if (_rol == 'master' || _rol == 'super_admin')
                   _buildDrawerItem(
                     context,
                     icon: Icons.analytics_rounded,
                     title: 'Reportes Globales',
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      Navigator.pop(context);
+                      // ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Reportes próximamente")));
+                    },
                   ),
                 _buildDrawerItem(
                   context,
                   icon: Icons.settings_rounded,
                   title: 'Configuraciones',
-                  onTap: () => Navigator.pop(context),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Ajustes próximamente")));
+                  },
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -297,7 +306,7 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'KAPITAL • v1.2.2',
+                  'KAPITAL • v1.5.0',
                   style: TextStyle(
                     color: isDark ? Colors.white24 : Colors.black26,
                     fontSize: 10,
