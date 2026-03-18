@@ -656,7 +656,7 @@ class _LoginPageState extends State<LoginPage> {
 
                             // Versión
                             Text(
-                              'v1.2.8 - Full Immersive Splash Update',
+                              'v1.5.0 - Premium Redesign Update',
                               style: TextStyle(
                                 color: isDark ? Colors.white24 : Colors.black38,
                                 fontSize: 11,

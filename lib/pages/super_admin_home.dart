@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kapital_app/theme/theme_provider.dart';
@@ -283,8 +284,15 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5),
+      extendBodyBehindAppBar: true,
       drawer: const KapitalDrawer(),
       appBar: AppBar(
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(color: Colors.transparent),
+          ),
+        ),
         title: Text(
           _miEmpresa?['nombre'] ?? 'DASHBOARD',
           style: TextStyle(
@@ -293,8 +301,11 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
             letterSpacing: 1.2,
           ),
         ),
-        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        backgroundColor: isDark 
+            ? const Color(0xFF1A1A1A).withValues(alpha: 0.7) 
+            : Colors.white.withValues(alpha: 0.7),
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
             icon: Icon(Icons.refresh, color: isDark ? Colors.white70 : Colors.black54),
@@ -304,70 +315,147 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _crearSucursal,
+        elevation: 4,
         backgroundColor: AppColors.primary(themeProvider.isDarkMode),
         label: const Text("Nueva Sucursal", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        icon: const Icon(Icons.add_business, color: Colors.black),
+        icon: const Icon(Icons.add_business_rounded, color: Colors.black),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildQuotaCard(),
-            const SizedBox(height: 16),
-            _buildTeamCard(),
-            const SizedBox(height: 25),
-            const Text("Mis Sucursales / Sedes", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 15),
-            if (_sucursales.isEmpty)
-              const Center(child: Padding(padding: EdgeInsets.all(20), child: Text("No tienes sucursales creadas.", style: TextStyle(color: Colors.white54))))
-            else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _sucursales.length,
-                itemBuilder: (context, index) {
-                  final s = _sucursales[index];
-                  return Card(
-                    color: const Color(0xFF1E1E1E),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    child: ListTile(
-                      leading: const Icon(Icons.store, color: Colors.amber),
-                      title: Text(s['nombre'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      subtitle: Text("Rutas Permitidas: ${s['rutas_permitidas']}", style: const TextStyle(color: Colors.white54)),
-                      trailing: const Icon(Icons.chevron_right, color: Colors.white24),
-                      onTap: () {
-                        // Navegar a gestión de la sucursal (próximamente)
-                      },
+      body: RefreshIndicator(
+        onRefresh: _loadDashboardData,
+        color: AppColors.primary(isDark),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + kToolbarHeight + 16, 16, 100),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildQuotaCard(),
+              const SizedBox(height: 16),
+              _buildTeamCard(),
+              const SizedBox(height: 32),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary(isDark),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                  );
-                },
+                    const SizedBox(width: 10),
+                    Text(
+                      "Mis Sucursales / Sedes",
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-          ],
+              const SizedBox(height: 16),
+              if (_sucursales.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(40),
+                    child: Column(
+                      children: [
+                        Icon(Icons.store_outlined, size: 48, color: isDark ? Colors.white10 : Colors.black12),
+                        const SizedBox(height: 10),
+                        Text(
+                          "No tienes sucursales creadas.",
+                          style: TextStyle(color: isDark ? Colors.white38 : Colors.black38),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _sucursales.length,
+                  itemBuilder: (context, index) {
+                    final s = _sucursales[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        leading: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.store_rounded, color: Colors.amber, size: 24),
+                        ),
+                        title: Text(
+                          s['nombre'],
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        subtitle: Text(
+                          "Cupo: ${s['rutas_permitidas']} rutas",
+                          style: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 13),
+                        ),
+                        trailing: Icon(Icons.chevron_right_rounded, color: isDark ? Colors.white24 : Colors.black26),
+                        onTap: () {
+                          // Navegar a gestión de la sucursal (próximamente)
+                        },
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildQuotaCard() {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = themeProvider.isDarkMode;
+    final tp = Provider.of<ThemeProvider>(context);
+    final isDark = tp.isDarkMode;
     final primary = AppColors.primary(isDark);
     final int maxGlobal = _miEmpresa?['total_rutas_contratadas'] ?? 0;
     final double progreso = maxGlobal > 0 ? _rutasAsignadasTotales / maxGlobal : 0;
     final bool isAtLimit = _rutasAsignadasTotales >= maxGlobal;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
-        boxShadow: isDark ? null : [
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+        ),
+        boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: (isAtLimit ? Colors.orange : primary).withValues(alpha: isDark ? 0.1 : 0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -377,22 +465,98 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Cuota de Rutas", style: TextStyle(color: isDark ? Colors.white70 : Colors.black54, fontSize: 13)),
-              Text("$_rutasAsignadasTotales / $maxGlobal", style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 18)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Balance de Rutas",
+                    style: TextStyle(
+                      color: isDark ? Colors.white38 : Colors.black38,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        "$_rutasAsignadasTotales",
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 28,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                      Text(
+                        " / $maxGlobal",
+                        style: TextStyle(
+                          color: isDark ? Colors.white24 : Colors.black26,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: (isAtLimit ? Colors.orange : primary).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  Icons.pie_chart_outline_rounded,
+                  color: isAtLimit ? Colors.orange : primary,
+                  size: 24,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 15),
-          LinearProgressIndicator(
-            value: progreso,
-            backgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
-            color: isAtLimit ? Colors.orange : primary,
-            minHeight: 8,
-            borderRadius: BorderRadius.circular(4),
+          const SizedBox(height: 20),
+          Stack(
+            children: [
+              Container(
+                height: 10,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+              ),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 800),
+                height: 10,
+                width: MediaQuery.of(context).size.width * 0.8 * progreso,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isAtLimit
+                        ? [Colors.orange, Colors.orangeAccent]
+                        : [primary, primary.withValues(alpha: 0.6)],
+                  ),
+                  borderRadius: BorderRadius.circular(5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (isAtLimit ? Colors.orange : primary).withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
-            "Has distribuido el ${(progreso * 100).toInt()}% de tus rutas contratadas.",
-            style: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 12),
+            isAtLimit 
+              ? "⚠️ Has alcanzado el límite de rutas contratadas."
+              : "Has distribuido el ${(progreso * 100).toInt()}% de tu cupo total.",
+            style: TextStyle(
+              color: isAtLimit ? Colors.orange : (isDark ? Colors.white38 : Colors.black38),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -400,102 +564,138 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
   }
 
   Widget _buildTeamCard() {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = themeProvider.isDarkMode;
+    final tp = Provider.of<ThemeProvider>(context);
+    final isDark = tp.isDarkMode;
     final primary = AppColors.primary(isDark);
     final double progreso = _totalAlcanzable > 0 ? _usuariosActivos / _totalAlcanzable : 0;
     final bool isAtLimit = _usuariosActivos >= _totalAlcanzable && _totalAlcanzable > 0;
 
-    return InkWell(
-      onTap: () async {
-        await Navigator.pushNamed(context, '/gestion_equipo');
-        _loadDashboardData();
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isAtLimit 
-              ? Colors.redAccent.withValues(alpha: 0.3) 
-              : primary.withValues(alpha: 0.3)
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            await Navigator.pushNamed(context, '/gestion_equipo');
+            _loadDashboardData();
+          },
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      "Gestión de Equipo",
-                      style: TextStyle(color: isDark ? Colors.white70 : Colors.black54, fontSize: 13),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "MI EQUIPO",
+                          style: TextStyle(
+                            color: isDark ? Colors.white38 : Colors.black38,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Text(
+                              "$_usuariosActivos",
+                              style: TextStyle(
+                                color: isDark ? Colors.white : Colors.black87,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 28,
+                                letterSpacing: -1,
+                              ),
+                            ),
+                            Text(
+                              " / $_totalAlcanzable",
+                              style: TextStyle(
+                                color: isDark ? Colors.white24 : Colors.black26,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Usuarios Activos: $_usuariosActivos / $_totalAlcanzable",
-                      style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black87,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: (isAtLimit ? Colors.redAccent : primary).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        isAtLimit ? Icons.warning_rounded : Icons.people_alt_rounded,
+                        color: isAtLimit ? Colors.redAccent : primary,
+                        size: 24,
                       ),
                     ),
                   ],
                 ),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: (isAtLimit ? Colors.redAccent : primary).withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isAtLimit ? Icons.warning_amber_rounded : Icons.group_add_rounded, 
-                    color: isAtLimit ? Colors.redAccent : primary, 
-                    size: 24
-                  ),
+                const SizedBox(height: 20),
+                Stack(
+                  children: [
+                    Container(
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 1000),
+                      height: 8,
+                      width: MediaQuery.of(context).size.width * 0.8 * progreso,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isAtLimit
+                              ? [Colors.redAccent, Colors.red]
+                              : [primary, Colors.greenAccent],
+                        ),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isAtLimit 
+                        ? "⚠️ Cupo de personal agotado" 
+                        : "Tienes ${_totalAlcanzable - _usuariosActivos} espacios disponibles",
+                      style: TextStyle(
+                        color: isAtLimit ? Colors.redAccent : (isDark ? Colors.white38 : Colors.black38),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios_rounded, size: 14, color: primary),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 15),
-            LinearProgressIndicator(
-              value: progreso,
-              backgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
-              color: isAtLimit ? Colors.redAccent : Colors.greenAccent,
-              minHeight: 6,
-              borderRadius: BorderRadius.circular(3),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  isAtLimit 
-                    ? "Cupo agotado" 
-                    : "Tienes ${_totalAlcanzable - _usuariosActivos} cupos libres",
-                  style: TextStyle(
-                    color: isAtLimit ? Colors.redAccent : (isDark ? Colors.white38 : Colors.black38),
-                    fontSize: 12,
-                  ),
-                ),
-                Text(
-                  "Administrar ➜",
-                  style: TextStyle(color: primary, fontSize: 12, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );

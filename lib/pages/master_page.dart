@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kapital_app/pages/login_page.dart';
@@ -739,6 +740,12 @@ class _MasterHomePageState extends State<MasterHomePage>
       extendBody: true,
       drawer: const KapitalDrawer(),
       appBar: AppBar(
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(color: Colors.transparent),
+          ),
+        ),
         title: Row(
           children: [
             Container(
@@ -767,24 +774,24 @@ class _MasterHomePageState extends State<MasterHomePage>
           ],
         ),
         backgroundColor: isDark 
-            ? const Color(0xFF1A1A1A).withValues(alpha: 0.8) 
-            : Colors.white.withValues(alpha: 0.8),
+            ? const Color(0xFF1A1A1A).withValues(alpha: 0.7) 
+            : Colors.white.withValues(alpha: 0.7),
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: primary,
           indicatorWeight: 3,
+          indicatorSize: TabBarIndicatorSize.label,
           labelColor: primary,
           unselectedLabelColor: isDark ? Colors.white38 : Colors.black38,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           tabs: [
-            const Tab(icon: Icon(Icons.business), text: 'Empresas'),
+            const Tab(text: 'Empresas'),
             Tab(
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.pending_actions),
-                  const SizedBox(width: 4),
                   const Text('Pendientes'),
                   if (_pendientes.isNotEmpty) ...[
                     const SizedBox(width: 6),
@@ -801,7 +808,7 @@ class _MasterHomePageState extends State<MasterHomePage>
                         '${_pendientes.length}',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 11,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -810,7 +817,7 @@ class _MasterHomePageState extends State<MasterHomePage>
                 ],
               ),
             ),
-            const Tab(icon: Icon(Icons.people), text: 'Usuarios'),
+            const Tab(text: 'Usuarios'),
           ],
         ),
         actions: [
@@ -826,6 +833,8 @@ class _MasterHomePageState extends State<MasterHomePage>
           ? Center(child: CircularProgressIndicator(color: primary))
           : Column(
               children: [
+                // Padding para el extendBodyBehindAppBar
+                SizedBox(height: MediaQuery.of(context).padding.top + kToolbarHeight + 48),
                 // Sección de alertas
                 if (_getAlertas().isNotEmpty)
                   _buildAlertasSection(isDark, primary),
@@ -850,58 +859,71 @@ class _MasterHomePageState extends State<MasterHomePage>
     if (alertas.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withValues(alpha: isDark ? 0.05 : 0.02),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.orange),
-              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
+              ),
+              const SizedBox(width: 12),
               Text(
                 'Alertas de Vencimiento',
                 style: TextStyle(
                   color: isDark ? Colors.white : Colors.black87,
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: 17,
+                  letterSpacing: -0.5,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           ...alertas.map(
             (alerta) => Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(8),
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
-                color: alerta['color'].withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: alerta['color'].withValues(alpha: 0.3),
-                ),
+                color: alerta['color'].withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
                 children: [
                   Icon(
                     alerta['tipo'] == 'vencimiento'
-                        ? Icons.error
-                        : Icons.warning,
+                        ? Icons.error_outline_rounded
+                        : Icons.info_outline_rounded,
                     color: alerta['color'],
-                    size: 16,
+                    size: 18,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       '${alerta['empresa']}: ${alerta['tipo'] == 'vencimiento' ? 'Vencida hace ${alerta['dias']} días' : 'Vence en ${alerta['dias']} días'}',
                       style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black87,
+                        color: isDark ? Colors.white70 : Colors.black87,
                         fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
@@ -929,7 +951,7 @@ class _MasterHomePageState extends State<MasterHomePage>
       onRefresh: _refreshData,
       color: primary,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         itemCount: _empresas.length,
         itemBuilder: (context, index) {
           final emp = _empresas[index];
@@ -947,107 +969,123 @@ class _MasterHomePageState extends State<MasterHomePage>
           final status = _getVencimientoStatus(emp);
 
           return Container(
-            margin: const EdgeInsets.only(bottom: 12),
+            margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: activa
-                    ? primary.withValues(alpha: 0.3)
-                    : Colors.redAccent.withValues(alpha: 0.3),
+                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.04),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Icon(Icons.business, color: primary, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          emp['nombre'] ?? '',
-                          style: TextStyle(
-                            color: isDark ? Colors.white : Colors.black87,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(Icons.business_rounded, color: primary, size: 24),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    emp['nombre'] ?? 'Sin Nombre',
+                                    style: TextStyle(
+                                      color: isDark ? Colors.white : Colors.black87,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Dueño: $ownerName',
+                                    style: TextStyle(
+                                      color: isDark ? Colors.white38 : Colors.black38,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Transform.scale(
+                              scale: 0.8,
+                              child: Switch(
+                                value: activa,
+                                activeColor: primary,
+                                activeTrackColor: primary.withValues(alpha: 0.2),
+                                inactiveThumbColor: Colors.grey,
+                                inactiveTrackColor: Colors.grey.withValues(alpha: 0.2),
+                                trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+                                onChanged: (_) => _toggleEmpresaActiva(emp),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      Switch(
-                        value: activa,
-                        activeThumbColor: primary,
-                        onChanged: (_) => _toggleEmpresaActiva(emp),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.person,
-                        size: 14,
-                        color: isDark ? Colors.white38 : Colors.black38,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Admin: $ownerName',
-                        style: TextStyle(
-                          color: isDark ? Colors.white54 : Colors.black54,
-                          fontSize: 13,
+                        const SizedBox(height: 20),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 8,
+                          children: [
+                            _chip(
+                              activa ? 'Activa' : 'Inactiva',
+                              activa ? Colors.green : Colors.redAccent,
+                              isDark,
+                            ),
+                            _chip(
+                              '${emp['total_rutas_contratadas'] ?? 0} Rutas',
+                              primary,
+                              isDark,
+                            ),
+                            if (fechaVenc != null) ...[
+                              () {
+                                final text = status['status'] == 'vencido'
+                                    ? 'Vencida'
+                                    : status['status'] == 'proximo'
+                                    ? 'Vence en ${status['days']}d'
+                                    : 'Al día';
+                                return _chip(text, status['color'], isDark);
+                              }(),
+                            ],
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: [
-                      _chip(
-                        activa ? '🟢 Activa' : '🔴 Inactiva',
-                        activa ? Colors.green : Colors.redAccent,
-                        isDark,
-                      ),
-                      _chip(
-                        '📍 ${emp['rutas_maximas'] ?? 0} rutas',
-                        primary,
-                        isDark,
-                      ),
-                      if (fechaVenc != null) ...[
-                        () {
-                          final icon = status['status'] == 'vencido'
-                              ? '🔴'
-                              : status['status'] == 'proximo'
-                              ? '🟠'
-                              : '🟢';
-                          final text = status['status'] == 'vencido'
-                              ? 'Vencida'
-                              : status['status'] == 'proximo'
-                              ? 'Vence en ${status['days']}d'
-                              : 'Activa';
-                          return _chip('$icon $text', status['color'], isDark);
-                        }(),
                       ],
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerRight,
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.01),
+                      border: Border(top: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05))),
+                    ),
                     child: TextButton.icon(
-                      icon: Icon(Icons.edit, size: 16, color: primary),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                      ),
+                      icon: Icon(Icons.settings_suggest_rounded, size: 18, color: primary),
                       label: Text(
-                        'Editar',
-                        style: TextStyle(color: primary, fontSize: 13),
+                        'Administrar suscripción',
+                        style: TextStyle(color: primary, fontSize: 13, fontWeight: FontWeight.bold),
                       ),
                       onPressed: () => _editarEmpresa(emp),
                     ),
@@ -1188,121 +1226,107 @@ class _MasterHomePageState extends State<MasterHomePage>
     final String? empresaNombre = _getEmpresaNombre(user['empresa_id']);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            // Avatar
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: _getAvatarColor(user['nombre']),
-              backgroundImage: user['foto'] != null
-                  ? NetworkImage(user['foto'])
-                  : null,
-              child: user['foto'] == null
-                  ? Text(
-                      _getInitials(user['nombre']),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 12),
-            // Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    user['nombre'] ?? 'Sin nombre',
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: primary.withValues(alpha: 0.3), width: 2),
+          ),
+          child: CircleAvatar(
+            radius: 26,
+            backgroundColor: _getAvatarColor(user['nombre']).withValues(alpha: 0.1),
+            backgroundImage: user['foto'] != null
+                ? NetworkImage(user['foto'])
+                : null,
+            child: user['foto'] == null
+                ? Text(
+                    _getInitials(user['nombre']),
                     style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
+                      color: _getAvatarColor(user['nombre']),
                       fontWeight: FontWeight.bold,
-                      fontSize: 15,
+                      fontSize: 16,
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  if (user['telefono'] != null)
-                    Text(
-                      '📞 ${user['telefono']}',
-                      style: TextStyle(
-                        color: isDark ? Colors.white38 : Colors.black38,
-                        fontSize: 12,
-                      ),
+                  )
+                : null,
+          ),
+        ),
+        title: Text(
+          user['nombre'] ?? 'Sin nombre',
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            if (empresaNombre != null)
+              Row(
+                children: [
+                  Icon(Icons.business_rounded, size: 12, color: isDark ? Colors.white38 : Colors.black38),
+                  const SizedBox(width: 4),
+                  Text(
+                    empresaNombre,
+                    style: TextStyle(
+                      color: isDark ? Colors.white38 : Colors.black38,
+                      fontSize: 12,
                     ),
-                  if (empresaNombre != null)
-                    Text(
-                      '🏢 $empresaNombre',
-                      style: TextStyle(
-                        color: isDark ? Colors.white38 : Colors.black38,
-                        fontSize: 11,
-                      ),
-                    ),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 6,
-                    children: [
-                      if (!isPending)
-                        _chip(
-                          activo ? '🟢 Activo' : '🔴 Inactivo',
-                          activo ? Colors.green : Colors.redAccent,
-                          isDark,
-                        ),
-                      _chip(_getRolLabel(rol), _getRolColor(rol), isDark),
-                    ],
                   ),
                 ],
               ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              children: [
+                if (!isPending)
+                  _chip(
+                    activo ? 'Activo' : 'Inactivo',
+                    activo ? Colors.green : Colors.redAccent,
+                    isDark,
+                  ),
+                _chip(_getRolLabel(rol), _getRolColor(rol), isDark),
+              ],
             ),
-            // Acciones
-            if (isPending)
-              ElevatedButton.icon(
+          ],
+        ),
+        trailing: isPending
+            ? ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primary,
+                  foregroundColor: Colors.black,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                  minimumSize: const Size(80, 40),
                 ),
-                icon: const Icon(
-                  Icons.how_to_reg,
-                  size: 18,
-                  color: Colors.black,
-                ),
-                label: const Text(
-                  'Aprobar',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: const Text('Aprobar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                 onPressed: () => _aprobarUsuario(user),
               )
-            else
-              PopupMenuButton<String>(
+            : PopupMenuButton<String>(
                 icon: Icon(
-                  Icons.more_vert,
+                  Icons.more_horiz_rounded,
                   color: isDark ? Colors.white38 : Colors.black38,
                 ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 color: isDark ? const Color(0xFF252525) : Colors.white,
                 onSelected: (action) {
                   if (action == 'toggle') _toggleUsuarioActivo(user);
@@ -1314,17 +1338,12 @@ class _MasterHomePageState extends State<MasterHomePage>
                     child: Row(
                       children: [
                         Icon(
-                          activo ? Icons.block : Icons.check_circle,
+                          activo ? Icons.block_flipped : Icons.check_circle_outline,
                           color: activo ? Colors.redAccent : Colors.green,
                           size: 18,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          activo ? 'Desactivar' : 'Activar',
-                          style: TextStyle(
-                            color: isDark ? Colors.white : Colors.black87,
-                          ),
-                        ),
+                        const SizedBox(width: 10),
+                        Text(activo ? 'Desactivar' : 'Activar'),
                       ],
                     ),
                   ),
@@ -1332,39 +1351,33 @@ class _MasterHomePageState extends State<MasterHomePage>
                     value: 'rol',
                     child: Row(
                       children: [
-                        Icon(Icons.swap_horiz, color: primary, size: 18),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Cambiar Rol',
-                          style: TextStyle(
-                            color: isDark ? Colors.white : Colors.black87,
-                          ),
-                        ),
+                        Icon(Icons.manage_accounts_outlined, color: primary, size: 18),
+                        const SizedBox(width: 10),
+                        const Text('Cambiar Rol'),
                       ],
                     ),
                   ),
                 ],
               ),
-          ],
-        ),
       ),
     );
   }
 
   Widget _chip(String label, Color color, bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.15 : 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        color: color.withValues(alpha: isDark ? 0.12 : 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: color,
           fontSize: 11,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.2,
         ),
       ),
     );

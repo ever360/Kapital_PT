@@ -94,45 +94,43 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
           // Header Modernizado con Gradiente
           Container(
             padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 20,
-              bottom: 20,
+              top: MediaQuery.of(context).padding.top + 32,
+              bottom: 32,
               left: 24,
               right: 24,
             ),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? [const Color(0xFF1A1A1A), const Color(0xFF0D0D0D)]
-                    : [primaryColor.withValues(alpha: 0.1), Colors.white],
-              ),
+              color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
               border: Border(
                 bottom: BorderSide(
-                  color: isDark ? Colors.white12 : Colors.black12,
-                  width: 0.5,
+                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
                 ),
               ),
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(3),
+                  padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: primaryColor, width: 2),
+                    gradient: LinearGradient(
+                      colors: [primaryColor, primaryColor.withValues(alpha: 0.3)],
+                    ),
                   ),
                   child: CircleAvatar(
-                    radius: 30,
-                    backgroundColor: isDark
-                        ? _getAvatarColor(_nombre).withValues(alpha: 0.1)
-                        : primaryColor.withValues(alpha: 0.1),
-                    child: Text(
-                      _getInitials(_nombre),
-                      style: TextStyle(
-                        color: isDark ? _getAvatarColor(_nombre) : primaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
+                    radius: 32,
+                    backgroundColor: isDark ? const Color(0xFF0D0D0D) : Colors.white,
+                    child: CircleAvatar(
+                      radius: 29,
+                      backgroundColor: primaryColor.withValues(alpha: 0.1),
+                      child: Text(
+                        _getInitials(_nombre),
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 22,
+                          letterSpacing: -1,
+                        ),
                       ),
                     ),
                   ),
@@ -147,31 +145,31 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
                         style: TextStyle(
                           color: isDark ? Colors.white : Colors.black87,
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          fontSize: 18,
+                          letterSpacing: -0.5,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
+                          horizontal: 10,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: primaryColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: primaryColor.withValues(alpha: 0.3),
-                            width: 0.5,
+                            color: primaryColor.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Text(
                           _getRolLabel(_rol),
                           style: TextStyle(
                             color: primaryColor,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.8,
                           ),
                         ),
                       ),
@@ -228,29 +226,32 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
 
                 // Theme Toggle Modernizado
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  margin: const EdgeInsets.only(top: 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.02),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   child: SwitchListTile(
                     title: Text(
                       'Modo Oscuro',
                       style: TextStyle(
                         color: isDark ? Colors.white70 : Colors.black87,
                         fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     value: isDark,
-                    activeThumbColor: AppColors.verdeSupabase,
+                    activeColor: primaryColor,
+                    activeTrackColor: primaryColor.withValues(alpha: 0.2),
                     secondary: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.black.withValues(alpha: 0.03),
+                        color: isDark ? primaryColor.withValues(alpha: 0.1) : Colors.amber.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                        color: isDark ? Colors.amber : Colors.orange,
+                        color: isDark ? primaryColor : Colors.amber,
                         size: 20,
                       ),
                     ),
@@ -328,23 +329,32 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
     required String title,
     required VoidCallback onTap,
   }) {
-    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: isDark ? Colors.white70 : Colors.black54,
-        size: 22,
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: isDark ? Colors.white : Colors.black87,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
+    final tp = Provider.of<ThemeProvider>(context);
+    final isDark = tp.isDarkMode;
+    final primary = AppColors.primary(isDark);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      child: ListTile(
+        leading: Icon(
+          icon,
+          color: isDark ? Colors.white54 : Colors.black54,
+          size: 22,
         ),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.2,
+          ),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        onTap: onTap,
+        hoverColor: primary.withValues(alpha: 0.1),
+        dense: true,
       ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onTap: onTap,
     );
   }
 }
