@@ -170,7 +170,7 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                   height: 200,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.primary(true).withValues(alpha: 0.05),
+                    color: AppColors.primary(true).withOpacity(0.05),
                   ),
                 ),
               ),
@@ -182,7 +182,7 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                   height: 300,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.primary(true).withValues(alpha: 0.03),
+                    color: AppColors.primary(true).withOpacity(0.03),
                   ),
                 ),
               ),
@@ -200,11 +200,11 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.white,
+                          color: isDark ? Colors.white.withOpacity(0.03) : Colors.white,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary(isDark).withValues(alpha: 0.2),
+                              color: AppColors.primary(isDark).withOpacity(0.2),
                               blurRadius: 40,
                               spreadRadius: 2,
                             ),
@@ -255,7 +255,7 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary(isDark),
                             elevation: 8,
-                            shadowColor: AppColors.primary(isDark).withValues(alpha: 0.4),
+                            shadowColor: AppColors.primary(isDark).withOpacity(0.4),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                           ),
                         ),
@@ -302,8 +302,8 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
           ),
         ),
         backgroundColor: isDark 
-            ? const Color(0xFF1A1A1A).withValues(alpha: 0.7) 
-            : Colors.white.withValues(alpha: 0.7),
+            ? const Color(0xFF1A1A1A).withOpacity(0.7) 
+            : Colors.white.withOpacity(0.7),
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         actions: [
@@ -388,11 +388,11 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                          color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
+                            color: Colors.black.withOpacity(isDark ? 0.3 : 0.03),
                             blurRadius: 15,
                             offset: const Offset(0, 5),
                           ),
@@ -403,7 +403,7 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                         leading: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.amber.withValues(alpha: 0.1),
+                            color: Colors.amber.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.store_rounded, color: Colors.amber, size: 24),
@@ -449,11 +449,11 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
         ),
         boxShadow: [
           BoxShadow(
-            color: (isAtLimit ? Colors.orange : primary).withValues(alpha: isDark ? 0.1 : 0.03),
+            color: (isAtLimit ? Colors.orange : primary).withOpacity(isDark ? 0.1 : 0.03),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -504,7 +504,7 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: (isAtLimit ? Colors.orange : primary).withValues(alpha: 0.1),
+                  color: (isAtLimit ? Colors.orange : primary).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(
@@ -521,7 +521,7 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
               Container(
                 height: 10,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+                  color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
                   borderRadius: BorderRadius.circular(5),
                 ),
               ),
@@ -533,12 +533,12 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                   gradient: LinearGradient(
                     colors: isAtLimit
                         ? [Colors.orange, Colors.orangeAccent]
-                        : [primary, primary.withValues(alpha: 0.6)],
+                        : [primary, primary.withOpacity(0.6)],
                   ),
                   borderRadius: BorderRadius.circular(5),
                   boxShadow: [
                     BoxShadow(
-                      color: (isAtLimit ? Colors.orange : primary).withValues(alpha: 0.3),
+                      color: (isAtLimit ? Colors.orange : primary).withOpacity(0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -575,11 +575,11 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.03),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -640,7 +640,7 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: (isAtLimit ? Colors.redAccent : primary).withValues(alpha: 0.1),
+                        color: (isAtLimit ? Colors.redAccent : primary).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Icon(
@@ -657,7 +657,7 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                     Container(
                       height: 8,
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+                        color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),

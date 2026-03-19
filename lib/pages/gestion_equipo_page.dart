@@ -263,8 +263,8 @@ class _GestionEquipoPageState extends State<GestionEquipoPage> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: isDark 
-            ? const Color(0xFF1A1A1A).withValues(alpha: 0.7) 
-            : Colors.white.withValues(alpha: 0.7),
+            ? const Color(0xFF1A1A1A).withOpacity(0.7) 
+            : Colors.white.withOpacity(0.7),
         elevation: 0,
         surfaceTintColor: Colors.transparent,
       ),
@@ -290,12 +290,12 @@ class _GestionEquipoPageState extends State<GestionEquipoPage> {
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
                     color: _isAtLimit 
-                      ? dangerColor.withValues(alpha: 0.4) 
-                      : (_isNearLimit ? warningColor.withValues(alpha: 0.4) : primary.withValues(alpha: 0.1)),
+                      ? dangerColor.withOpacity(0.4) 
+                      : (_isNearLimit ? warningColor.withOpacity(0.4) : primary.withOpacity(0.1)),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: (_isAtLimit ? dangerColor : primary).withValues(alpha: isDark ? 0.3 : 0.05),
+                      color: (_isAtLimit ? dangerColor : primary).withOpacity(isDark ? 0.3 : 0.05),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -343,7 +343,7 @@ class _GestionEquipoPageState extends State<GestionEquipoPage> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: (_isAtLimit ? dangerColor : primary).withValues(alpha: 0.1),
+                        color: (_isAtLimit ? dangerColor : primary).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Icon(
@@ -411,11 +411,11 @@ class _GestionEquipoPageState extends State<GestionEquipoPage> {
                             color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                              color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
+                                color: Colors.black.withOpacity(isDark ? 0.3 : 0.03),
                                 blurRadius: 15,
                                 offset: const Offset(0, 5),
                               ),
@@ -426,11 +426,11 @@ class _GestionEquipoPageState extends State<GestionEquipoPage> {
                             leading: Container(
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                border: Border.all(color: primary.withValues(alpha: 0.3), width: 2),
+                                border: Border.all(color: primary.withOpacity(0.3), width: 2),
                               ),
                               child: CircleAvatar(
                                 radius: 24,
-                                backgroundColor: primary.withValues(alpha: 0.1),
+                                backgroundColor: primary.withOpacity(0.1),
                                 child: Text(
                                   emp['nombre']?[0].toUpperCase() ?? '?',
                                   style: TextStyle(color: primary, fontWeight: FontWeight.bold, fontSize: 16),
@@ -452,7 +452,7 @@ class _GestionEquipoPageState extends State<GestionEquipoPage> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: (rol == 'socio' ? Colors.blue : Colors.purple).withValues(alpha: 0.1),
+                                      color: (rol == 'socio' ? Colors.blue : Colors.purple).withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
@@ -479,10 +479,10 @@ class _GestionEquipoPageState extends State<GestionEquipoPage> {
                             trailing: Switch(
                               value: isActive,
                               activeColor: primary,
-                              activeTrackColor: primary.withValues(alpha: 0.2),
+                              activeTrackColor: primary.withOpacity(0.2),
                               inactiveThumbColor: Colors.grey,
-                              inactiveTrackColor: Colors.grey.withValues(alpha: 0.2),
-                              trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+                              inactiveTrackColor: Colors.grey.withOpacity(0.2),
+                              trackOutlineColor: MaterialStateProperty.all(Colors.transparent),
                               onChanged: (val) => _toggleStatus(emp, val),
                             ),
                           ),
@@ -492,7 +492,6 @@ class _GestionEquipoPageState extends State<GestionEquipoPage> {
               ),
             ],
           ),
-    );
     );
   }
 }

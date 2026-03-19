@@ -178,11 +178,11 @@ class _RegisterPageState extends State<RegisterPage> {
         filled: true,
         fillColor: readOnly
             ? (themeProvider.isDarkMode
-                ? Colors.white.withValues(alpha: 0.04)
-                : Colors.black.withValues(alpha: 0.03))
+                ? Colors.white.withOpacity(0.04)
+                : Colors.black.withOpacity(0.03))
             : (themeProvider.isDarkMode
-                ? Colors.white.withValues(alpha: 0.08)
-                : Colors.black.withValues(alpha: 0.05)),
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.05)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -226,8 +226,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.amber.withValues(
-                                    alpha: isDark ? 0.15 : 0.4,
+                                  color: Colors.amber.withOpacity(
+                                    isDark ? 0.15 : 0.4,
                                   ),
                                   blurRadius: 30,
                                   spreadRadius: 10,
@@ -268,8 +268,8 @@ class _RegisterPageState extends State<RegisterPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? Colors.white.withValues(alpha: 0.07)
-                                  : Colors.black.withValues(alpha: 0.04),
+                                  ? Colors.white.withOpacity(0.07)
+                                  : Colors.black.withOpacity(0.04),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
@@ -308,7 +308,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 radius: 45,
                                 backgroundColor: isDark
                                     ? Colors.white10
-                                    : Colors.black.withValues(alpha: 0.05),
+                                    : Colors.black.withOpacity(0.05),
                                 backgroundImage: _imageUrl != null
                                     ? NetworkImage(_imageUrl!)
                                     : null,

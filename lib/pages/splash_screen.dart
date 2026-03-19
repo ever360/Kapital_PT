@@ -88,10 +88,10 @@ class _SplashScreenState extends State<SplashScreen>
                 radius: _radiusAnimation.value,
                 colors: isDark
                     ? [
-                        primaryColor.withValues(alpha: 0.25),
+                        primaryColor.withOpacity(0.25),
                         const Color(0xFF0D0D0D),
                       ]
-                    : [primaryColor.withValues(alpha: 0.8), Colors.white],
+                    : [primaryColor.withOpacity(0.8), Colors.white],
                 stops: const [0.0, 1.0],
               ),
             ),

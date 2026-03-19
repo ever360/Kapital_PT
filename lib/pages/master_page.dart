@@ -774,8 +774,8 @@ class _MasterHomePageState extends State<MasterHomePage>
           ],
         ),
         backgroundColor: isDark 
-            ? const Color(0xFF1A1A1A).withValues(alpha: 0.7) 
-            : Colors.white.withValues(alpha: 0.7),
+            ? const Color(0xFF1A1A1A).withOpacity(0.7) 
+            : Colors.white.withOpacity(0.7),
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         bottom: TabBar(
@@ -864,10 +864,10 @@ class _MasterHomePageState extends State<MasterHomePage>
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+        border: Border.all(color: Colors.orange.withOpacity(0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withValues(alpha: isDark ? 0.05 : 0.02),
+            color: Colors.orange.withOpacity(isDark ? 0.05 : 0.02),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -881,7 +881,7 @@ class _MasterHomePageState extends State<MasterHomePage>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.1),
+                  color: Colors.orange.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
@@ -904,7 +904,7 @@ class _MasterHomePageState extends State<MasterHomePage>
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
-                color: alerta['color'].withValues(alpha: 0.05),
+                color: alerta['color'].withOpacity(0.05),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -974,11 +974,11 @@ class _MasterHomePageState extends State<MasterHomePage>
               color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.04),
+                  color: Colors.black.withOpacity(isDark ? 0.4 : 0.04),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -998,7 +998,7 @@ class _MasterHomePageState extends State<MasterHomePage>
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: primary.withValues(alpha: 0.1),
+                                color: primary.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               child: Icon(Icons.business_rounded, color: primary, size: 24),
@@ -1032,9 +1032,9 @@ class _MasterHomePageState extends State<MasterHomePage>
                               child: Switch(
                                 value: activa,
                                 activeColor: primary,
-                                activeTrackColor: primary.withValues(alpha: 0.2),
+                                activeTrackColor: primary.withOpacity(0.2),
                                 inactiveThumbColor: Colors.grey,
-                                inactiveTrackColor: Colors.grey.withValues(alpha: 0.2),
+                                inactiveTrackColor: Colors.grey.withOpacity(0.2),
                                 trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
                                 onChanged: (_) => _toggleEmpresaActiva(emp),
                               ),
@@ -1074,8 +1074,8 @@ class _MasterHomePageState extends State<MasterHomePage>
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.01),
-                      border: Border(top: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05))),
+                      color: isDark ? Colors.white.withOpacity(0.02) : Colors.black.withOpacity(0.01),
+                      border: Border(top: BorderSide(color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05))),
                     ),
                     child: TextButton.icon(
                       style: TextButton.styleFrom(
@@ -1183,7 +1183,7 @@ class _MasterHomePageState extends State<MasterHomePage>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: _getRolColor(rol).withValues(alpha: 0.15),
+                        color: _getRolColor(rol).withOpacity(0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -1231,11 +1231,11 @@ class _MasterHomePageState extends State<MasterHomePage>
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.03),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -1246,11 +1246,11 @@ class _MasterHomePageState extends State<MasterHomePage>
         leading: Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: primary.withValues(alpha: 0.3), width: 2),
+            border: Border.all(color: primary.withOpacity(0.3), width: 2),
           ),
           child: CircleAvatar(
             radius: 26,
-            backgroundColor: _getAvatarColor(user['nombre']).withValues(alpha: 0.1),
+            backgroundColor: _getAvatarColor(user['nombre']).withOpacity(0.1),
             backgroundImage: user['foto'] != null
                 ? NetworkImage(user['foto'])
                 : null,
@@ -1367,9 +1367,9 @@ class _MasterHomePageState extends State<MasterHomePage>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.12 : 0.08),
+        color: color.withOpacity(isDark ? 0.12 : 0.08),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Text(
         label,

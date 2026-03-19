@@ -61,7 +61,7 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
       Colors.pinkAccent,
       Colors.tealAccent,
     ];
-    return colors[nombre.hashCode.abs() % colors.length].withValues(alpha: 0.8);
+    return colors[nombre.hashCode.abs() % colors.length].withOpacity(0.8);
   }
 
   String _getRolLabel(String rol) {
@@ -103,7 +103,7 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
               color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
               border: Border(
                 bottom: BorderSide(
-                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                  color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
                 ),
               ),
             ),
@@ -114,7 +114,7 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: [primaryColor, primaryColor.withValues(alpha: 0.3)],
+                      colors: [primaryColor, primaryColor.withOpacity(0.3)],
                     ),
                   ),
                   child: CircleAvatar(
@@ -122,7 +122,7 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
                     backgroundColor: isDark ? const Color(0xFF0D0D0D) : Colors.white,
                     child: CircleAvatar(
                       radius: 29,
-                      backgroundColor: primaryColor.withValues(alpha: 0.1),
+                      backgroundColor: primaryColor.withOpacity(0.1),
                       child: Text(
                         _getInitials(_nombre),
                         style: TextStyle(
@@ -157,10 +157,10 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: primaryColor.withValues(alpha: 0.1),
+                          color: primaryColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: primaryColor.withValues(alpha: 0.2),
+                            color: primaryColor.withOpacity(0.2),
                           ),
                         ),
                         child: Text(
@@ -228,7 +228,7 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
                 Container(
                   margin: const EdgeInsets.only(top: 8),
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.02),
+                    color: isDark ? Colors.white.withOpacity(0.02) : Colors.black.withOpacity(0.02),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: SwitchListTile(
@@ -242,11 +242,11 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
                     ),
                     value: isDark,
                     activeColor: primaryColor,
-                    activeTrackColor: primaryColor.withValues(alpha: 0.2),
+                    activeTrackColor: primaryColor.withOpacity(0.2),
                     secondary: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: isDark ? primaryColor.withValues(alpha: 0.1) : Colors.amber.withValues(alpha: 0.1),
+                        color: isDark ? primaryColor.withOpacity(0.1) : Colors.amber.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
@@ -280,7 +280,7 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
                     ),
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: Colors.redAccent.withValues(alpha: 0.5),
+                        color: Colors.redAccent.withOpacity(0.5),
                       ),
                       borderRadius: BorderRadius.circular(15),
                     ),
@@ -352,7 +352,7 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         onTap: onTap,
-        hoverColor: primary.withValues(alpha: 0.1),
+        hoverColor: primary.withOpacity(0.1),
         dense: true,
       ),
     );

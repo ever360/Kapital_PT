@@ -147,10 +147,10 @@ class KapitalApp extends StatelessWidget {
                 foregroundColor: Colors.black,
               ),
               switchTheme: SwitchThemeData(
-                thumbColor: WidgetStateProperty.resolveWith((states) =>
-                    states.contains(WidgetState.selected) ? AppColors.doradoKapital : Colors.grey),
-                trackColor: WidgetStateProperty.resolveWith((states) =>
-                    states.contains(WidgetState.selected) ? AppColors.doradoKapital.withValues(alpha: 0.4) : Colors.grey.withValues(alpha: 0.3)),
+                thumbColor: MaterialStateProperty.resolveWith((states) =>
+                    states.contains(MaterialState.selected) ? AppColors.doradoKapital : Colors.grey),
+                trackColor: MaterialStateProperty.resolveWith((states) =>
+                    states.contains(MaterialState.selected) ? AppColors.doradoKapital.withOpacity(0.4) : Colors.grey.withOpacity(0.3)),
               ),
               cardTheme: CardThemeData(
                 color: Colors.white,
@@ -212,10 +212,10 @@ class KapitalApp extends StatelessWidget {
                 foregroundColor: Colors.black,
               ),
               switchTheme: SwitchThemeData(
-                thumbColor: WidgetStateProperty.resolveWith((states) =>
-                    states.contains(WidgetState.selected) ? AppColors.verdeSupabase : Colors.grey),
-                trackColor: WidgetStateProperty.resolveWith((states) =>
-                    states.contains(WidgetState.selected) ? AppColors.verdeSupabase.withValues(alpha: 0.4) : Colors.grey.withValues(alpha: 0.3)),
+                thumbColor: MaterialStateProperty.resolveWith((states) =>
+                    states.contains(MaterialState.selected) ? AppColors.verdeSupabase : Colors.grey),
+                trackColor: MaterialStateProperty.resolveWith((states) =>
+                    states.contains(MaterialState.selected) ? AppColors.verdeSupabase.withOpacity(0.4) : Colors.grey.withOpacity(0.3)),
               ),
               cardTheme: CardThemeData(
                 color: const Color(0xFF1A1A1A),
