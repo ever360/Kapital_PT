@@ -35,8 +35,10 @@
 
       // Inicialización rápida
       const savedTheme = localStorage.getItem('flutter.theme_mode') || localStorage.getItem('app_theme');
-      const isDark = savedTheme === '"dark"' || savedTheme === 'dark' ||
-        (savedTheme !== '"light"' && savedTheme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      let isDark = savedTheme === '"dark"' || savedTheme === 'dark';
+      if (!savedTheme || savedTheme === '"system"' || savedTheme === 'system') {
+        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
       
       applyThemeColor(isDark);
     })();
@@ -93,6 +95,17 @@
       height: 100% !important;
     }
   </style>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker
+          .register('/firebase-messaging-sw.js')
+          .catch(function (err) {
+            console.error('No se pudo registrar firebase-messaging-sw.js', err);
+          });
+      });
+    }
+  </script>
   <!-- Flutter bootstrap -->
   <script src="flutter_bootstrap.js" async></script>
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'pages/login_page.dart';
 import 'pages/register_page.dart';
 import 'pages/splash_screen.dart';
@@ -18,13 +19,13 @@ import 'pages/gestion_equipo_page.dart';
 // Futuro global para inicialización
 Future<void>? _initFuture;
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Configurar pantalla completa (Edge-to-Edge)
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  _initFuture = _initializeServices();
+  await _initializeServices();
   runApp(const KapitalApp());
 }
 
@@ -33,17 +34,21 @@ Future<void> _initializeServices() async {
   await themeProvider.init();
   // 1. Inicializar Firebase
   try {
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: 'AIzaSyAaxzlRP7giXc0WMYsrXYKDpakx-L2-JHI',
-        appId: '1:903185337094:web:98058680bf7d8c6f98ec87',
-        messagingSenderId: '903185337094',
-        projectId: 'kapital-br',
-        authDomain: 'kapital-br.firebaseapp.com',
-        storageBucket: 'kapital-br.firebasestorage.app',
-        measurementId: 'G-J4SN2H8BJG',
-      ),
-    );
+    if (kIsWeb) {
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          apiKey: 'AIzaSyAaxzlRP7giXc0WMYsrXYKDpakx-L2-JHI',
+          appId: '1:903185337094:web:98058680bf7d8c6f98ec87',
+          messagingSenderId: '903185337094',
+          projectId: 'kapital-br',
+          authDomain: 'kapital-br.firebaseapp.com',
+          storageBucket: 'kapital-br.firebasestorage.app',
+          measurementId: 'G-J4SN2H8BJG',
+        ),
+      );
+    } else {
+      await Firebase.initializeApp();
+    }
   } catch (e) {
     debugPrint("Firebase init error: $e");
   }
@@ -61,10 +66,10 @@ Future<void> _initializeServices() async {
   // 2. Orientación y Estilo Full Screen
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  
+
   // 3. Inicializar Notificaciones
   try {
-    PushNotificationService.initialize();
+    await PushNotificationService.initialize();
   } catch (e) {
     debugPrint("Push init error: $e");
   }
@@ -84,21 +89,7 @@ class KapitalApp extends StatelessWidget {
 
           // Actualizar el estilo del sistema en cada cambio de tema
           SystemChrome.setSystemUIOverlayStyle(
-            SystemUiOverlayStyle(
-              // Mismo color que el fondo del Scaffold para que se vea continuo
-              // Barra de estado transparente para Edge-to-Edge real
-              statusBarColor: Colors.transparent,
-              statusBarIconBrightness: isDark
-                  ? Brightness.light
-                  : Brightness.dark,
-              statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
-              systemNavigationBarColor: isDark
-                  ? const Color(0xFF0D0D0D)
-                  : const Color(0xFFF5F5F5),
-              systemNavigationBarIconBrightness: isDark
-                  ? Brightness.light
-                  : Brightness.dark,
-            ),
+            ThemeProvider.getSystemUIOverlayStyle(isDark),
           );
 
           return MaterialApp(
@@ -139,7 +130,9 @@ class KapitalApp extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.doradoKapital,
                   foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
               floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -147,19 +140,29 @@ class KapitalApp extends StatelessWidget {
                 foregroundColor: Colors.black,
               ),
               switchTheme: SwitchThemeData(
-                thumbColor: MaterialStateProperty.resolveWith((states) =>
-                    states.contains(MaterialState.selected) ? AppColors.doradoKapital : Colors.grey),
-                trackColor: MaterialStateProperty.resolveWith((states) =>
-                    states.contains(MaterialState.selected) ? AppColors.doradoKapital.withOpacity(0.4) : Colors.grey.withOpacity(0.3)),
+                thumbColor: WidgetStateProperty.resolveWith(
+                  (states) => states.contains(WidgetState.selected)
+                      ? AppColors.doradoKapital
+                      : Colors.grey,
+                ),
+                trackColor: WidgetStateProperty.resolveWith(
+                  (states) => states.contains(WidgetState.selected)
+                      ? AppColors.doradoKapital.withValues(alpha: 0.4)
+                      : Colors.grey.withValues(alpha: 0.3),
+                ),
               ),
               cardTheme: CardThemeData(
                 color: Colors.white,
                 elevation: 1,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
               dialogTheme: DialogThemeData(
                 backgroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
               progressIndicatorTheme: ProgressIndicatorThemeData(
                 color: AppColors.doradoKapital,
@@ -204,7 +207,9 @@ class KapitalApp extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.verdeSupabase,
                   foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
               floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -212,19 +217,29 @@ class KapitalApp extends StatelessWidget {
                 foregroundColor: Colors.black,
               ),
               switchTheme: SwitchThemeData(
-                thumbColor: MaterialStateProperty.resolveWith((states) =>
-                    states.contains(MaterialState.selected) ? AppColors.verdeSupabase : Colors.grey),
-                trackColor: MaterialStateProperty.resolveWith((states) =>
-                    states.contains(MaterialState.selected) ? AppColors.verdeSupabase.withOpacity(0.4) : Colors.grey.withOpacity(0.3)),
+                thumbColor: WidgetStateProperty.resolveWith(
+                  (states) => states.contains(WidgetState.selected)
+                      ? AppColors.verdeSupabase
+                      : Colors.grey,
+                ),
+                trackColor: WidgetStateProperty.resolveWith(
+                  (states) => states.contains(WidgetState.selected)
+                      ? AppColors.verdeSupabase.withValues(alpha: 0.4)
+                      : Colors.grey.withValues(alpha: 0.3),
+                ),
               ),
               cardTheme: CardThemeData(
                 color: const Color(0xFF1A1A1A),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
               dialogTheme: DialogThemeData(
                 backgroundColor: const Color(0xFF1E1E1E),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
               progressIndicatorTheme: ProgressIndicatorThemeData(
                 color: AppColors.verdeSupabase,
@@ -241,7 +256,9 @@ class KapitalApp extends StatelessWidget {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   final bool isDark = themeProvider.isDarkMode;
                   return Scaffold(
-                    backgroundColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5),
+                    backgroundColor: isDark
+                        ? const Color(0xFF0D0D0D)
+                        : const Color(0xFFF5F5F5),
                     extendBodyBehindAppBar: true,
                     extendBody: true,
                     body: Center(

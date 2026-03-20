@@ -1,17 +1,23 @@
-import 'dart:js' as js;
+import 'package:flutter/foundation.dart';
+import 'package:web/web.dart' as web;
 
 void updateWebPWATheme(bool isDark) {
   try {
-    js.context.callMethod('updatePWATheme', [isDark]);
+    final metaTag =
+        web.document.querySelector('meta[name="theme-color"]')
+            as web.HTMLMetaElement?;
+    if (metaTag != null) {
+      metaTag.content = isDark ? '#0D0D0D' : '#F5F5F5';
+    }
   } catch (e) {
-    print('Error calling updatePWATheme: $e');
+    debugPrint('Error updating PWA theme: $e');
   }
 }
 
 void saveThemeToWebStorage(String theme) {
   try {
-    js.context['localStorage'].callMethod('setItem', ['app_theme', theme]);
+    web.window.localStorage.setItem('app_theme', theme);
   } catch (e) {
-    print('Error saving theme to localStorage: $e');
+    debugPrint('Error saving theme to localStorage: $e');
   }
 }

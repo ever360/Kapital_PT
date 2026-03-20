@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:kapital_app/pages/register_page.dart';
@@ -8,6 +9,8 @@ import 'package:kapital_app/pages/socio_home.dart';
 import 'package:kapital_app/pages/cobrador_home.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:local_auth_android/local_auth_android.dart';
+import 'package:local_auth_darwin/local_auth_darwin.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:kapital_app/theme/theme_provider.dart';
 import 'package:provider/provider.dart';
@@ -100,8 +103,9 @@ class _LoginPageState extends State<LoginPage> {
         final provider = user.appMetadata['provider'] ?? '';
         if (provider == 'google') {
           final String? googleEmail = user.email;
-          final String? googleName = user.userMetadata?['full_name'] as String?
-              ?? user.userMetadata?['name'] as String?;
+          final String? googleName =
+              user.userMetadata?['full_name'] as String? ??
+              user.userMetadata?['name'] as String?;
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -136,19 +140,20 @@ class _LoginPageState extends State<LoginPage> {
             try {
               final empresa = await supabase
                   .from('empresas')
-                  .select('is_active')
+                  .select('is_active, nombre')
                   .eq('id', empresaId)
                   .single();
               final bool empresaActiva = empresa['is_active'] ?? false;
               if (!empresaActiva) {
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
+                  SnackBar(
                     content: Text(
-                      '🔒 Tu empresa está suspendida. Contacta al administrador.',
+                      '🔒 ${empresa['nombre'] ?? 'Tu empresa'} está suspendida. '
+                      'Contacta al administrador o al soporte.',
                     ),
                     backgroundColor: Colors.redAccent,
-                    duration: Duration(seconds: 4),
+                    duration: const Duration(seconds: 5),
                   ),
                 );
                 await supabase.auth.signOut();
@@ -188,9 +193,17 @@ class _LoginPageState extends State<LoginPage> {
             MaterialPageRoute(builder: (_) => homePage),
           );
         } else {
-          String mensaje = !isApproved
-              ? "Tu cuenta está pendiente de aprobación."
-              : "Tu cuenta está inactiva.";
+          String mensaje;
+          if (!isApproved && rol == 'admin_pendiente') {
+            mensaje =
+                "⏳ Tu cuenta aún no ha sido aprobada. Si eres empresa, el Master revisará tu solicitud pronto.";
+          } else if (!isApproved) {
+            mensaje =
+                "⏳ Tu acceso está pendiente de aprobación por tu administrador.";
+          } else {
+            mensaje =
+                "🚫 Tu cuenta está inactiva. Contacta al administrador de tu empresa.";
+          }
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(mensaje), backgroundColor: Colors.redAccent),
@@ -214,7 +227,10 @@ class _LoginPageState extends State<LoginPage> {
       try {
         final email = emailController.text.trim();
         final password = passwordController.text.trim();
-        await supabase.auth.signInWithPassword(email: email, password: password);
+        await supabase.auth.signInWithPassword(
+          email: email,
+          password: password,
+        );
         await storage.write(key: 'user_email', value: email);
         await storage.write(key: 'user_password', value: password);
       } catch (e) {
@@ -272,15 +288,25 @@ class _LoginPageState extends State<LoginPage> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Inicia sesión manualmente una vez para activar la huella."),
+            content: Text(
+              "Inicia sesión manualmente una vez para activar la huella.",
+            ),
           ),
         );
         return;
       }
       final bool didAuthenticate = await auth.authenticate(
-        localizedReason: 'Inicia sesión en Kapital con tu huella',
+        localizedReason: 'Verifica tu identidad para acceder',
         persistAcrossBackgrounding: true,
         biometricOnly: true,
+        authMessages: const [
+          AndroidAuthMessages(
+            signInTitle: 'Kapital',
+            signInHint: 'Toca el sensor de huella',
+            cancelButton: 'Cancelar',
+          ),
+          IOSAuthMessages(cancelButton: 'Cancelar'),
+        ],
       );
       if (didAuthenticate) {
         setState(() => _isLoading = true);
@@ -291,7 +317,9 @@ class _LoginPageState extends State<LoginPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error biométrico: $e")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error biométrico: $e")));
     }
   }
 
@@ -328,35 +356,56 @@ class _LoginPageState extends State<LoginPage> {
     required String? Function(String?) validator,
   }) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+    final primary = AppColors.primary(isDark);
     return TextFormField(
       controller: controller,
       obscureText: obscure,
       style: TextStyle(
-        color: themeProvider.isDarkMode ? Colors.white : Colors.black87,
+        color: isDark ? Colors.white : Colors.black87,
+        fontWeight: FontWeight.w500,
       ),
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(
-          color: themeProvider.isDarkMode ? Colors.white54 : Colors.black54,
-        ),
-        prefixIcon: Icon(
-          icon,
-          color: themeProvider.isDarkMode ? Colors.white70 : Colors.black54,
-        ),
+        hintStyle: TextStyle(color: isDark ? Colors.white54 : Colors.black45),
+        prefixIcon: Icon(icon, color: isDark ? Colors.white70 : primary),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: themeProvider.isDarkMode
-            ? Colors.white.withValues(alpha: 0.08)
-            : Colors.black.withValues(alpha: 0.05),
+        fillColor: isDark
+            ? Colors.white.withValues(alpha: 0.06)
+            : Colors.white.withValues(alpha: 0.72),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 18,
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide.none,
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : primary.withValues(alpha: 0.10),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(
+            color: primary.withValues(alpha: 0.55),
+            width: 1.4,
+          ),
+        ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
         ),
       ),
       validator: validator,
@@ -370,6 +419,8 @@ class _LoginPageState extends State<LoginPage> {
     VoidCallback onPressed,
   ) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+    final primary = AppColors.primary(isDark);
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
@@ -377,20 +428,94 @@ class _LoginPageState extends State<LoginPage> {
         label: Text(
           label,
           style: TextStyle(
-            color: themeProvider.isDarkMode ? Colors.white : Colors.black87,
-            fontSize: 16,
+            color: isDark ? Colors.white : Colors.black87,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.3,
           ),
         ),
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          backgroundColor: isDark
+              ? Colors.white.withValues(alpha: 0.025)
+              : Colors.white.withValues(alpha: 0.72),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           side: BorderSide(
-            color: themeProvider.isDarkMode ? Colors.white30 : Colors.black26,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.12)
+                : primary.withValues(alpha: 0.14),
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
           ),
         ),
         onPressed: onPressed,
+      ),
+    );
+  }
+
+  Widget _buildBackdropOrb({
+    required double size,
+    required Alignment alignment,
+    required Color color,
+  }) {
+    return IgnorePointer(
+      child: Align(
+        alignment: alignment,
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+              colors: [
+                color.withValues(alpha: 0.26),
+                color.withValues(alpha: 0.0),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopBadge(bool isDark, Color primary) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.04)
+            : Colors.white.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: primary.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: primary,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: primary.withValues(alpha: 0.55),
+                  blurRadius: 14,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            'PLATAFORMA OPERATIVA KAPITAL',
+            style: TextStyle(
+              color: isDark ? Colors.white70 : Colors.black87,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.3,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -400,6 +525,7 @@ class _LoginPageState extends State<LoginPage> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final size = MediaQuery.of(context).size;
     final isDark = themeProvider.isDarkMode;
+    final primary = AppColors.primary(isDark);
 
     return Scaffold(
       backgroundColor: isDark
@@ -411,6 +537,42 @@ class _LoginPageState extends State<LoginPage> {
         onTap: () => FocusScope.of(context).unfocus(),
         child: Stack(
           children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: isDark
+                        ? const [
+                            Color(0xFF050816),
+                            Color(0xFF0D0D0D),
+                            Color(0xFF101A17),
+                          ]
+                        : const [
+                            Color(0xFFF9F6ED),
+                            Color(0xFFF3F7F4),
+                            Color(0xFFFFFFFF),
+                          ],
+                  ),
+                ),
+              ),
+            ),
+            _buildBackdropOrb(
+              size: size.width * 0.9,
+              alignment: const Alignment(-1.15, -0.95),
+              color: isDark ? primary : AppColors.doradoKapital,
+            ),
+            _buildBackdropOrb(
+              size: size.width * 0.72,
+              alignment: const Alignment(1.1, -0.2),
+              color: Colors.blueAccent,
+            ),
+            _buildBackdropOrb(
+              size: size.width * 0.82,
+              alignment: const Alignment(-0.9, 1.0),
+              color: isDark ? Colors.tealAccent : Colors.orangeAccent,
+            ),
             // Contenido principal
             SingleChildScrollView(
               child: SafeArea(
@@ -422,244 +584,387 @@ class _LoginPageState extends State<LoginPage> {
                       child: Form(
                         key: _formKey,
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const SizedBox(height: 10),
-
-                            // Logo
-                            Hero(
-                              tag: 'logo',
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.amber.withValues(
-                                        alpha: isDark ? 0.15 : 0.4,
-                                      ),
-                                      blurRadius: 30,
-                                      spreadRadius: 10,
+                            const SizedBox(height: 18),
+                            _buildTopBadge(isDark, primary),
+                            const SizedBox(height: 24),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(32),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(
+                                  sigmaX: 24,
+                                  sigmaY: 24,
+                                ),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.04)
+                                        : Colors.white.withValues(alpha: 0.68),
+                                    borderRadius: BorderRadius.circular(32),
+                                    border: Border.all(
+                                      color: isDark
+                                          ? Colors.white.withValues(alpha: 0.08)
+                                          : primary.withValues(alpha: 0.10),
                                     ),
-                                  ],
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: primary.withValues(
+                                          alpha: isDark ? 0.18 : 0.10,
+                                        ),
+                                        blurRadius: 40,
+                                        spreadRadius: -10,
+                                        offset: const Offset(0, 24),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      24,
+                                      28,
+                                      24,
+                                      24,
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Container(
+                                          width: double.infinity,
+                                          padding: const EdgeInsets.all(18),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                              colors: isDark
+                                                  ? [
+                                                      Colors.white.withValues(
+                                                        alpha: 0.05,
+                                                      ),
+                                                      primary.withValues(
+                                                        alpha: 0.06,
+                                                      ),
+                                                    ]
+                                                  : [
+                                                      Colors.white,
+                                                      primary.withValues(
+                                                        alpha: 0.10,
+                                                      ),
+                                                    ],
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              24,
+                                            ),
+                                            border: Border.all(
+                                              color: primary.withValues(
+                                                alpha: 0.12,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Column(
+                                            children: [
+                                              Hero(
+                                                tag: 'logo',
+                                                child: Container(
+                                                  padding: const EdgeInsets.all(
+                                                    16,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    gradient: RadialGradient(
+                                                      colors: [
+                                                        primary.withValues(
+                                                          alpha: 0.22,
+                                                        ),
+                                                        primary.withValues(
+                                                          alpha: 0.0,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: primary
+                                                            .withValues(
+                                                              alpha: isDark
+                                                                  ? 0.26
+                                                                  : 0.18,
+                                                            ),
+                                                        blurRadius: 36,
+                                                        spreadRadius: 2,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  child: Image.asset(
+                                                    'assets/logoKapital.png',
+                                                    height: size.height * 0.12,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 18),
+                                              Text(
+                                                'Acceso Seguro',
+                                                style: TextStyle(
+                                                  color: isDark
+                                                      ? Colors.white
+                                                      : Colors.black87,
+                                                  fontSize: 28,
+                                                  fontWeight: FontWeight.w900,
+                                                  letterSpacing: -0.7,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                'Control financiero, operación en tiempo real y administración inteligente en una sola superficie.',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  color: isDark
+                                                      ? Colors.white60
+                                                      : Colors.black54,
+                                                  fontSize: 13,
+                                                  height: 1.45,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 24),
+                                        _buildTextField(
+                                          context: context,
+                                          controller: emailController,
+                                          hint: 'Correo electrónico',
+                                          obscure: false,
+                                          icon: Icons.email_outlined,
+                                          keyboardType:
+                                              TextInputType.emailAddress,
+                                          textInputAction: TextInputAction.next,
+                                          validator: (value) {
+                                            if (value == null ||
+                                                value.isEmpty) {
+                                              return 'Por favor ingresa tu correo';
+                                            }
+                                            if (!value.contains('@')) {
+                                              return 'Correo inválido';
+                                            }
+                                            return null;
+                                          },
+                                        ),
+                                        const SizedBox(height: 18),
+                                        _buildTextField(
+                                          context: context,
+                                          controller: passwordController,
+                                          hint: 'Contraseña',
+                                          obscure: _obscurePassword,
+                                          icon: Icons.lock_outline,
+                                          keyboardType: TextInputType.text,
+                                          textInputAction: TextInputAction.done,
+                                          suffixIcon: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              if (_canCheckBiometrics)
+                                                IconButton(
+                                                  icon: Icon(
+                                                    Icons.fingerprint,
+                                                    color: primary,
+                                                  ),
+                                                  onPressed:
+                                                      authenticateWithBiometrics,
+                                                ),
+                                              IconButton(
+                                                icon: Icon(
+                                                  _obscurePassword
+                                                      ? Icons
+                                                            .visibility_outlined
+                                                      : Icons
+                                                            .visibility_off_outlined,
+                                                  color: isDark
+                                                      ? Colors.white54
+                                                      : Colors.black54,
+                                                ),
+                                                onPressed: () => setState(
+                                                  () => _obscurePassword =
+                                                      !_obscurePassword,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          validator: (value) {
+                                            if (value == null ||
+                                                value.isEmpty) {
+                                              return 'Ingresa tu contraseña';
+                                            }
+                                            return null;
+                                          },
+                                        ),
+                                        const SizedBox(height: 22),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: primary,
+                                              foregroundColor: Colors.black,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 18,
+                                                  ),
+                                              elevation: 0,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(22),
+                                              ),
+                                            ),
+                                            onPressed: _isLoading
+                                                ? null
+                                                : loginWithEmail,
+                                            child: _isLoading
+                                                ? const SizedBox(
+                                                    height: 20,
+                                                    width: 20,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          color: Colors.black,
+                                                          strokeWidth: 2.2,
+                                                        ),
+                                                  )
+                                                : const Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Text(
+                                                        'Entrar al sistema',
+                                                        style: TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.w900,
+                                                          letterSpacing: 0.6,
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 10),
+                                                      Icon(
+                                                        Icons
+                                                            .north_east_rounded,
+                                                        size: 18,
+                                                      ),
+                                                    ],
+                                                  ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Align(
+                                          alignment: Alignment.centerRight,
+                                          child: TextButton(
+                                            onPressed: _isLoading
+                                                ? null
+                                                : forgotPassword,
+                                            child: Text(
+                                              '¿Olvidaste tu contraseña?',
+                                              style: TextStyle(
+                                                color: isDark
+                                                    ? Colors.white60
+                                                    : Colors.black54,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Divider(
+                                                color: isDark
+                                                    ? Colors.white.withValues(
+                                                        alpha: 0.12,
+                                                      )
+                                                    : primary.withValues(
+                                                        alpha: 0.14,
+                                                      ),
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                  ),
+                                              child: Text(
+                                                'Acceso alternativo',
+                                                style: TextStyle(
+                                                  color: isDark
+                                                      ? Colors.white54
+                                                      : Colors.black54,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: 0.7,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: Divider(
+                                                color: isDark
+                                                    ? Colors.white.withValues(
+                                                        alpha: 0.12,
+                                                      )
+                                                    : primary.withValues(
+                                                        alpha: 0.14,
+                                                      ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 18),
+                                        _buildSocialButton(
+                                          context,
+                                          'Continuar con Google',
+                                          'assets/icons/google_icon.png',
+                                          _isLoading ? () {} : signInWithGoogle,
+                                        ),
+                                        const SizedBox(height: 24),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              '¿No tienes cuenta? ',
+                                              style: TextStyle(
+                                                color: isDark
+                                                    ? Colors.white70
+                                                    : Colors.black87,
+                                              ),
+                                            ),
+                                            MouseRegion(
+                                              cursor: SystemMouseCursors.click,
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          const RegisterPage(),
+                                                    ),
+                                                  );
+                                                },
+                                                child: Text(
+                                                  'Regístrate',
+                                                  style: TextStyle(
+                                                    color: primary,
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                                child: Image.asset(
-                                  'assets/logoKapital.png',
-                                  height: size.height * 0.14,
-                                ),
                               ),
-                            ),
-
-                            const SizedBox(height: 12),
-                            Text(
-                              "Iniciar Sesión",
-                              style: TextStyle(
-                                color: isDark ? Colors.white : Colors.black87,
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              "Bienvenido de nuevo a Kapital",
-                              style: TextStyle(
-                                color: isDark ? Colors.white54 : Colors.black54,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 35),
-
-                            // Email
-                            _buildTextField(
-                              context: context,
-                              controller: emailController,
-                              hint: 'Correo electrónico',
-                              obscure: false,
-                              icon: Icons.email_outlined,
-                              keyboardType: TextInputType.emailAddress,
-                              textInputAction: TextInputAction.next,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Por favor ingresa tu correo';
-                                }
-                                if (!value.contains('@')) return 'Correo inválido';
-                                return null;
-                              },
                             ),
                             const SizedBox(height: 20),
-
-                            // Contraseña
-                            _buildTextField(
-                              context: context,
-                              controller: passwordController,
-                              hint: 'Contraseña',
-                              obscure: _obscurePassword,
-                              icon: Icons.lock_outline,
-                              keyboardType: TextInputType.text,
-                              textInputAction: TextInputAction.done,
-                              suffixIcon: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (_canCheckBiometrics)
-                                    IconButton(
-                                      icon: Icon(
-                                        Icons.fingerprint,
-                                        color: AppColors.primary(isDark),
-                                      ),
-                                      onPressed: authenticateWithBiometrics,
-                                    ),
-                                  IconButton(
-                                    icon: Icon(
-                                      _obscurePassword
-                                          ? Icons.visibility_outlined
-                                          : Icons.visibility_off_outlined,
-                                      color: isDark ? Colors.white54 : Colors.black54,
-                                    ),
-                                    onPressed: () => setState(
-                                      () => _obscurePassword = !_obscurePassword,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Ingresa tu contraseña';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 30),
-
-                            // Botón Entrar
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary(isDark),
-                                  foregroundColor: Colors.black,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  elevation: 2,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                                onPressed: _isLoading ? null : loginWithEmail,
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.black,
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Text(
-                                        "Entrar",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 1,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                            const SizedBox(height: 15),
-
-                            // Olvidé contraseña
-                            TextButton(
-                              onPressed: _isLoading ? null : forgotPassword,
-                              child: Text(
-                                "¿Olvidaste tu contraseña?",
-                                style: TextStyle(
-                                  color: isDark ? Colors.white54 : Colors.black54,
-                                  fontSize: 13,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 15),
-
-                            // Separador
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Divider(
-                                    color: isDark
-                                        ? Colors.white.withValues(alpha: 0.2)
-                                        : Colors.black.withValues(alpha: 0.2),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                                  child: Text(
-                                    "O continúa con",
-                                    style: TextStyle(
-                                      color: isDark ? Colors.white54 : Colors.black54,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Divider(
-                                    color: isDark
-                                        ? Colors.white.withValues(alpha: 0.2)
-                                        : Colors.black.withValues(alpha: 0.2),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 25),
-
-                            // Google
-                            _buildSocialButton(
-                              context,
-                              'Google',
-                              'assets/icons/google_icon.png',
-                              _isLoading ? () {} : signInWithGoogle,
-                            ),
-                            const SizedBox(height: 30),
-
-                            // Registro
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "¿No tienes cuenta? ",
-                                  style: TextStyle(
-                                    color: isDark ? Colors.white70 : Colors.black87,
-                                  ),
-                                ),
-                                MouseRegion(
-                                  cursor: SystemMouseCursors.click,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => const RegisterPage(),
-                                        ),
-                                      );
-                                    },
-                                    child: Text(
-                                      "Regístrate",
-                                      style: TextStyle(
-                                        color: AppColors.primary(isDark),
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-
-                            // Versión
                             Text(
-                              'v1.5.0 - Premium Redesign Update',
+                              'v1.6.0 - Push Notifications & Kapital Branding',
                               style: TextStyle(
                                 color: isDark ? Colors.white24 : Colors.black38,
                                 fontSize: 11,
+                                letterSpacing: 0.4,
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -682,8 +987,12 @@ class _LoginPageState extends State<LoginPage> {
                   child: IconButton(
                     onPressed: () => themeProvider.toggleTheme(),
                     icon: Icon(
-                      isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                      color: isDark ? AppColors.verdeSupabase : AppColors.doradoKapital,
+                      isDark
+                          ? Icons.light_mode_rounded
+                          : Icons.dark_mode_rounded,
+                      color: isDark
+                          ? AppColors.verdeSupabase
+                          : AppColors.doradoKapital,
                     ),
                     tooltip: isDark ? 'Modo Claro' : 'Modo Oscuro',
                   ),

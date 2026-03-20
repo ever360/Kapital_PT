@@ -15,7 +15,8 @@ class CobradorHomePage extends StatefulWidget {
 class _CobradorHomePageState extends State<CobradorHomePage> {
   final supabase = Supabase.instance.client;
   bool _isLoading = true;
-  
+  String _empresaNombre = 'Mi Empresa';
+
   List<Map<String, dynamic>> _misRutas = [];
   double _totalCobradoHoy = 0.0;
   double _metaCobroHoy = 0.0;
@@ -33,6 +34,21 @@ class _CobradorHomePageState extends State<CobradorHomePage> {
       final user = supabase.auth.currentUser;
       if (user == null) return;
 
+      final profile = await supabase
+          .from('profiles')
+          .select('empresa_id')
+          .eq('id', user.id)
+          .single();
+      final String? empresaId = profile['empresa_id']?.toString();
+      if (empresaId != null) {
+        final empresa = await supabase
+            .from('empresas')
+            .select('nombre')
+            .eq('id', empresaId)
+            .single();
+        _empresaNombre = (empresa['nombre'] ?? 'Mi Empresa').toString();
+      }
+
       // 1. Obtener las Rutas que el socio me asignó
       final asignacionesRes = await supabase
           .from('cobrador_rutas')
@@ -45,47 +61,54 @@ class _CobradorHomePageState extends State<CobradorHomePage> {
           .toList();
 
       if (rutasList.isNotEmpty) {
-        final List<String> idsRutas = rutasList.map((r) => r['id'].toString()).toList();
-        
+        final List<String> idsRutas = rutasList
+            .map((r) => r['id'].toString())
+            .toList();
+
         // 2. Calcular Clientes Totales Activos en mis rutas
         final clientesRes = await supabase
             .from('clientes')
             .select('id')
             .inFilter('ruta_id', idsRutas)
             .eq('is_active', true);
-            
+
         // 3. Mapear Préstamos activos para calcular "Meta del Día" (Cuota Diaria de Préstamos Activos)
         final prestamosRes = await supabase
             .from('prestamos')
             .select('cuota_diaria')
             .inFilter('ruta_id', idsRutas)
             .eq('estado', 'ACTIVO');
-            
+
         double metaCalculada = 0;
-        for(var p in prestamosRes) {
+        for (var p in prestamosRes) {
           metaCalculada += (p['cuota_diaria'] ?? 0) as num;
         }
 
         // 4. Calcular "Cobrado Hoy"
         final tzToday = DateTime.now();
-        final startOfDay = DateTime(tzToday.year, tzToday.month, tzToday.day).toIso8601String();
-        
+        final startOfDay = DateTime(
+          tzToday.year,
+          tzToday.month,
+          tzToday.day,
+        ).toIso8601String();
+
         final pagosHoyRes = await supabase
             .from('pagos')
             .select('monto')
             .inFilter('ruta_id', idsRutas)
             .eq('perfil_id', user.id) // Solo LO QUE YO HE COBRADO HOY
             .gte('fecha_pago', startOfDay);
-            
+
         double cobradoHoyCalculado = 0;
-        for(var p in pagosHoyRes) {
+        for (var p in pagosHoyRes) {
           cobradoHoyCalculado += (p['monto'] ?? 0) as num;
         }
 
         if (mounted) {
           setState(() {
             _misRutas = rutasList;
-            _clientesPendientes = clientesRes.length; // Idealmente sería: Totales - Los que ya pagaron hoy.
+            _clientesPendientes = clientesRes
+                .length; // Idealmente sería: Totales - Los que ya pagaron hoy.
             _metaCobroHoy = metaCalculada;
             _totalCobradoHoy = cobradoHoyCalculado;
             _isLoading = false;
@@ -99,15 +122,15 @@ class _CobradorHomePageState extends State<CobradorHomePage> {
           });
         }
       }
-
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error cargando operaciones: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error cargando operaciones: $e')),
+        );
       }
     }
   }
-
 
   // Utilidad para formatear divisas simple
   String _formatDinero(double valor) {
@@ -127,27 +150,46 @@ class _CobradorHomePageState extends State<CobradorHomePage> {
       drawer: const KapitalDrawer(),
       appBar: AppBar(
         title: Text(
-          'MI ASIGNACIÓN',
+          'Panel Empresa • Cobrador',
           style: TextStyle(
             color: isDark ? Colors.white : Colors.black87,
             fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
+            letterSpacing: 0.4,
           ),
         ),
-        backgroundColor: isDark 
-            ? const Color(0xFF1A1A1A).withValues(alpha: 0.8) 
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(24),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              _empresaNombre,
+              style: TextStyle(
+                color: isDark ? Colors.white60 : Colors.black54,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+        backgroundColor: isDark
+            ? const Color(0xFF1A1A1A).withValues(alpha: 0.8)
             : Colors.white.withValues(alpha: 0.8),
         elevation: 0,
+        scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh, color: isDark ? Colors.white70 : Colors.black54),
+            icon: Icon(
+              Icons.refresh,
+              color: isDark ? Colors.white70 : Colors.black54,
+            ),
             onPressed: _loadDashboard,
           ),
         ],
       ),
-      body: _isLoading 
+      body: _isLoading
           ? Center(child: CircularProgressIndicator(color: primary))
           : RefreshIndicator(
               onRefresh: _loadDashboard,
@@ -162,48 +204,71 @@ class _CobradorHomePageState extends State<CobradorHomePage> {
                     // ==========================================
                     Container(
                       margin: const EdgeInsets.all(16),
-                      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 24,
+                        horizontal: 20,
+                      ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: isDark 
-                              ? [const Color(0xFF2A2A2A), const Color(0xFF1E1E1E)]
-                              : [primary.withValues(alpha: 0.9), primary.withValues(alpha: 0.7)],
+                          colors: isDark
+                              ? [
+                                  const Color(0xFF2A2A2A),
+                                  const Color(0xFF1E1E1E),
+                                ]
+                              : [
+                                  primary.withValues(alpha: 0.9),
+                                  primary.withValues(alpha: 0.7),
+                                ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
-                          BoxShadow(color: primary.withValues(alpha: isDark ? 0.1 : 0.3), blurRadius: 20, offset: const Offset(0, 8))
-                        ]
+                          BoxShadow(
+                            color: primary.withValues(
+                              alpha: isDark ? 0.1 : 0.3,
+                            ),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             "Recaudo del Día",
-                            style: TextStyle(color: isDark ? Colors.white70 : Colors.black54, fontSize: 14, fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              color: isDark ? Colors.white70 : Colors.black54,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           const SizedBox(height: 5),
                           Text(
                             _formatDinero(_totalCobradoHoy),
-                            style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: isDark ? primary : Colors.black87),
+                            style: TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? primary : Colors.black87,
+                            ),
                           ),
                           const SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               _KpiItem(
-                                title: "Meta Cuotas", 
-                                value: _formatDinero(_metaCobroHoy), 
-                                isDark: isDark
+                                title: "Meta Cuotas",
+                                value: _formatDinero(_metaCobroHoy),
+                                isDark: isDark,
                               ),
                               _KpiItem(
-                                title: "Clientes Asignados", 
-                                value: "$_clientesPendientes", 
-                                isDark: isDark
+                                title: "Clientes Asignados",
+                                value: "$_clientesPendientes",
+                                isDark: isDark,
                               ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -212,10 +277,17 @@ class _CobradorHomePageState extends State<CobradorHomePage> {
                     // LISTADO DE RUTAS
                     // ==========================================
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20.0,
+                        vertical: 10.0,
+                      ),
                       child: Text(
                         "Mis Rutas a Cubrir",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
                       ),
                     ),
 
@@ -225,12 +297,20 @@ class _CobradorHomePageState extends State<CobradorHomePage> {
                           padding: const EdgeInsets.all(40.0),
                           child: Column(
                             children: [
-                              Icon(Icons.directions_walk, size: 60, color: isDark ? Colors.white24 : Colors.black26),
+                              Icon(
+                                Icons.directions_walk,
+                                size: 60,
+                                color: isDark ? Colors.white24 : Colors.black26,
+                              ),
                               const SizedBox(height: 15),
                               Text(
                                 "No tienes rutas asignadas.\nHabla con tu Gerente (Socio).",
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: isDark ? Colors.white54 : Colors.black54),
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Colors.white54
+                                      : Colors.black54,
+                                ),
                               ),
                             ],
                           ),
@@ -243,16 +323,33 @@ class _CobradorHomePageState extends State<CobradorHomePage> {
                         itemCount: _misRutas.length,
                         itemBuilder: (context, index) {
                           final ruta = _misRutas[index];
-                          
+
                           return Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF232323) : Colors.white,
+                              color: isDark
+                                  ? const Color(0xFF232323)
+                                  : Colors.white,
                               borderRadius: BorderRadius.circular(16),
-                              border: isDark ? null : Border.all(color: Colors.grey.withValues(alpha: 0.2)),
-                              boxShadow: isDark ? [] : [
-                                BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))
-                              ]
+                              border: isDark
+                                  ? null
+                                  : Border.all(
+                                      color: Colors.grey.withValues(alpha: 0.2),
+                                    ),
+                              boxShadow: isDark
+                                  ? []
+                                  : [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.03,
+                                        ),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
                             ),
                             child: Material(
                               color: Colors.transparent,
@@ -262,8 +359,11 @@ class _CobradorHomePageState extends State<CobradorHomePage> {
                                 onTap: () {
                                   // Navegar a la pantalla de clientes de la ruta
                                   Navigator.push(
-                                    context, 
-                                    MaterialPageRoute(builder: (context) => CobradorClientesPage(rutaData: ruta))
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          CobradorClientesPage(rutaData: ruta),
+                                    ),
                                   );
                                 },
                                 child: Padding(
@@ -276,26 +376,47 @@ class _CobradorHomePageState extends State<CobradorHomePage> {
                                           color: primary.withValues(alpha: 0.1),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: Icon(Icons.maps_home_work, color: primary, size: 28),
+                                        child: Icon(
+                                          Icons.maps_home_work,
+                                          color: primary,
+                                          size: 28,
+                                        ),
                                       ),
                                       const SizedBox(width: 16),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              ruta['nombre'] ?? 'Sin Nombre', 
-                                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)
+                                              ruta['nombre'] ?? 'Sin Nombre',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: isDark
+                                                    ? Colors.white
+                                                    : Colors.black87,
+                                              ),
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              "Toca para ver los clientes", 
-                                              style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.black54)
+                                              "Toca para ver los clientes",
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: isDark
+                                                    ? Colors.white54
+                                                    : Colors.black54,
+                                              ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                      Icon(Icons.chevron_right, color: isDark ? Colors.white24 : Colors.black26),
+                                      Icon(
+                                        Icons.chevron_right,
+                                        color: isDark
+                                            ? Colors.white24
+                                            : Colors.black26,
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -304,7 +425,7 @@ class _CobradorHomePageState extends State<CobradorHomePage> {
                           );
                         },
                       ),
-                      
+
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -319,16 +440,34 @@ class _KpiItem extends StatelessWidget {
   final String value;
   final bool isDark;
 
-  const _KpiItem({required this.title, required this.value, required this.isDark});
+  const _KpiItem({
+    required this.title,
+    required this.value,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 12, fontWeight: FontWeight.w500)),
+        Text(
+          title,
+          style: TextStyle(
+            color: isDark ? Colors.white54 : Colors.black54,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text(value, style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }

@@ -55,22 +55,93 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
+  Future<void> _notifyMastersPendingApproval({
+    required String userId,
+    required String nombre,
+    required String? email,
+    required String? telefono,
+  }) async {
+    try {
+      final response = await supabase.functions.invoke(
+        'notify-masters-new-pending',
+        body: {
+          'user_id': userId,
+          'nombre': nombre,
+          'email': email,
+          'telefono': telefono,
+          'created_at': DateTime.now().toUtc().toIso8601String(),
+        },
+      );
+
+      debugPrint(
+        'notify-masters-new-pending status=${response.status} data=${response.data}',
+      );
+
+      if (response.status != 200) {
+        debugPrint(
+          'notify-masters-new-pending devolvio status no exitoso: ${response.status}',
+        );
+      }
+    } catch (e) {
+      // No interrumpir el flujo de registro por fallos de notificación
+      debugPrint('No se pudo notificar al master: $e');
+    }
+  }
+
   Future<void> signUp() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
+        String snackMsg;
+
         if (_isGoogleFlow) {
-          // Usuario ya autenticado con Google: solo insertar perfil
-          await supabase.from('profiles').upsert({
-            'id': widget.googleUser!.id,
-            'nombre': nameController.text.trim(),
-            'telefono': phoneController.text.trim(),
-            'foto': _imageUrl,
-            'rol': 'admin_pendiente',
-            'isApproved': false,
-            'isActive': false,
-            'empresa_id': null,
-          });
+          // Verificar si hay invitación pendiente para este email de Google
+          final googleEmail = (widget.googleUser!.email ?? '').toLowerCase();
+          final googleInvite = await supabase
+              .from('invitaciones')
+              .select()
+              .eq('email', googleEmail)
+              .eq('used', false)
+              .maybeSingle();
+
+          if (googleInvite != null) {
+            await supabase.from('profiles').upsert({
+              'id': widget.googleUser!.id,
+              'nombre': nameController.text.trim(),
+              'telefono': phoneController.text.trim(),
+              'foto': _imageUrl,
+              'rol': googleInvite['rol'],
+              'isApproved': true,
+              'isActive': false,
+              'empresa_id': googleInvite['empresa_id'],
+            });
+            await supabase
+                .from('invitaciones')
+                .update({'used': true, 'profile_id': widget.googleUser!.id})
+                .eq('id', googleInvite['id']);
+            snackMsg =
+                "✅ Te has unido a tu equipo. Espera que el administrador te active.";
+          } else {
+            // Sin invitación: flujo estándar admin_pendiente
+            await supabase.from('profiles').upsert({
+              'id': widget.googleUser!.id,
+              'nombre': nameController.text.trim(),
+              'telefono': phoneController.text.trim(),
+              'foto': _imageUrl,
+              'rol': 'admin_pendiente',
+              'isApproved': false,
+              'isActive': false,
+              'empresa_id': null,
+            });
+            await _notifyMastersPendingApproval(
+              userId: widget.googleUser!.id,
+              nombre: nameController.text.trim(),
+              email: widget.googleUser!.email,
+              telefono: phoneController.text.trim(),
+            );
+            snackMsg =
+                "✅ Solicitud enviada. El Master revisará tu registro y te dará acceso pronto.";
+          }
         } else {
           // Registro normal con email/password
           final authResponse = await supabase.auth.signUp(
@@ -81,16 +152,56 @@ class _RegisterPageState extends State<RegisterPage> {
           if (!mounted) return;
 
           if (authResponse.user != null) {
-            await supabase.from('profiles').insert({
-              'id': authResponse.user!.id,
-              'nombre': nameController.text.trim(),
-              'telefono': phoneController.text.trim(),
-              'foto': _imageUrl,
-              'rol': 'admin_pendiente',
-              'isApproved': false,  // El Master debe aprobar
-              'isActive': false,
-              'empresa_id': null,
-            });
+            final emailLower = emailController.text.trim().toLowerCase();
+
+            // Verificar si hay una invitación pendiente para este email
+            final invite = await supabase
+                .from('invitaciones')
+                .select()
+                .eq('email', emailLower)
+                .eq('used', false)
+                .maybeSingle();
+
+            if (invite != null) {
+              // Auto-vincular a la empresa que lo invitó
+              await supabase.from('profiles').insert({
+                'id': authResponse.user!.id,
+                'nombre': nameController.text.trim(),
+                'telefono': phoneController.text.trim(),
+                'foto': _imageUrl,
+                'rol': invite['rol'],
+                'isApproved': true,
+                'isActive': false, // Admin debe activarlo manualmente
+                'empresa_id': invite['empresa_id'],
+              });
+              // Marcar invitación como usada
+              await supabase
+                  .from('invitaciones')
+                  .update({'used': true, 'profile_id': authResponse.user!.id})
+                  .eq('id', invite['id']);
+              snackMsg =
+                  "✅ Te has unido a tu equipo. Tu admin te dará acceso en breve.";
+            } else {
+              // Sin invitación: flujo estándar → espera al Master
+              await supabase.from('profiles').insert({
+                'id': authResponse.user!.id,
+                'nombre': nameController.text.trim(),
+                'telefono': phoneController.text.trim(),
+                'foto': _imageUrl,
+                'rol': 'admin_pendiente',
+                'isApproved': false,
+                'isActive': false,
+                'empresa_id': null,
+              });
+              await _notifyMastersPendingApproval(
+                userId: authResponse.user!.id,
+                nombre: nameController.text.trim(),
+                email: emailLower,
+                telefono: phoneController.text.trim(),
+              );
+              snackMsg =
+                  "✅ Solicitud enviada. El Master revisará tu registro y te dará acceso pronto.";
+            }
           } else {
             if (mounted) setState(() => _isLoading = false);
             return;
@@ -100,12 +211,10 @@ class _RegisterPageState extends State<RegisterPage> {
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "✅ Solicitud enviada. El Master revisará tu registro y te dará acceso pronto.",
-            ),
+          SnackBar(
+            content: Text(snackMsg),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 5),
+            duration: const Duration(seconds: 5),
           ),
         );
 
@@ -116,7 +225,9 @@ class _RegisterPageState extends State<RegisterPage> {
           if (!mounted) return;
           nav.pushNamedAndRemoveUntil('/login', (route) => false);
         } else {
-          Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil('/login', (route) => false);
         }
       } catch (e) {
         if (!mounted) return;
@@ -170,19 +281,25 @@ class _RegisterPageState extends State<RegisterPage> {
           icon,
           color: themeProvider.isDarkMode ? Colors.white70 : Colors.black54,
         ),
-        suffixIcon: suffixIcon ?? (readOnly
-            ? Icon(Icons.lock_outline_rounded,
-                size: 16,
-                color: themeProvider.isDarkMode ? Colors.white30 : Colors.black26)
-            : null),
+        suffixIcon:
+            suffixIcon ??
+            (readOnly
+                ? Icon(
+                    Icons.lock_outline_rounded,
+                    size: 16,
+                    color: themeProvider.isDarkMode
+                        ? Colors.white30
+                        : Colors.black26,
+                  )
+                : null),
         filled: true,
         fillColor: readOnly
             ? (themeProvider.isDarkMode
-                ? Colors.white.withOpacity(0.04)
-                : Colors.black.withOpacity(0.03))
+                  ? Colors.white.withValues(alpha: 0.04)
+                  : Colors.black.withValues(alpha: 0.03))
             : (themeProvider.isDarkMode
-                ? Colors.white.withOpacity(0.08)
-                : Colors.black.withOpacity(0.05)),
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.05)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -226,8 +343,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.amber.withOpacity(
-                                    isDark ? 0.15 : 0.4,
+                                  color: Colors.amber.withValues(
+                                    alpha: isDark ? 0.15 : 0.4,
                                   ),
                                   blurRadius: 30,
                                   spreadRadius: 10,
@@ -242,7 +359,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 20),
                         Text(
-                          _isGoogleFlow ? "Completa tu registro" : "Crear Cuenta",
+                          _isGoogleFlow
+                              ? "Completa tu registro"
+                              : "Crear Cuenta",
                           style: TextStyle(
                             color: isDark ? Colors.white : Colors.black87,
                             fontSize: 26,
@@ -265,23 +384,31 @@ class _RegisterPageState extends State<RegisterPage> {
                         if (_isGoogleFlow) ...[
                           const SizedBox(height: 12),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? Colors.white.withOpacity(0.07)
-                                  : Colors.black.withOpacity(0.04),
+                                  ? Colors.white.withValues(alpha: 0.07)
+                                  : Colors.black.withValues(alpha: 0.04),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Image.asset('assets/icons/google_icon.png', height: 16),
+                                Image.asset(
+                                  'assets/icons/google_icon.png',
+                                  height: 16,
+                                ),
                                 const SizedBox(width: 6),
                                 Text(
                                   'Conectado con Google',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: isDark ? Colors.white60 : Colors.black54,
+                                    color: isDark
+                                        ? Colors.white60
+                                        : Colors.black54,
                                   ),
                                 ),
                               ],
@@ -308,7 +435,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 radius: 45,
                                 backgroundColor: isDark
                                     ? Colors.white10
-                                    : Colors.black.withOpacity(0.05),
+                                    : Colors.black.withValues(alpha: 0.05),
                                 backgroundImage: _imageUrl != null
                                     ? NetworkImage(_imageUrl!)
                                     : null,
@@ -483,7 +610,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                     ),
                                   )
                                 : Text(
-                                    _isGoogleFlow ? "Completar Registro" : "Registrarse",
+                                    _isGoogleFlow
+                                        ? "Completar Registro"
+                                        : "Registrarse",
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,

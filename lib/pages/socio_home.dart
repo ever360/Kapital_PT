@@ -413,7 +413,6 @@ class _SocioHomePageState extends State<SocioHomePage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final isDark = themeProvider.isDarkMode;
@@ -424,22 +423,41 @@ class _SocioHomePageState extends State<SocioHomePage> {
       drawer: const KapitalDrawer(),
       appBar: AppBar(
         title: Text(
-          'MI OFICINA - SOCIO',
+          'Panel Empresa • Socio',
           style: TextStyle(
             color: isDark ? Colors.white : Colors.black87,
             fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
+            letterSpacing: 0.4,
           ),
         ),
-        backgroundColor: isDark 
-            ? const Color(0xFF1A1A1A).withValues(alpha: 0.8) 
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(24),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              (_miEmpresa?['nombre'] ?? 'Mi Empresa').toString(),
+              style: TextStyle(
+                color: isDark ? Colors.white60 : Colors.black54,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+        backgroundColor: isDark
+            ? const Color(0xFF1A1A1A).withValues(alpha: 0.8)
             : Colors.white.withValues(alpha: 0.8),
         elevation: 0,
+        scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh, color: isDark ? Colors.white70 : Colors.black54),
+            icon: Icon(
+              Icons.refresh,
+              color: isDark ? Colors.white70 : Colors.black54,
+            ),
             onPressed: _loadData,
           ),
         ],
