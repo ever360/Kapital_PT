@@ -102,7 +102,7 @@ class _SplashScreenState extends State<SplashScreen>
                 colors: isDark
                     ? [
                         primaryColor.withValues(alpha: 0.25),
-                        const Color(0xFF0D0D0D),
+                        const Color(0xFF050816),
                       ]
                     : [primaryColor.withValues(alpha: 0.8), Colors.white],
                 stops: const [0.0, 1.0],

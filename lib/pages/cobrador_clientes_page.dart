@@ -31,18 +31,29 @@ class _CobradorClientesPageState extends State<CobradorClientesPage> {
       final rutaId = widget.rutaData['id'];
 
       // 1. Traer todos los clientes activos de ESTA ruta
-      final resClientes = await supabase.from('clientes').select().eq('ruta_id', rutaId).eq('is_active', true).order('nombre');
+      final resClientes = await supabase
+          .from('clientes')
+          .select()
+          .eq('ruta_id', rutaId)
+          .eq('is_active', true)
+          .order('nombre');
 
       // 2. Traer todos los prestamos activos de ESTA ruta
-      final resPrestamos = await supabase.from('prestamos').select().eq('ruta_id', rutaId).eq('estado', 'ACTIVO');
+      final resPrestamos = await supabase
+          .from('prestamos')
+          .select()
+          .eq('ruta_id', rutaId)
+          .eq('estado', 'ACTIVO');
 
       double deudaAcumulada = 0;
       final List<Map<String, dynamic>> finalData = [];
 
       for (var cliente in resClientes) {
         // Filtrar préstamos de este cliente localmente (más rápido que N queries)
-        var prestamosDelCliente = resPrestamos.where((p) => p['cliente_id'] == cliente['id']).toList();
-        
+        var prestamosDelCliente = resPrestamos
+            .where((p) => p['cliente_id'] == cliente['id'])
+            .toList();
+
         double saldoTotalCliente = 0;
         for (var p in prestamosDelCliente) {
           saldoTotalCliente += (p['saldo_pendiente'] ?? 0) as num;
@@ -67,7 +78,9 @@ class _CobradorClientesPageState extends State<CobradorClientesPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error cargando cartera: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error cargando cartera: $e')));
       }
     }
   }
@@ -84,7 +97,9 @@ class _CobradorClientesPageState extends State<CobradorClientesPage> {
     final primary = AppColors.primary(isDark);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5),
+      backgroundColor: isDark
+          ? const Color(0xFF050816)
+          : const Color(0xFFF9F6ED),
       appBar: AppBar(
         title: Text(
           widget.rutaData['nombre']?.toUpperCase() ?? 'DETALLE DE RUTA',
@@ -109,15 +124,41 @@ class _CobradorClientesPageState extends State<CobradorClientesPage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Total Cartera Viva", style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 13)),
-                    Text(_formatDinero(_totalDeudaRuta), style: TextStyle(color: primary, fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text(
+                      "Total Cartera Viva",
+                      style: TextStyle(
+                        color: isDark ? Colors.white54 : Colors.black54,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      _formatDinero(_totalDeudaRuta),
+                      style: TextStyle(
+                        color: primary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text("Clientes", style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 13)),
-                    Text("${_clientesAgrupados.length}", style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text(
+                      "Clientes",
+                      style: TextStyle(
+                        color: isDark ? Colors.white54 : Colors.black54,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      "${_clientesAgrupados.length}",
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -131,9 +172,12 @@ class _CobradorClientesPageState extends State<CobradorClientesPage> {
         },
         backgroundColor: primary,
         icon: const Icon(Icons.person_add_alt_1, color: Colors.black),
-        label: const Text("Nuevo Cliente", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        label: const Text(
+          "Nuevo Cliente",
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
       ),
-      body: _isLoading 
+      body: _isLoading
           ? Center(child: CircularProgressIndicator(color: primary))
           : RefreshIndicator(
               onRefresh: _loadClientesYPrestamos,
@@ -142,12 +186,17 @@ class _CobradorClientesPageState extends State<CobradorClientesPage> {
                   ? Center(
                       child: Text(
                         "No hay clientes en esta ruta",
-                        style: TextStyle(color: isDark ? Colors.white54 : Colors.black54),
+                        style: TextStyle(
+                          color: isDark ? Colors.white54 : Colors.black54,
+                        ),
                       ),
                     )
                   : ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10).copyWith(bottom: 80),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ).copyWith(bottom: 80),
                       itemCount: _clientesAgrupados.length,
                       itemBuilder: (context, index) {
                         final agru = _clientesAgrupados[index];
@@ -158,74 +207,146 @@ class _CobradorClientesPageState extends State<CobradorClientesPage> {
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           elevation: isDark ? 0 : 2,
-                          color: isDark ? const Color(0xFF232323) : Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          color: isDark
+                              ? const Color(0xFF232323)
+                              : Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           child: Theme(
-                            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                            data: Theme.of(
+                              context,
+                            ).copyWith(dividerColor: Colors.transparent),
                             child: ExpansionTile(
                               iconColor: primary,
-                              collapsedIconColor: isDark ? Colors.white54 : Colors.black54,
+                              collapsedIconColor: isDark
+                                  ? Colors.white54
+                                  : Colors.black54,
                               title: Text(
                                 cliente['nombre'],
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : Colors.black87),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: isDark ? Colors.white : Colors.black87,
+                                ),
                               ),
                               subtitle: RichText(
                                 text: TextSpan(
                                   text: "Deuda Total: ",
-                                  style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 13),
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? Colors.white54
+                                        : Colors.black54,
+                                    fontSize: 13,
+                                  ),
                                   children: [
                                     TextSpan(
                                       text: _formatDinero(deuda),
-                                      style: TextStyle(color: deuda > 0 ? Colors.redAccent : Colors.green, fontWeight: FontWeight.bold),
-                                    )
-                                  ]
-                                )
+                                      style: TextStyle(
+                                        color: deuda > 0
+                                            ? Colors.redAccent
+                                            : Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                               children: [
                                 const Divider(height: 1),
                                 if (prestamos.isEmpty)
                                   Padding(
                                     padding: const EdgeInsets.all(16.0),
-                                    child: Text("Sin créditos activos", style: TextStyle(color: isDark ? Colors.white24 : Colors.black26)),
+                                    child: Text(
+                                      "Sin créditos activos",
+                                      style: TextStyle(
+                                        color: isDark
+                                            ? Colors.white24
+                                            : Colors.black26,
+                                      ),
+                                    ),
                                   )
                                 else
                                   ...prestamos.map((p) {
                                     return ListTile(
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                                      title: Text("Crédito #${p['id'].toString().substring(0, 5)}", style: TextStyle(color: isDark ? Colors.white70 : Colors.black87, fontWeight: FontWeight.w600)),
-                                      subtitle: Text("Cuota: ${_formatDinero((p['cuota_diaria'] ?? 0) as double)} / día", style: TextStyle(color: primary)),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 20,
+                                            vertical: 4,
+                                          ),
+                                      title: Text(
+                                        "Crédito #${p['id'].toString().substring(0, 5)}",
+                                        style: TextStyle(
+                                          color: isDark
+                                              ? Colors.white70
+                                              : Colors.black87,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        "Cuota: ${_formatDinero((p['cuota_diaria'] ?? 0) as double)} / día",
+                                        style: TextStyle(color: primary),
+                                      ),
                                       trailing: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
                                         children: [
-                                          Text("Saldo", style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 10)),
-                                          Text(_formatDinero((p['saldo_pendiente'] ?? 0) as double), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                                          Text(
+                                            "Saldo",
+                                            style: TextStyle(
+                                              color: isDark
+                                                  ? Colors.white54
+                                                  : Colors.black54,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                          Text(
+                                            _formatDinero(
+                                              (p['saldo_pendiente'] ?? 0)
+                                                  as double,
+                                            ),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.redAccent,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                       onTap: () {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => CobradorPagosPage(
-                                              prestamo: p,
-                                              nombreCliente: cliente['nombre'],
-                                              rutaData: widget.rutaData,
-                                            )
-                                          )
+                                            builder: (context) =>
+                                                CobradorPagosPage(
+                                                  prestamo: p,
+                                                  nombreCliente:
+                                                      cliente['nombre'],
+                                                  rutaData: widget.rutaData,
+                                                ),
+                                          ),
                                         ).then((_) {
                                           _loadClientesYPrestamos(); // Refrescar al volver por si hizo pagos
                                         });
                                       },
                                     );
                                   }),
-                                
+
                                 // Botón para añadir préstamo rápido
                                 Padding(
                                   padding: const EdgeInsets.all(8.0),
                                   child: TextButton.icon(
-                                    onPressed: () {}, 
-                                    icon: Icon(Icons.monetization_on, size: 16, color: primary), 
-                                    label: Text("Adicionar Crédito", style: TextStyle(color: primary))
+                                    onPressed: () {},
+                                    icon: Icon(
+                                      Icons.monetization_on,
+                                      size: 16,
+                                      color: primary,
+                                    ),
+                                    label: Text(
+                                      "Adicionar Crédito",
+                                      style: TextStyle(color: primary),
+                                    ),
                                   ),
                                 ),
                               ],

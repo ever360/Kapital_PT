@@ -2,12 +2,7 @@
     "name": "kapital",
     "short_name": "kapital",
     "start_url": ".",
-    "display": "fullscreen",
-    "display_override": [
-        "fullscreen",
-        "standalone",
-        "minimal-ui"
-    ],
+    "display": "standalone",
     "scope": "/",
     "background_color": "#F9F6ED",
     "theme_color": "#F9F6ED",

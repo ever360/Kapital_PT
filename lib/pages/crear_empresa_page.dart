@@ -48,15 +48,18 @@ class _CrearEmpresaPageState extends State<CrearEmpresaPage> {
       final String empresaId = response[0]['id'];
 
       // 2. Vincular al usuario admin
-      await supabase.from('profiles').update({
-        'empresa_id': empresaId,
-      }).eq('id', user.id);
+      await supabase
+          .from('profiles')
+          .update({'empresa_id': empresaId})
+          .eq('id', user.id);
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("✅ Empresa registrada. El Master debe activarla para empezar."),
+          content: Text(
+            "✅ Empresa registrada. El Master debe activarla para empezar.",
+          ),
           backgroundColor: Colors.green,
         ),
       );
@@ -79,7 +82,9 @@ class _CrearEmpresaPageState extends State<CrearEmpresaPage> {
     final isDark = themeProvider.isDarkMode;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5),
+      backgroundColor: isDark
+          ? const Color(0xFF050816)
+          : const Color(0xFFF9F6ED),
       appBar: AppBar(
         title: const Text("Configura tu Empresa"),
         backgroundColor: Colors.transparent,
@@ -162,7 +167,10 @@ class _CrearEmpresaPageState extends State<CrearEmpresaPage> {
                       ? const CircularProgressIndicator(color: Colors.black)
                       : const Text(
                           "Registrar Empresa",
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
               ),
@@ -202,11 +210,14 @@ class _CrearEmpresaPageState extends State<CrearEmpresaPage> {
           style: TextStyle(color: isDark ? Colors.white : Colors.black87),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: isDark ? Colors.white24 : Colors.black26),
+            hintStyle: TextStyle(
+              color: isDark ? Colors.white24 : Colors.black26,
+            ),
             prefixIcon: Icon(icon, color: AppColors.primary(isDark), size: 20),
             filled: true,
-            fillColor: isDark ? Colors.white.withValues(alpha: 0.05)
- : Colors.black.withValues(alpha: 0.05),
+            fillColor: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.black.withValues(alpha: 0.05),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,

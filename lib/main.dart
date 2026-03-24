@@ -101,7 +101,7 @@ class KapitalApp extends StatelessWidget {
               useMaterial3: true,
               brightness: Brightness.light,
               primaryColor: AppColors.doradoKapital,
-              scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+              scaffoldBackgroundColor: const Color(0xFFF9F6ED),
               colorScheme: ColorScheme.fromSeed(
                 seedColor: AppColors.doradoKapital,
                 brightness: Brightness.light,
@@ -117,7 +117,7 @@ class KapitalApp extends StatelessWidget {
                 systemOverlayStyle: const SystemUiOverlayStyle(
                   statusBarColor: Colors.transparent,
                   statusBarIconBrightness: Brightness.dark,
-                  systemNavigationBarColor: Color(0xFFF5F5F5),
+                  systemNavigationBarColor: Color(0xFFF9F6ED),
                   systemNavigationBarIconBrightness: Brightness.dark,
                 ),
               ),
@@ -178,7 +178,7 @@ class KapitalApp extends StatelessWidget {
               useMaterial3: true,
               brightness: Brightness.dark,
               primaryColor: AppColors.verdeSupabase,
-              scaffoldBackgroundColor: const Color(0xFF0D0D0D),
+              scaffoldBackgroundColor: const Color(0xFF050816),
               colorScheme: ColorScheme.fromSeed(
                 seedColor: AppColors.verdeSupabase,
                 brightness: Brightness.dark,
@@ -194,7 +194,7 @@ class KapitalApp extends StatelessWidget {
                 systemOverlayStyle: const SystemUiOverlayStyle(
                   statusBarColor: Colors.transparent,
                   statusBarIconBrightness: Brightness.light,
-                  systemNavigationBarColor: Color(0xFF0D0D0D),
+                  systemNavigationBarColor: Color(0xFF050816),
                   systemNavigationBarIconBrightness: Brightness.light,
                 ),
               ),
@@ -257,8 +257,8 @@ class KapitalApp extends StatelessWidget {
                   final bool isDark = themeProvider.isDarkMode;
                   return Scaffold(
                     backgroundColor: isDark
-                        ? const Color(0xFF0D0D0D)
-                        : const Color(0xFFF5F5F5),
+                        ? const Color(0xFF050816)
+                        : const Color(0xFFF9F6ED),
                     extendBodyBehindAppBar: true,
                     extendBody: true,
                     body: Center(
