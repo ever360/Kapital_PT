@@ -2120,9 +2120,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
           ),
           overflow: TextOverflow.ellipsis,
         ),
-        backgroundColor: isDark
-            ? const Color(0xFF1A1A1A).withValues(alpha: 0.7)
-            : Colors.white.withValues(alpha: 0.7),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,

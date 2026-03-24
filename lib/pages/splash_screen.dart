@@ -85,260 +85,279 @@ class _SplashScreenState extends State<SplashScreen>
     final isDark = tp.isDarkMode;
     final primaryColor = AppColors.primary(isDark);
 
-    return Scaffold(
-      backgroundColor: isDark
-          ? const Color(0xFF050816)
-          : const Color(0xFFF9F6ED),
-      extendBodyBehindAppBar: true,
-      extendBody: true,
-      resizeToAvoidBottomInset: false,
-      body: AnimatedBuilder(
-        animation: _radiusAnimation,
-        builder: (context, child) {
-          return Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.center,
-                radius: _radiusAnimation.value,
-                colors: isDark
-                    ? [
-                        primaryColor.withValues(alpha: 0.25),
-                        const Color(0xFF050816),
-                      ]
-                    : [primaryColor.withValues(alpha: 0.8), Colors.white],
-                stops: const [0.0, 1.0],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: isDark
+            ? Brightness.light
+            : Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: isDark
+            ? const Color(0xFF050816)
+            : const Color(0xFFF9F6ED),
+        extendBodyBehindAppBar: true,
+        extendBody: true,
+        resizeToAvoidBottomInset: false,
+        body: AnimatedBuilder(
+          animation: _radiusAnimation,
+          builder: (context, child) {
+            return Container(
+              width: double.infinity,
+              height: double.infinity,
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.center,
+                  radius: _radiusAnimation.value,
+                  colors: isDark
+                      ? [
+                          primaryColor.withValues(alpha: 0.25),
+                          const Color(0xFF050816),
+                        ]
+                      : [
+                          primaryColor.withValues(alpha: 0.8),
+                          const Color(0xFFF9F6ED),
+                        ],
+                  stops: const [0.0, 1.0],
+                ),
               ),
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: -80,
-                  left: -40,
-                  child: Container(
-                    width: 240,
-                    height: 240,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          primaryColor.withValues(alpha: 0.18),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: -120,
-                  right: -60,
-                  child: Container(
-                    width: 280,
-                    height: 280,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          (isDark ? Colors.blueAccent : AppColors.doradoKapital)
-                              .withValues(alpha: 0.14),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(36),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
-                      child: Container(
-                        width: 320,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 28,
-                          vertical: 34,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.04)
-                              : Colors.white.withValues(alpha: 0.62),
-                          borderRadius: BorderRadius.circular(36),
-                          border: Border.all(
-                            color: primaryColor.withValues(alpha: 0.16),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: primaryColor.withValues(alpha: 0.20),
-                              blurRadius: 48,
-                              spreadRadius: -16,
-                              offset: const Offset(0, 26),
-                            ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -80,
+                    left: -40,
+                    child: Container(
+                      width: 240,
+                      height: 240,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            primaryColor.withValues(alpha: 0.18),
+                            Colors.transparent,
                           ],
                         ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 8,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -120,
+                    right: -60,
+                    child: Container(
+                      width: 280,
+                      height: 280,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            (isDark
+                                    ? Colors.blueAccent
+                                    : AppColors.doradoKapital)
+                                .withValues(alpha: 0.14),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(36),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
+                        child: Container(
+                          width: 320,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 28,
+                            vertical: 34,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.04)
+                                : Colors.white.withValues(alpha: 0.62),
+                            borderRadius: BorderRadius.circular(36),
+                            border: Border.all(
+                              color: primaryColor.withValues(alpha: 0.16),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: primaryColor.withValues(alpha: 0.20),
+                                blurRadius: 48,
+                                spreadRadius: -16,
+                                offset: const Offset(0, 26),
                               ),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.04)
-                                    : primaryColor.withValues(alpha: 0.10),
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(
-                                  color: primaryColor.withValues(alpha: 0.18),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
                                 ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: primaryColor,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: primaryColor.withValues(
-                                            alpha: 0.55,
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.04)
+                                      : primaryColor.withValues(alpha: 0.10),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: primaryColor.withValues(alpha: 0.18),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: primaryColor,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: primaryColor.withValues(
+                                              alpha: 0.55,
+                                            ),
+                                            blurRadius: 14,
                                           ),
-                                          blurRadius: 14,
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    'INICIALIZANDO ENTORNO',
-                                    style: TextStyle(
-                                      color: isDark
-                                          ? Colors.white70
-                                          : Colors.black87,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 1.3,
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      'INICIALIZANDO ENTORNO',
+                                      style: TextStyle(
+                                        color: isDark
+                                            ? Colors.white70
+                                            : Colors.black87,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 1.3,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 26),
-                            FadeTransition(
-                              opacity: _fadeLogo,
-                              child: Hero(
-                                tag: 'logo',
-                                child: Container(
-                                  padding: const EdgeInsets.all(18),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: RadialGradient(
-                                      colors: [
-                                        primaryColor.withValues(alpha: 0.22),
-                                        Colors.transparent,
-                                      ],
+                              const SizedBox(height: 26),
+                              FadeTransition(
+                                opacity: _fadeLogo,
+                                child: Hero(
+                                  tag: 'logo',
+                                  child: Container(
+                                    padding: const EdgeInsets.all(18),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: RadialGradient(
+                                        colors: [
+                                          primaryColor.withValues(alpha: 0.22),
+                                          Colors.transparent,
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  child: Image.asset(
-                                    'assets/logoKapital.png',
-                                    width: 136,
-                                    height: 136,
+                                    child: Image.asset(
+                                      'assets/logoKapital.png',
+                                      width: 136,
+                                      height: 136,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 20),
-                            FadeTransition(
-                              opacity: _fadeLogo,
-                              child: Column(
-                                children: [
-                                  ShimmerText(
-                                    text: 'Kapital',
-                                    style: TextStyle(
-                                      fontSize: 46,
-                                      fontWeight: FontWeight.w900,
-                                      color: isDark
-                                          ? Colors.white
-                                          : Colors.black87,
-                                      letterSpacing: 3,
+                              const SizedBox(height: 20),
+                              FadeTransition(
+                                opacity: _fadeLogo,
+                                child: Column(
+                                  children: [
+                                    ShimmerText(
+                                      text: 'Kapital',
+                                      style: TextStyle(
+                                        fontSize: 46,
+                                        fontWeight: FontWeight.w900,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.black87,
+                                        letterSpacing: 3,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'Finanzas operativas con presencia premium, control centralizado y velocidad en tiempo real.',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      height: 1.5,
-                                      letterSpacing: 0.6,
-                                      color: isDark
-                                          ? Colors.white60
-                                          : Colors.black54,
-                                      fontWeight: FontWeight.w400,
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Finanzas operativas con presencia premium, control centralizado y velocidad en tiempo real.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        height: 1.5,
+                                        letterSpacing: 0.6,
+                                        color: isDark
+                                            ? Colors.white60
+                                            : Colors.black54,
+                                        fontWeight: FontWeight.w400,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 50,
-                  left: 0,
-                  right: 0,
-                  child: FadeTransition(
-                    opacity: _fadeLogo,
-                    child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.04)
-                              : Colors.white.withValues(alpha: 0.72),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(
-                            color: primaryColor.withValues(alpha: 0.14),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                isDark ? primaryColor : AppColors.doradoKapital,
-                              ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 50,
+                    left: 0,
+                    right: 0,
+                    child: FadeTransition(
+                      opacity: _fadeLogo,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.04)
+                                : Colors.white.withValues(alpha: 0.72),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: primaryColor.withValues(alpha: 0.14),
                             ),
-                            const SizedBox(width: 14),
-                            Text(
-                              'Cargando núcleo visual',
-                              style: TextStyle(
-                                color: isDark ? Colors.white70 : Colors.black87,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.3,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  isDark
+                                      ? primaryColor
+                                      : AppColors.doradoKapital,
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 14),
+                              Text(
+                                'Cargando núcleo visual',
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Colors.white70
+                                      : Colors.black87,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

@@ -960,7 +960,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             const SizedBox(height: 20),
                             Text(
-                              'v1.6.2 - Push Notifications & Kapital Branding',
+                              'v1.7.1 - PWA Nativa & Edge-to-Edge',
                               style: TextStyle(
                                 color: isDark ? Colors.white24 : Colors.black38,
                                 fontSize: 11,
