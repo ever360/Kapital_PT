@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kapital_app/theme/theme_provider.dart';
 import 'package:provider/provider.dart';
@@ -386,6 +387,12 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(color: Colors.transparent),
                 ),
+              ),
+              systemOverlayStyle: SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: isDark
+                    ? Brightness.light
+                    : Brightness.dark,
               ),
               title: Text(
                 'Panel Empresa • Dashboard',

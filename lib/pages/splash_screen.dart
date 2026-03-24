@@ -86,6 +86,9 @@ class _SplashScreenState extends State<SplashScreen>
     final primaryColor = AppColors.primary(isDark);
 
     return Scaffold(
+      backgroundColor: isDark
+          ? const Color(0xFF050816)
+          : const Color(0xFFF9F6ED),
       extendBodyBehindAppBar: true,
       extendBody: true,
       resizeToAvoidBottomInset: false,
