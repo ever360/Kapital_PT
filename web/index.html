@@ -15,31 +15,44 @@
 
   <!-- Descripción y SEO -->
   <meta name="description" content="Tu futuro financiero empieza aquí">
-  <meta name="theme-color" content="#F5F5F5" id="theme-color-meta">
+  <!-- theme-color dual: elimina la línea entre status bar y app -->
+  <meta name="theme-color" content="#F9F6ED" media="(prefers-color-scheme: light)" id="theme-color-light">
+  <meta name="theme-color" content="#050816" media="(prefers-color-scheme: dark)" id="theme-color-dark">
 
   <!-- Script para aplicar el color de la barra de estado según el tema guardado -->
   <script>
     (function () {
+      // Colores exactos del gradiente top de la app Flutter
+      const LIGHT_BG = '#F9F6ED';
+      const DARK_BG  = '#050816';
+
       function applyThemeColor(isDark) {
-        const color = isDark ? '#0D0D0D' : '#F5F5F5';
-        const meta = document.getElementById('theme-color-meta');
-        if (meta) meta.setAttribute('content', color);
+        const color = isDark ? DARK_BG : LIGHT_BG;
+        const metaLight = document.getElementById('theme-color-light');
+        const metaDark  = document.getElementById('theme-color-dark');
+        // Sincroniza ambos para forzar el color correcto independiente de prefers-color-scheme
+        if (isDark) {
+          if (metaDark)  metaDark.setAttribute('content', DARK_BG);
+          if (metaLight) metaLight.setAttribute('content', DARK_BG);
+        } else {
+          if (metaLight) metaLight.setAttribute('content', LIGHT_BG);
+          if (metaDark)  metaDark.setAttribute('content', LIGHT_BG);
+        }
         document.documentElement.style.setProperty('--app-bg', color);
         document.body.style.backgroundColor = color;
       }
 
-      // Función global para que Flutter la llame
+      // Función global para que Flutter la llame cuando el usuario cambia el tema
       window.updatePWATheme = function(isDark) {
         applyThemeColor(isDark);
       };
 
-      // Inicialización rápida
+      // Inicialización rápida antes de que Flutter cargue
       const savedTheme = localStorage.getItem('flutter.theme_mode') || localStorage.getItem('app_theme');
       let isDark = savedTheme === '"dark"' || savedTheme === 'dark';
       if (!savedTheme || savedTheme === '"system"' || savedTheme === 'system') {
         isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       }
-      
       applyThemeColor(isDark);
     })();
   </script>
@@ -61,11 +74,11 @@
 <body>
   <style>
     :root {
-      --app-bg: #F5F5F5;
+      --app-bg: #F9F6ED;
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --app-bg: #0D0D0D;
+        --app-bg: #050816;
       }
     }
 

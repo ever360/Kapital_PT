@@ -2,7 +2,7 @@
 <html lang="es">
 
 <head>
-  <base href="/Kapital_PT/">
+  <base href="/">
 
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=Edge">
@@ -15,29 +15,44 @@
 
   <!-- Descripción y SEO -->
   <meta name="description" content="Tu futuro financiero empieza aquí">
-  <meta name="theme-color" content="#F5F5F5" id="theme-color-meta">
+  <!-- theme-color dual: elimina la línea entre status bar y app -->
+  <meta name="theme-color" content="#F9F6ED" media="(prefers-color-scheme: light)" id="theme-color-light">
+  <meta name="theme-color" content="#050816" media="(prefers-color-scheme: dark)" id="theme-color-dark">
 
   <!-- Script para aplicar el color de la barra de estado según el tema guardado -->
   <script>
     (function () {
+      // Colores exactos del gradiente top de la app Flutter
+      const LIGHT_BG = '#F9F6ED';
+      const DARK_BG  = '#050816';
+
       function applyThemeColor(isDark) {
-        const color = isDark ? '#0D0D0D' : '#F5F5F5';
-        const meta = document.getElementById('theme-color-meta');
-        if (meta) meta.setAttribute('content', color);
+        const color = isDark ? DARK_BG : LIGHT_BG;
+        const metaLight = document.getElementById('theme-color-light');
+        const metaDark  = document.getElementById('theme-color-dark');
+        // Sincroniza ambos para forzar el color correcto independiente de prefers-color-scheme
+        if (isDark) {
+          if (metaDark)  metaDark.setAttribute('content', DARK_BG);
+          if (metaLight) metaLight.setAttribute('content', DARK_BG);
+        } else {
+          if (metaLight) metaLight.setAttribute('content', LIGHT_BG);
+          if (metaDark)  metaDark.setAttribute('content', LIGHT_BG);
+        }
         document.documentElement.style.setProperty('--app-bg', color);
         document.body.style.backgroundColor = color;
       }
 
-      // Función global para que Flutter la llame
+      // Función global para que Flutter la llame cuando el usuario cambia el tema
       window.updatePWATheme = function(isDark) {
         applyThemeColor(isDark);
       };
 
-      // Inicialización rápida
+      // Inicialización rápida antes de que Flutter cargue
       const savedTheme = localStorage.getItem('flutter.theme_mode') || localStorage.getItem('app_theme');
-      const isDark = savedTheme === '"dark"' || savedTheme === 'dark' ||
-        (savedTheme !== '"light"' && savedTheme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      
+      let isDark = savedTheme === '"dark"' || savedTheme === 'dark';
+      if (!savedTheme || savedTheme === '"system"' || savedTheme === 'system') {
+        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
       applyThemeColor(isDark);
     })();
   </script>
@@ -59,11 +74,11 @@
 <body>
   <style>
     :root {
-      --app-bg: #F5F5F5;
+      --app-bg: #F9F6ED;
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --app-bg: #0D0D0D;
+        --app-bg: #050816;
       }
     }
 
@@ -71,11 +86,13 @@
     body {
       margin: 0;
       padding: 0;
-      width: 100vw;
-      height: 100vh;
+      width: 100dvw;
+      height: 100dvh;
+      min-height: -webkit-fill-available;
       background-color: var(--app-bg) !important;
       overflow: hidden;
       position: fixed;
+      inset: 0;
     }
 
     /* Edge-to-edge: el contenido de Flutter ocupa toda la pantalla incluyendo la status bar */
@@ -89,25 +106,45 @@
       position: fixed !important;
       top: 0 !important;
       left: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
+      width: 100dvw !important;
+      height: 100dvh !important;
+      min-height: -webkit-fill-available !important;
+    }
+
+    #pwa-splash {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100dvw;
+      height: 100dvh;
+      min-height: -webkit-fill-available;
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      background-color: var(--app-bg);
+      transition: opacity 220ms ease;
+    }
+
+    #pwa-splash.hidden {
+      opacity: 0;
+      pointer-events: none;
     }
   </style>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker
+          .register('/firebase-messaging-sw.js')
+          .catch(function (err) {
+            console.error('No se pudo registrar firebase-messaging-sw.js', err);
+          });
+      });
+    }
+  </script>
   <!-- Flutter bootstrap -->
   <script src="flutter_bootstrap.js" async></script>
 
-  <div id="pwa-splash" style="
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100vw;
-    height: 100vh;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: -1;
-    background-color: var(--app-bg);
-  ">
+  <div id="pwa-splash">
     <img src="icons/kapital_192.png" alt="Kapital" style="width: 120px; height: 120px; opacity: 0.8;">
   </div>
 
@@ -164,6 +201,26 @@
 
   <script>
     (function () {
+      function syncViewportHeight() {
+        const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+      }
+
+      syncViewportHeight();
+      window.addEventListener('resize', syncViewportHeight, { passive: true });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', syncViewportHeight, { passive: true });
+      }
+
+      const splash = document.getElementById('pwa-splash');
+      window.addEventListener('flutter-first-frame', function () {
+        if (!splash) return;
+        splash.classList.add('hidden');
+        setTimeout(function () {
+          splash.remove();
+        }, 260);
+      });
+
       var deferredPrompt = null;
       var banner = document.getElementById('pwa-install-banner');
       var installBtn = document.getElementById('pwa-install-btn');

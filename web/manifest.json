@@ -9,8 +9,8 @@
         "minimal-ui"
     ],
     "scope": "/",
-    "background_color": "#F5F5F5",
-    "theme_color": "#F5F5F5",
+    "background_color": "#050816",
+    "theme_color": "#050816",
     "description": "Tu futuro financiero empieza aquí",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
