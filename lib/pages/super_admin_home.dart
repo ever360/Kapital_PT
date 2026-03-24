@@ -118,28 +118,30 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
         final themeProvider = Provider.of<ThemeProvider>(context);
         return AlertDialog(
           title: const Text("Nueva Sucursal / Socio"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Rutas disponibles: $disponibles",
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.amber,
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Rutas disponibles: $disponibles",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.amber,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: nombreCtrl,
-                decoration: _inputDeco("Nombre (ej: Sede Norte)"),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: rutasSedeCtrl,
-                keyboardType: TextInputType.number,
-                decoration: _inputDeco("Rutas para esta sede"),
-              ),
-            ],
+                const SizedBox(height: 10),
+                TextField(
+                  controller: nombreCtrl,
+                  decoration: _inputDeco("Nombre (ej: Sede Norte)"),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: rutasSedeCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: _inputDeco("Rutas para esta sede"),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(

@@ -2,7 +2,13 @@
     "name": "kapital",
     "short_name": "kapital",
     "start_url": ".",
-    "display": "standalone",
+    "display": "fullscreen",
+    "display_override": [
+        "fullscreen",
+        "standalone",
+        "minimal-ui"
+    ],
+    "scope": "/",
     "background_color": "#F5F5F5",
     "theme_color": "#F5F5F5",
     "description": "Tu futuro financiero empieza aquí",

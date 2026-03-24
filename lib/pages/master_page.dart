@@ -255,18 +255,18 @@ class _MasterHomePageState extends State<MasterHomePage> {
     final ownerEmail = ownerList.isNotEmpty ? ownerList.first['email'] : 'N/A';
     final ownerName = ownerList.isNotEmpty ? ownerList.first['nombre'] : 'N/A';
 
-    // Obtener historial de pagos de esta empresa
+    // Obtener historial de pagos de suscripción de la empresa
     List<Map<String, dynamic>> pagos = [];
     try {
       final resp = await supabase
-          .from('pagos')
-          .select('*, prestamos!inner(id)')
+          .from('pagos_empresa')
+          .select('*')
+          .eq('empresa_id', emp['id'])
           .order('created_at', ascending: false)
           .limit(50);
-      // Filtrar solo pagos relacionados a prestamos de esta empresa
       pagos = List<Map<String, dynamic>>.from(resp);
     } catch (e) {
-      debugPrint('Error cargando pagos: $e');
+      debugPrint('Error cargando pagos empresa: $e');
     }
 
     // Obtener fecha de creación
@@ -280,212 +280,522 @@ class _MasterHomePageState extends State<MasterHomePage> {
     ).isDarkMode;
     final primary = AppColors.primary(isDark);
 
+    final vencStatus = _getVencimientoStatus(emp);
+    final totalPagado = pagos.fold<double>(
+      0,
+      (sum, p) =>
+          sum +
+          ((p['monto'] ?? 0) is int
+              ? (p['monto'] as int).toDouble()
+              : (p['monto'] ?? 0.0) as double),
+    );
+
     await showModalBottomSheet(
       context: context,
-      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) => DraggableScrollableSheet(
         expand: false,
-        initialChildSize: 0.7,
+        initialChildSize: 0.85,
         minChildSize: 0.5,
         maxChildSize: 0.95,
         builder: (context, scrollController) => Container(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF8F9FA),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
           child: Column(
             children: [
-              // Header
+              // Drag handle
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
+                margin: const EdgeInsets.only(top: 10),
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : Colors.black.withValues(alpha: 0.05),
-                    ),
-                  ),
+                  color: primary.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.business_rounded, color: primary, size: 24),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            emp['nombre'] ?? 'Sin nombre',
-                            style: TextStyle(
-                              color: isDark ? Colors.white : Colors.black87,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          Text(
-                            'Detalles de Empresa',
-                            style: TextStyle(
-                              color: isDark ? Colors.white54 : Colors.black54,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(ctx),
-                      color: isDark ? Colors.white54 : Colors.black54,
+              ),
+              // Header futurista con gradiente
+              Container(
+                margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      primary.withValues(alpha: 0.15),
+                      primary.withValues(alpha: 0.05),
+                      isDark ? const Color(0xFF1A1A2E) : Colors.white,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: primary.withValues(alpha: 0.2)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primary.withValues(alpha: 0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-              ),
-              // Content
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(20),
+                child: Column(
                   children: [
-                    // Info General
-                    _buildDetailSection('Información General', isDark, primary),
-                    const SizedBox(height: 8),
-                    _buildDetailRow(
-                      'Dueño',
-                      ownerName,
-                      Icons.person_outline,
-                      isDark,
-                    ),
-                    _buildDetailRow(
-                      'Email Dueño',
-                      ownerEmail,
-                      Icons.email_outlined,
-                      isDark,
-                    ),
-                    _buildDetailRow(
-                      'Fecha Creación',
-                      _formatDate(fechaCreacion),
-                      Icons.calendar_today_outlined,
-                      isDark,
-                    ),
-                    _buildDetailRow(
-                      'Rutas Contratadas',
-                      '${emp['total_rutas_contratadas'] ?? 0}',
-                      Icons.route_outlined,
-                      isDark,
-                    ),
-                    _buildDetailRow(
-                      'Estado',
-                      (emp['is_active'] ?? false) ? 'Activa' : 'Inactiva',
-                      Icons.verified_outlined,
-                      isDark,
-                      valueColor: (emp['is_active'] ?? false)
-                          ? Colors.green
-                          : Colors.redAccent,
-                    ),
-                    const SizedBox(height: 24),
-                    // Historial de Pagos
-                    _buildDetailSection('Historial de Pagos', isDark, primary),
-                    if (pagos.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: Center(
-                          child: Text(
-                            'Sin pagos registrados',
-                            style: TextStyle(
-                              color: isDark ? Colors.white38 : Colors.black38,
-                              fontSize: 13,
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: primary.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: primary.withValues(alpha: 0.3),
                             ),
+                          ),
+                          child: Icon(
+                            Icons.business_rounded,
+                            color: primary,
+                            size: 22,
                           ),
                         ),
-                      )
-                    else
-                      ...pagos.map(
-                        (pago) => Container(
-                          margin: const EdgeInsets.only(top: 12),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.03)
-                                : Colors.black.withValues(alpha: 0.02),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: primary.withValues(alpha: 0.1),
-                            ),
-                          ),
+                        const SizedBox(width: 14),
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              Text(
+                                emp['nombre'] ?? 'Sin nombre',
+                                style: TextStyle(
+                                  color: isDark ? Colors.white : Colors.black87,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 18,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Monto: \$ ${(pago['monto'] ?? 0).toStringAsFixed(0).replaceAllMapped(RegExp(r'(\\d{1,3})(?=(\\d{3})+(?!\\d))'), (Match m) => '${m[1]}.')}',
-                                          style: TextStyle(
-                                            color: isDark
-                                                ? Colors.white
-                                                : Colors.black87,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'Método: ${pago['metodo_pago'] ?? 'N/A'}',
-                                          style: TextStyle(
-                                            color: isDark
-                                                ? Colors.white54
-                                                : Colors.black54,
-                                            fontSize: 11,
-                                          ),
+                                  Container(
+                                    width: 7,
+                                    height: 7,
+                                    decoration: BoxDecoration(
+                                      color: (emp['is_active'] ?? false)
+                                          ? Colors.greenAccent
+                                          : Colors.redAccent,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color:
+                                              ((emp['is_active'] ?? false)
+                                                      ? Colors.greenAccent
+                                                      : Colors.redAccent)
+                                                  .withValues(alpha: 0.6),
+                                          blurRadius: 6,
                                         ),
                                       ],
                                     ),
                                   ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        _formatDate(
-                                          pago['fecha_pago'] ??
-                                              pago['created_at'] ??
-                                              'N/A',
-                                        ),
-                                        style: TextStyle(
-                                          color: primary,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Rutas: ${(pago['rutas_contratadas'] ?? 0)}',
-                                        style: TextStyle(
-                                          color: isDark
-                                              ? Colors.white54
-                                              : Colors.black54,
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                    ],
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    (emp['is_active'] ?? false)
+                                        ? 'Activa'
+                                        : 'Inactiva',
+                                    style: TextStyle(
+                                      color: isDark
+                                          ? Colors.white54
+                                          : Colors.black54,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Icon(
+                                    Icons.route_rounded,
+                                    size: 13,
+                                    color: primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${emp['total_rutas_contratadas'] ?? 0} rutas',
+                                    style: TextStyle(
+                                      color: isDark
+                                          ? Colors.white54
+                                          : Colors.black54,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                 ],
                               ),
                             ],
                           ),
                         ),
-                      ),
+                        IconButton(
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: isDark ? Colors.white38 : Colors.black38,
+                          ),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Mini stats row
+                    Row(
+                      children: [
+                        _buildMiniStat(
+                          'Dueño',
+                          ownerName,
+                          Icons.person_rounded,
+                          isDark,
+                          primary,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildMiniStat(
+                          'Vence',
+                          emp['fecha_vencimiento'] != null
+                              ? _formatDate(emp['fecha_vencimiento'])
+                              : 'N/A',
+                          Icons.timer_outlined,
+                          isDark,
+                          vencStatus['color'] as Color,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Content
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    // Info cards row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildInfoChip(
+                            Icons.email_outlined,
+                            ownerEmail,
+                            isDark,
+                            primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildInfoChip(
+                            Icons.calendar_today_outlined,
+                            'Creada: ${_formatDate(fechaCreacion)}',
+                            isDark,
+                            primary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildInfoChip(
+                            Icons.payments_outlined,
+                            'Total: \$${totalPagado.toStringAsFixed(0)}',
+                            isDark,
+                            Colors.greenAccent,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    // Historial de Pagos header
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.receipt_long_rounded,
+                            color: primary,
+                            size: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Historial de Pagos',
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${pagos.length}',
+                            style: TextStyle(
+                              color: primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (pagos.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.03)
+                              : Colors.black.withValues(alpha: 0.02),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Colors.black.withValues(alpha: 0.05),
+                            strokeAlign: BorderSide.strokeAlignInside,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.receipt_long_outlined,
+                              size: 40,
+                              color: isDark ? Colors.white12 : Colors.black12,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Sin pagos registrados',
+                              style: TextStyle(
+                                color: isDark ? Colors.white30 : Colors.black26,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ...pagos.asMap().entries.map((entry) {
+                        final idx = entry.key;
+                        final pago = entry.value;
+                        final montoRaw = (pago['monto'] ?? 0);
+                        final monto = montoRaw is int
+                            ? montoRaw.toDouble()
+                            : (montoRaw as double);
+                        final isLatest = idx == 0;
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: isLatest
+                                  ? [
+                                      primary.withValues(alpha: 0.08),
+                                      isDark
+                                          ? const Color(0xFF1A1A2E)
+                                          : Colors.white,
+                                    ]
+                                  : [
+                                      isDark
+                                          ? Colors.white.withValues(alpha: 0.03)
+                                          : Colors.white,
+                                      isDark
+                                          ? Colors.white.withValues(alpha: 0.01)
+                                          : const Color(0xFFF8F9FA),
+                                    ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isLatest
+                                  ? primary.withValues(alpha: 0.3)
+                                  : isDark
+                                  ? Colors.white.withValues(alpha: 0.06)
+                                  : Colors.black.withValues(alpha: 0.06),
+                            ),
+                            boxShadow: isLatest
+                                ? [
+                                    BoxShadow(
+                                      color: primary.withValues(alpha: 0.1),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ]
+                                : [],
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    // Icono con glow
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: isLatest
+                                            ? primary.withValues(alpha: 0.15)
+                                            : isDark
+                                            ? Colors.white.withValues(
+                                                alpha: 0.05,
+                                              )
+                                            : Colors.black.withValues(
+                                                alpha: 0.04,
+                                              ),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Icon(
+                                        Icons.paid_rounded,
+                                        color: isLatest
+                                            ? primary
+                                            : isDark
+                                            ? Colors.white38
+                                            : Colors.black38,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    // Monto y fecha
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '\$ ${monto.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
+                                            style: TextStyle(
+                                              color: isDark
+                                                  ? Colors.white
+                                                  : Colors.black87,
+                                              fontWeight: FontWeight.w900,
+                                              fontSize: 17,
+                                              letterSpacing: -0.5,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            _formatDate(
+                                              pago['fecha_pago'] ??
+                                                  pago['created_at'] ??
+                                                  'N/A',
+                                            ),
+                                            style: TextStyle(
+                                              color: isDark
+                                                  ? Colors.white38
+                                                  : Colors.black38,
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // Rutas badge
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 3,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: primary.withValues(
+                                              alpha: 0.1,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.route_rounded,
+                                                size: 11,
+                                                color: primary,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '${pago['rutas_contratadas'] ?? 0}',
+                                                style: TextStyle(
+                                                  color: primary,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 11,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (pago['fecha_vencimiento'] != null)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 4,
+                                            ),
+                                            child: Text(
+                                              'Vence ${_formatDate(pago['fecha_vencimiento'])}',
+                                              style: TextStyle(
+                                                color: isDark
+                                                    ? Colors.white30
+                                                    : Colors.black26,
+                                                fontSize: 10,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                if (pago['notas'] != null &&
+                                    (pago['notas'] as String).isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? Colors.white.withValues(alpha: 0.03)
+                                          : Colors.black.withValues(
+                                              alpha: 0.02,
+                                            ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      pago['notas'],
+                                      style: TextStyle(
+                                        color: isDark
+                                            ? Colors.white38
+                                            : Colors.black45,
+                                        fontSize: 11,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -497,66 +807,81 @@ class _MasterHomePageState extends State<MasterHomePage> {
     );
   }
 
-  Widget _buildDetailSection(String title, bool isDark, Color primary) {
-    return Row(
-      children: [
-        Container(
-          width: 3,
-          height: 16,
-          decoration: BoxDecoration(
-            color: primary,
-            borderRadius: BorderRadius.circular(1.5),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            color: isDark ? Colors.white : Colors.black87,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailRow(
+  Widget _buildMiniStat(
     String label,
     String value,
     IconData icon,
-    bool isDark, {
-    Color? valueColor,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+    bool isDark,
+    Color color,
+  ) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.04)
+              : Colors.black.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: isDark ? Colors.white30 : Colors.black26,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(IconData icon, String text, bool isDark, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.04)
+            : Colors.black.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.1)),
+      ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: isDark ? Colors.white38 : Colors.black38),
-          const SizedBox(width: 12),
+          Icon(icon, size: 14, color: color.withValues(alpha: 0.7)),
+          const SizedBox(width: 8),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isDark ? Colors.white54 : Colors.black54,
-                    fontSize: 11,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    color:
-                        valueColor ?? (isDark ? Colors.white : Colors.black87),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
+            child: Text(
+              text,
+              style: TextStyle(
+                color: isDark ? Colors.white60 : Colors.black54,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -845,6 +1170,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
     final rutasMaxCtrl = TextEditingController(
       text: '5',
     ); // Rutas pagadas por defecto
+    final montoCtrl = TextEditingController(text: '0');
 
     DateTime fechaPagoSel = DateTime.now();
     DateTime fechaVencSel = fechaPagoSel.add(const Duration(days: 30));
@@ -888,173 +1214,207 @@ class _MasterHomePageState extends State<MasterHomePage> {
               ),
               content: Form(
                 key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.black.withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 22,
-                            backgroundColor: _getAvatarColor(user['nombre']),
-                            backgroundImage: user['foto'] != null
-                                ? NetworkImage(user['foto'])
-                                : null,
-                            child: user['foto'] == null
-                                ? Text(
-                                    _getInitials(user['nombre']),
-                                    style: const TextStyle(
-                                      color: Colors.white,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.03),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 22,
+                              backgroundColor: _getAvatarColor(user['nombre']),
+                              backgroundImage: user['foto'] != null
+                                  ? NetworkImage(user['foto'])
+                                  : null,
+                              child: user['foto'] == null
+                                  ? Text(
+                                      _getInitials(user['nombre']),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    user['nombre'] ?? 'Sin nombre',
+                                    style: TextStyle(
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black87,
                                       fontWeight: FontWeight.bold,
                                     ),
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                user['nombre'] ?? 'Sin nombre',
-                                style: TextStyle(
-                                  color: isDark ? Colors.white : Colors.black87,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    user['telefono'] ?? '',
+                                    style: TextStyle(
+                                      color: isDark
+                                          ? Colors.white38
+                                          : Colors.black38,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                user['telefono'] ?? '',
-                                style: TextStyle(
-                                  color: isDark
-                                      ? Colors.white38
-                                      : Colors.black38,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: empresaCtrl,
-                      style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black87,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Nombre de la Empresa',
-                        labelStyle: TextStyle(
-                          color: isDark ? Colors.white54 : Colors.black54,
-                        ),
-                        prefixIcon: Icon(
-                          Icons.business,
-                          color: AppColors.primary(isDark),
-                        ),
-                        filled: true,
-                        fillColor: isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.black.withValues(alpha: 0.03),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Obligatorio'
-                          : null,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: rutasMaxCtrl,
-                      keyboardType: TextInputType.number,
-                      style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black87,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Rutas Máximas Pagadas',
-                        labelStyle: TextStyle(
-                          color: isDark ? Colors.white60 : Colors.black54,
-                        ),
-                        prefixIcon: Icon(
-                          Icons.route,
-                          color: AppColors.primary(isDark),
-                        ),
-                        filled: true,
-                        fillColor: isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.black.withValues(alpha: 0.03),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Obligatorio';
-                        if (int.tryParse(v) == null || int.parse(v) < 1) {
-                          return 'Mínimo 1';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.black.withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Fechas de Membresía',
-                            style: TextStyle(
-                              color: isDark ? Colors.white70 : Colors.black87,
-                              fontWeight: FontWeight.bold,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: () => pickDate(true),
-                                  icon: const Icon(Icons.event_available),
-                                  label: Text(
-                                    'Pago: ${_formatDate(fechaPagoSel.toIso8601String())}',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: () => pickDate(false),
-                                  icon: const Icon(Icons.event_busy),
-                                  label: Text(
-                                    'Vence: ${_formatDate(fechaVencSel.toIso8601String())}',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: empresaCtrl,
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Nombre de la Empresa',
+                          labelStyle: TextStyle(
+                            color: isDark ? Colors.white54 : Colors.black54,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.business,
+                            color: AppColors.primary(isDark),
+                          ),
+                          filled: true,
+                          fillColor: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.03),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Obligatorio'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: rutasMaxCtrl,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Rutas Máximas Pagadas',
+                          labelStyle: TextStyle(
+                            color: isDark ? Colors.white60 : Colors.black54,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.route,
+                            color: AppColors.primary(isDark),
+                          ),
+                          filled: true,
+                          fillColor: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.03),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty)
+                            return 'Obligatorio';
+                          if (int.tryParse(v) == null || int.parse(v) < 1) {
+                            return 'Mínimo 1';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: montoCtrl,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Monto del Pago',
+                          labelStyle: TextStyle(
+                            color: isDark ? Colors.white60 : Colors.black54,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.attach_money,
+                            color: AppColors.primary(isDark),
+                          ),
+                          filled: true,
+                          fillColor: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.03),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.03),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Fechas de Membresía',
+                              style: TextStyle(
+                                color: isDark ? Colors.white70 : Colors.black87,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => pickDate(true),
+                                    icon: const Icon(Icons.event_available),
+                                    label: Text(
+                                      'Pago: ${_formatDate(fechaPagoSel.toIso8601String())}',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => pickDate(false),
+                                    icon: const Icon(Icons.event_busy),
+                                    label: Text(
+                                      'Vence: ${_formatDate(fechaVencSel.toIso8601String())}',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               actions: [
@@ -1086,13 +1446,14 @@ class _MasterHomePageState extends State<MasterHomePage> {
                     Navigator.pop(ctx);
                     setState(() => _isLoading = true);
                     try {
+                      final rutasContratadas = int.parse(
+                        rutasMaxCtrl.text.trim(),
+                      );
                       final empRes = await supabase
                           .from('empresas')
                           .insert({
                             'nombre': empresaCtrl.text.trim(),
-                            'total_rutas_contratadas': int.parse(
-                              rutasMaxCtrl.text.trim(),
-                            ),
+                            'total_rutas_contratadas': rutasContratadas,
                             'is_active': true,
                             'fecha_pago': fechaPagoSel
                                 .toUtc()
@@ -1103,6 +1464,18 @@ class _MasterHomePageState extends State<MasterHomePage> {
                           })
                           .select('id')
                           .single();
+                      // Registrar pago inicial de la empresa
+                      await supabase.from('pagos_empresa').insert({
+                        'empresa_id': empRes['id'],
+                        'monto': double.tryParse(montoCtrl.text.trim()) ?? 0,
+                        'rutas_contratadas': rutasContratadas,
+                        'fecha_pago': fechaPagoSel.toUtc().toIso8601String(),
+                        'fecha_vencimiento': fechaVencSel
+                            .toUtc()
+                            .toIso8601String(),
+                        'notas': 'Pago inicial - Empresa creada',
+                        'registrado_por': supabase.auth.currentUser?.id,
+                      });
                       await supabase
                           .from('profiles')
                           .update({
@@ -1146,6 +1519,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
       text: '${emp['total_rutas_contratadas'] ?? 1}',
     );
     final notasCtrl = TextEditingController(text: emp['notas_master'] ?? '');
+    final montoEditCtrl = TextEditingController(text: '0');
     DateTime fechaPagoSel = emp['fecha_pago'] != null
         ? DateTime.tryParse(emp['fecha_pago'])?.toLocal() ?? DateTime.now()
         : DateTime.now();
@@ -1191,101 +1565,129 @@ class _MasterHomePageState extends State<MasterHomePage> {
                 'Editar: ${emp['nombre']}',
                 style: TextStyle(color: isDark ? Colors.white : Colors.black87),
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: rutasCtrl,
-                    keyboardType: TextInputType.number,
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: 'Cupo de Rutas',
-                      labelStyle: TextStyle(
-                        color: isDark ? Colors.white60 : Colors.black54,
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: rutasCtrl,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
                       ),
-                      prefixIcon: Icon(
-                        Icons.route,
-                        color: AppColors.primary(isDark),
-                      ),
-                      filled: true,
-                      fillColor: isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : Colors.black.withValues(alpha: 0.03),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: notasCtrl,
-                    maxLines: 3,
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: 'Notas del Master',
-                      labelStyle: TextStyle(
-                        color: isDark ? Colors.white60 : Colors.black54,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.note,
-                        color: AppColors.primary(isDark),
-                      ),
-                      filled: true,
-                      fillColor: isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : Colors.black.withValues(alpha: 0.03),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
+                      decoration: InputDecoration(
+                        labelText: 'Cupo de Rutas',
+                        labelStyle: TextStyle(
+                          color: isDark ? Colors.white60 : Colors.black54,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.route,
+                          color: AppColors.primary(isDark),
+                        ),
+                        filled: true,
+                        fillColor: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.black.withValues(alpha: 0.03),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => pickDate(true),
-                          icon: Icon(
-                            Icons.event_available,
-                            color: AppColors.primary(isDark),
-                          ),
-                          label: Text(
-                            'Pago: ${_formatDate(fechaPagoSel.toIso8601String())}',
-                            style: TextStyle(
-                              color: isDark ? Colors.white70 : Colors.black87,
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: notasCtrl,
+                      maxLines: 3,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Notas del Master',
+                        labelStyle: TextStyle(
+                          color: isDark ? Colors.white60 : Colors.black54,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.note,
+                          color: AppColors.primary(isDark),
+                        ),
+                        filled: true,
+                        fillColor: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.black.withValues(alpha: 0.03),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: montoEditCtrl,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Monto del Pago',
+                        labelStyle: TextStyle(
+                          color: isDark ? Colors.white60 : Colors.black54,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.attach_money,
+                          color: AppColors.primary(isDark),
+                        ),
+                        filled: true,
+                        fillColor: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.black.withValues(alpha: 0.03),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => pickDate(true),
+                            icon: Icon(
+                              Icons.event_available,
+                              color: AppColors.primary(isDark),
+                            ),
+                            label: Text(
+                              'Pago: ${_formatDate(fechaPagoSel.toIso8601String())}',
+                              style: TextStyle(
+                                color: isDark ? Colors.white70 : Colors.black87,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => pickDate(false),
-                          icon: Icon(
-                            Icons.event_busy,
-                            color: AppColors.primary(isDark),
-                          ),
-                          label: Text(
-                            'Vence: ${_formatDate(fechaVencSel.toIso8601String())}',
-                            style: TextStyle(
-                              color: isDark ? Colors.white70 : Colors.black87,
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => pickDate(false),
+                            icon: Icon(
+                              Icons.event_busy,
+                              color: AppColors.primary(isDark),
+                            ),
+                            label: Text(
+                              'Vence: ${_formatDate(fechaVencSel.toIso8601String())}',
+                              style: TextStyle(
+                                color: isDark ? Colors.white70 : Colors.black87,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -1298,6 +1700,9 @@ class _MasterHomePageState extends State<MasterHomePage> {
                   ),
                   onPressed: () async {
                     Navigator.pop(ctx);
+                    final rutasNuevas =
+                        int.tryParse(rutasCtrl.text) ??
+                        emp['total_rutas_contratadas'];
                     await supabase
                         .from('empresas')
                         .update({
@@ -1305,12 +1710,26 @@ class _MasterHomePageState extends State<MasterHomePage> {
                           'fecha_vencimiento': fechaVencSel
                               .toUtc()
                               .toIso8601String(),
-                          'total_rutas_contratadas':
-                              int.tryParse(rutasCtrl.text) ??
-                              emp['total_rutas_contratadas'],
+                          'total_rutas_contratadas': rutasNuevas,
                           'notas_master': notasCtrl.text.trim(),
                         })
                         .eq('id', emp['id']);
+                    // Registrar pago en historial
+                    final montoVal =
+                        double.tryParse(montoEditCtrl.text.trim()) ?? 0;
+                    if (montoVal > 0) {
+                      await supabase.from('pagos_empresa').insert({
+                        'empresa_id': emp['id'],
+                        'monto': montoVal,
+                        'rutas_contratadas': rutasNuevas,
+                        'fecha_pago': fechaPagoSel.toUtc().toIso8601String(),
+                        'fecha_vencimiento': fechaVencSel
+                            .toUtc()
+                            .toIso8601String(),
+                        'notas': notasCtrl.text.trim(),
+                        'registrado_por': supabase.auth.currentUser?.id,
+                      });
+                    }
                     _refreshData();
                   },
                   child: const Text(
@@ -1613,7 +2032,9 @@ class _MasterHomePageState extends State<MasterHomePage> {
             ],
           ),
           const SizedBox(height: 12),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               ElevatedButton.icon(
                 onPressed: () => _toggleEmpresaActiva(emp),
@@ -1632,19 +2053,16 @@ class _MasterHomePageState extends State<MasterHomePage> {
                 ),
                 label: Text(activa ? 'Poner Inactiva' : 'Poner Activa'),
               ),
-              const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: () => _editarEmpresa(emp),
                 icon: const Icon(Icons.edit_outlined),
                 label: const Text('Editar plan'),
               ),
-              const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: () => _showEmpresaDetalles(emp),
                 icon: const Icon(Icons.info_outline),
                 label: const Text('Detalles'),
               ),
-              const Spacer(),
               TextButton(
                 onPressed: () {
                   Provider.of<ThemeProvider>(

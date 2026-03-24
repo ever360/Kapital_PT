@@ -960,7 +960,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             const SizedBox(height: 20),
                             Text(
-                              'v1.6.0 - Push Notifications & Kapital Branding',
+                              'v1.6.1 - Push Notifications & Kapital Branding',
                               style: TextStyle(
                                 color: isDark ? Colors.white24 : Colors.black38,
                                 fontSize: 11,
