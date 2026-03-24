@@ -87,9 +87,13 @@ class _SplashScreenState extends State<SplashScreen>
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
+        statusBarColor: isDark
+            ? const Color(0xFF050816)
+            : const Color(0xFFF9F6ED),
         statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarColor: isDark
+            ? const Color(0xFF050816)
+            : const Color(0xFFF9F6ED),
         systemNavigationBarIconBrightness: isDark
             ? Brightness.light
             : Brightness.dark,

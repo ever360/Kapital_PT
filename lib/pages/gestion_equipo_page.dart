@@ -429,12 +429,6 @@ class _GestionEquipoPageState extends State<GestionEquipoPage> {
           : const Color(0xFFF9F6ED),
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        flexibleSpace: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(color: Colors.transparent),
-          ),
-        ),
         title: const Text(
           "Panel Empresa • Gestión de Equipo",
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -456,8 +450,8 @@ class _GestionEquipoPageState extends State<GestionEquipoPage> {
           ),
         ),
         backgroundColor: isDark
-            ? const Color(0xFF1A1A1A).withValues(alpha: 0.7)
-            : Colors.white.withValues(alpha: 0.7),
+            ? const Color(0xFF050816)
+            : const Color(0xFFF9F6ED),
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,

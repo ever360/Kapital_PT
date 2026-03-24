@@ -30,7 +30,9 @@ class HomePage extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        backgroundColor: isDark
+            ? const Color(0xFF050816)
+            : const Color(0xFFF9F6ED),
         elevation: 0,
       ),
       body: Center(

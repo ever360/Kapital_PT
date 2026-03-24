@@ -6,7 +6,11 @@ class SocioPrestamosPage extends StatefulWidget {
   final Map<String, dynamic> cliente;
   final Map<String, dynamic> ruta;
 
-  const SocioPrestamosPage({super.key, required this.cliente, required this.ruta});
+  const SocioPrestamosPage({
+    super.key,
+    required this.cliente,
+    required this.ruta,
+  });
 
   @override
   State<SocioPrestamosPage> createState() => _SocioPrestamosPageState();
@@ -32,7 +36,7 @@ class _SocioPrestamosPageState extends State<SocioPrestamosPage> {
           .select()
           .eq('cliente_id', widget.cliente['id'])
           .order('created_at', ascending: false);
-      
+
       bool hayActivo = false;
       for (var p in res) {
         if (p['estado'] == 'ACTIVO') hayActivo = true;
@@ -48,7 +52,9 @@ class _SocioPrestamosPageState extends State<SocioPrestamosPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -60,7 +66,12 @@ class _SocioPrestamosPageState extends State<SocioPrestamosPage> {
 
   Future<void> _crearPrestamo() async {
     if (_tienePrestamoActivo) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('El cliente ya tiene un préstamo activo.'), backgroundColor: Colors.orange));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El cliente ya tiene un préstamo activo.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
       return;
     }
 
@@ -82,7 +93,7 @@ class _SocioPrestamosPageState extends State<SocioPrestamosPage> {
               final m = double.tryParse(montoCtrl.text) ?? 0;
               final i = double.tryParse(interesCtrl.text) ?? 0;
               final p = int.tryParse(plazoCtrl.text) ?? 1;
-              
+
               if (m > 0 && p > 0) {
                 montoTotal = m + (m * (i / 100));
                 cuotaDiaria = montoTotal / p;
@@ -94,7 +105,10 @@ class _SocioPrestamosPageState extends State<SocioPrestamosPage> {
 
             return AlertDialog(
               backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              title: Text("Nuevo Préstamo", style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
+              title: Text(
+                "Nuevo Préstamo",
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -102,13 +116,20 @@ class _SocioPrestamosPageState extends State<SocioPrestamosPage> {
                     TextField(
                       controller: montoCtrl,
                       keyboardType: TextInputType.number,
-                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
                       onChanged: (_) => setStateDialog(calcular),
                       decoration: InputDecoration(
                         labelText: "Monto a Prestar *",
-                        labelStyle: TextStyle(color: isDark ? Colors.white54 : Colors.black54),
+                        labelStyle: TextStyle(
+                          color: isDark ? Colors.white54 : Colors.black54,
+                        ),
                         prefixText: '\$ ',
-                        prefixStyle: TextStyle(color: primary, fontWeight: FontWeight.bold)
+                        prefixStyle: TextStyle(
+                          color: primary,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     Row(
@@ -117,11 +138,15 @@ class _SocioPrestamosPageState extends State<SocioPrestamosPage> {
                           child: TextField(
                             controller: interesCtrl,
                             keyboardType: TextInputType.number,
-                            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
                             onChanged: (_) => setStateDialog(calcular),
                             decoration: InputDecoration(
                               labelText: "Interés (%)",
-                              labelStyle: TextStyle(color: isDark ? Colors.white54 : Colors.black54),
+                              labelStyle: TextStyle(
+                                color: isDark ? Colors.white54 : Colors.black54,
+                              ),
                             ),
                           ),
                         ),
@@ -130,48 +155,86 @@ class _SocioPrestamosPageState extends State<SocioPrestamosPage> {
                           child: TextField(
                             controller: plazoCtrl,
                             keyboardType: TextInputType.number,
-                            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
                             onChanged: (_) => setStateDialog(calcular),
                             decoration: InputDecoration(
                               labelText: "Plazo (Días)",
-                              labelStyle: TextStyle(color: isDark ? Colors.white54 : Colors.black54),
+                              labelStyle: TextStyle(
+                                color: isDark ? Colors.white54 : Colors.black54,
+                              ),
                             ),
                           ),
-                        )
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.black26 : Colors.grey.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8)
+                        color: isDark
+                            ? Colors.black26
+                            : Colors.grey.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
                         children: [
-                          Text("Total a Pagar", style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 12)),
-                          Text(_formatDinero(montoTotal), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.orange)),
+                          Text(
+                            "Total a Pagar",
+                            style: TextStyle(
+                              color: isDark ? Colors.white54 : Colors.black54,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            _formatDinero(montoTotal),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 22,
+                              color: Colors.orange,
+                            ),
+                          ),
                           const Divider(),
-                          Text("Cuota Diaria", style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 12)),
-                          Text(_formatDinero(cuotaDiaria), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: primary)),
+                          Text(
+                            "Cuota Diaria",
+                            style: TextStyle(
+                              color: isDark ? Colors.white54 : Colors.black54,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            _formatDinero(cuotaDiaria),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: primary,
+                            ),
+                          ),
                         ],
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text("Cancelar", style: TextStyle(color: Colors.grey)),
+                  child: const Text(
+                    "Cancelar",
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: primary, foregroundColor: Colors.black),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    foregroundColor: Colors.black,
+                  ),
                   onPressed: () async {
                     if (montoTotal <= 0) return;
                     Navigator.pop(context);
                     setState(() => _isLoading = true);
-                    
+
                     try {
                       final m = double.tryParse(montoCtrl.text) ?? 0;
                       final i = double.tryParse(interesCtrl.text) ?? 0;
@@ -187,26 +250,41 @@ class _SocioPrestamosPageState extends State<SocioPrestamosPage> {
                         'cuota_diaria': cuotaDiaria,
                         'dias_plazo': p,
                         'estado': 'ACTIVO',
-                        'fecha_inicio': DateTime.now().toIso8601String().split('T')[0],
-                        'fecha_vencimiento': DateTime.now().add(Duration(days: p)).toIso8601String().split('T')[0]
+                        'fecha_inicio': DateTime.now().toIso8601String().split(
+                          'T',
+                        )[0],
+                        'fecha_vencimiento': DateTime.now()
+                            .add(Duration(days: p))
+                            .toIso8601String()
+                            .split('T')[0],
                       });
-                      
+
                       _loadPrestamos();
                       if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Préstamo creado con éxito'), backgroundColor: Colors.green));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Préstamo creado con éxito'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
                     } catch (e) {
                       setState(() => _isLoading = false);
                       if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
                     }
                   },
                   child: const Text("Confirmar Préstamo"),
                 ),
               ],
             );
-          }
+          },
         );
-      }
+      },
     );
   }
 
@@ -217,8 +295,9 @@ class _SocioPrestamosPageState extends State<SocioPrestamosPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Préstamos de ${widget.cliente['alias'] ?? widget.cliente['nombre']}"),
-        backgroundColor: Colors.transparent,
+        title: Text(
+          "Préstamos de ${widget.cliente['alias'] ?? widget.cliente['nombre']}",
+        ),
         elevation: 0,
         foregroundColor: isDark ? Colors.white : Colors.black87,
       ),
@@ -226,82 +305,150 @@ class _SocioPrestamosPageState extends State<SocioPrestamosPage> {
           ? FloatingActionButton.extended(
               onPressed: _crearPrestamo,
               backgroundColor: primary,
-              icon: const Icon(Icons.account_balance_wallet, color: Colors.black),
-              label: const Text("Nuevo Préstamo", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              icon: const Icon(
+                Icons.account_balance_wallet,
+                color: Colors.black,
+              ),
+              label: const Text(
+                "Nuevo Préstamo",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             )
           : null,
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: primary))
           : _prestamos.isEmpty
-              ? const Center(child: Text("Sin historial de préstamos.", style: TextStyle(color: Colors.grey)))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _prestamos.length,
-                  itemBuilder: (context, index) {
-                    final p = _prestamos[index];
-                    final esActivo = p['estado'] == 'ACTIVO';
-                    final saldo = (p['saldo_pendiente'] ?? 0) as double;
-                    
-                    return Card(
-                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: esActivo ? primary.withValues(alpha: 0.5) : Colors.transparent, width: 2)
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+          ? const Center(
+              child: Text(
+                "Sin historial de préstamos.",
+                style: TextStyle(color: Colors.grey),
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _prestamos.length,
+              itemBuilder: (context, index) {
+                final p = _prestamos[index];
+                final esActivo = p['estado'] == 'ACTIVO';
+                final saldo = (p['saldo_pendiente'] ?? 0) as double;
+
+                return Card(
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: esActivo
+                          ? primary.withValues(alpha: 0.5)
+                          : Colors.transparent,
+                      width: 2,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  _formatDinero((p['monto_prestado'] ?? 0) as double),
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: isDark ? Colors.white : Colors.black87),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: esActivo ? primary.withValues(alpha: 0.2) : Colors.green.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(8)
-                                  ),
-                                  child: Text(
-                                    p['estado'] ?? '',
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: esActivo ? primary : Colors.green),
-                                  ),
-                                )
-                              ],
+                            Text(
+                              _formatDinero(
+                                (p['monto_prestado'] ?? 0) as double,
+                              ),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
                             ),
-                            const SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text("Cuota Diaria", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                                    Text(_formatDinero((p['cuota_diaria'] ?? 0) as double), style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : Colors.black54)),
-                                  ],
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: esActivo
+                                    ? primary.withValues(alpha: 0.2)
+                                    : Colors.green.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                p['estado'] ?? '',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: esActivo ? primary : Colors.green,
                                 ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    const Text("Saldo Pendiente", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                                    Text(_formatDinero(saldo), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
-                                  ],
-                                ),
-                              ],
+                              ),
                             ),
-                            const Divider(height: 20),
-                            Text("Otorgado: ${p['fecha_inicio']} • Vence: ${p['fecha_vencimiento']}", style: const TextStyle(color: Colors.grey, fontSize: 11)),
                           ],
                         ),
-                      ),
-                    );
-                  },
-                ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Cuota Diaria",
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  _formatDinero(
+                                    (p['cuota_diaria'] ?? 0) as double,
+                                  ),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark
+                                        ? Colors.white70
+                                        : Colors.black54,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                const Text(
+                                  "Saldo Pendiente",
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  _formatDinero(saldo),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 20),
+                        Text(
+                          "Otorgado: ${p['fecha_inicio']} • Vence: ${p['fecha_vencimiento']}",
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
     );
   }
 }

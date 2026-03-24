@@ -173,8 +173,8 @@ class _CobradorHomePageState extends State<CobradorHomePage> {
           ),
         ),
         backgroundColor: isDark
-            ? const Color(0xFF1A1A1A).withValues(alpha: 0.8)
-            : Colors.white.withValues(alpha: 0.8),
+            ? const Color(0xFF050816)
+            : const Color(0xFFF9F6ED),
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,

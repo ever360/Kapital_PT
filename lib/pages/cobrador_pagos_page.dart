@@ -261,7 +261,6 @@ class _CobradorPagosPageState extends State<CobradorPagosPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Cobro a ${widget.nombreCliente}"),
-        backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: isDark ? Colors.white : Colors.black87,
       ),

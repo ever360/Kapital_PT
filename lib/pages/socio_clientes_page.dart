@@ -193,7 +193,9 @@ class _SocioClientesPageState extends State<SocioClientesPage> {
             letterSpacing: 1.2,
           ),
         ),
-        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        backgroundColor: isDark
+            ? const Color(0xFF050816)
+            : const Color(0xFFF9F6ED),
         elevation: 0,
         foregroundColor: isDark ? Colors.white : Colors.black87,
       ),

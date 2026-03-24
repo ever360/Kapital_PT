@@ -103,7 +103,7 @@ class _CompletarPerfilPageState extends State<CompletarPerfilPage> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),

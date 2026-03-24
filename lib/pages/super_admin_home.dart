@@ -221,7 +221,9 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
         extendBody: true,
         drawer: const KapitalDrawer(),
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
+          backgroundColor: isDark
+              ? const Color(0xFF050816)
+              : const Color(0xFFF9F6ED),
           elevation: 0,
           foregroundColor: isDark ? Colors.white : Colors.black87,
         ),
@@ -382,14 +384,10 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
       appBar: widget.isSubView
           ? null
           : AppBar(
-              flexibleSpace: ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(color: Colors.transparent),
-                ),
-              ),
               systemOverlayStyle: SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
+                statusBarColor: isDark
+                    ? const Color(0xFF050816)
+                    : const Color(0xFFF9F6ED),
                 statusBarIconBrightness: isDark
                     ? Brightness.light
                     : Brightness.dark,
@@ -417,7 +415,9 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                   ),
                 ),
               ),
-              backgroundColor: Colors.transparent,
+              backgroundColor: isDark
+                  ? const Color(0xFF050816)
+                  : const Color(0xFFF9F6ED),
               elevation: 0,
               scrolledUnderElevation: 0,
               surfaceTintColor: Colors.transparent,

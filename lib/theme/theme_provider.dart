@@ -81,7 +81,9 @@ class ThemeProvider extends ChangeNotifier {
   // Helper para obtener el estilo del sistema consistente
   static SystemUiOverlayStyle getSystemUIOverlayStyle(bool isDark) {
     return SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
+      statusBarColor: isDark
+          ? const Color(0xFF050816)
+          : const Color(0xFFF9F6ED),
       statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
       statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
       systemNavigationBarColor: isDark

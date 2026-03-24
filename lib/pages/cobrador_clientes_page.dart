@@ -109,14 +109,16 @@ class _CobradorClientesPageState extends State<CobradorClientesPage> {
             letterSpacing: 1.2,
           ),
         ),
-        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        backgroundColor: isDark
+            ? const Color(0xFF050816)
+            : const Color(0xFFF9F6ED),
         elevation: 0,
         centerTitle: true,
         foregroundColor: isDark ? Colors.white : Colors.black87,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60.0),
           child: Container(
-            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            color: isDark ? const Color(0xFF050816) : const Color(0xFFF9F6ED),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

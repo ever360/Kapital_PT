@@ -87,7 +87,6 @@ class _CrearEmpresaPageState extends State<CrearEmpresaPage> {
           : const Color(0xFFF9F6ED),
       appBar: AppBar(
         title: const Text("Configura tu Empresa"),
-        backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: isDark ? Colors.white : Colors.black87,
       ),

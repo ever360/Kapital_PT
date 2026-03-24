@@ -110,12 +110,13 @@ class KapitalApp extends StatelessWidget {
                 onPrimary: Colors.black,
               ),
               appBarTheme: AppBarTheme(
-                backgroundColor: Colors.white,
+                backgroundColor: const Color(0xFFF9F6ED),
                 foregroundColor: Colors.black87,
                 elevation: 0,
+                scrolledUnderElevation: 0,
                 surfaceTintColor: Colors.transparent,
                 systemOverlayStyle: const SystemUiOverlayStyle(
-                  statusBarColor: Colors.transparent,
+                  statusBarColor: Color(0xFFF9F6ED),
                   statusBarIconBrightness: Brightness.dark,
                   systemNavigationBarColor: Color(0xFFF9F6ED),
                   systemNavigationBarIconBrightness: Brightness.dark,
@@ -187,12 +188,13 @@ class KapitalApp extends StatelessWidget {
                 onPrimary: Colors.black,
               ),
               appBarTheme: AppBarTheme(
-                backgroundColor: const Color(0xFF1A1A1A),
+                backgroundColor: const Color(0xFF050816),
                 foregroundColor: Colors.white,
                 elevation: 0,
+                scrolledUnderElevation: 0,
                 surfaceTintColor: Colors.transparent,
                 systemOverlayStyle: const SystemUiOverlayStyle(
-                  statusBarColor: Colors.transparent,
+                  statusBarColor: Color(0xFF050816),
                   statusBarIconBrightness: Brightness.light,
                   systemNavigationBarColor: Color(0xFF050816),
                   systemNavigationBarIconBrightness: Brightness.light,
