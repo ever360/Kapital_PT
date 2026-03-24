@@ -7,7 +7,7 @@ void updateWebPWATheme(bool isDark) {
         web.document.querySelector('meta[name="theme-color"]')
             as web.HTMLMetaElement?;
     if (metaTag != null) {
-      metaTag.content = isDark ? '#0D0D0D' : '#F5F5F5';
+      metaTag.content = isDark ? '#050816' : '#F9F6ED';
     }
   } catch (e) {
     debugPrint('Error updating PWA theme: $e');

@@ -18,7 +18,11 @@ class ThemeProvider extends ChangeNotifier {
   String? get targetEmpresaId => _targetEmpresaId;
   Map<String, dynamic>? get targetEmpresa => _targetEmpresa;
 
-  void setMasterView(String view, {String? empresaId, Map<String, dynamic>? empresa}) {
+  void setMasterView(
+    String view, {
+    String? empresaId,
+    Map<String, dynamic>? empresa,
+  }) {
     _masterView = view;
     _targetEmpresaId = empresaId;
     _targetEmpresa = empresa;
@@ -58,7 +62,7 @@ class ThemeProvider extends ChangeNotifier {
     String saveVal = 'system';
     if (mode == ThemeMode.light) saveVal = 'light';
     if (mode == ThemeMode.dark) saveVal = 'dark';
-    
+
     // Guardar en secure storage para la app
     await _storage.write(key: 'theme_mode', value: saveVal);
 
@@ -80,9 +84,14 @@ class ThemeProvider extends ChangeNotifier {
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
       statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
-      systemNavigationBarColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF5F5F5),
-      systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-      systemNavigationBarDividerColor: Colors.transparent, // Intentar quitar línea en algunos Android
+      systemNavigationBarColor: isDark
+          ? const Color(0xFF050816)
+          : const Color(0xFFF9F6ED),
+      systemNavigationBarIconBrightness: isDark
+          ? Brightness.light
+          : Brightness.dark,
+      systemNavigationBarDividerColor:
+          Colors.transparent, // Intentar quitar línea en algunos Android
     );
   }
 }
