@@ -73,11 +73,13 @@
     body {
       margin: 0;
       padding: 0;
-      width: 100vw;
-      height: 100vh;
+      width: 100dvw;
+      height: 100dvh;
+      min-height: -webkit-fill-available;
       background-color: var(--app-bg) !important;
       overflow: hidden;
       position: fixed;
+      inset: 0;
     }
 
     /* Edge-to-edge: el contenido de Flutter ocupa toda la pantalla incluyendo la status bar */
@@ -91,8 +93,28 @@
       position: fixed !important;
       top: 0 !important;
       left: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
+      width: 100dvw !important;
+      height: 100dvh !important;
+      min-height: -webkit-fill-available !important;
+    }
+
+    #pwa-splash {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100dvw;
+      height: 100dvh;
+      min-height: -webkit-fill-available;
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      background-color: var(--app-bg);
+      transition: opacity 220ms ease;
+    }
+
+    #pwa-splash.hidden {
+      opacity: 0;
+      pointer-events: none;
     }
   </style>
   <script>
@@ -109,18 +131,7 @@
   <!-- Flutter bootstrap -->
   <script src="flutter_bootstrap.js" async></script>
 
-  <div id="pwa-splash" style="
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100vw;
-    height: 100vh;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: -1;
-    background-color: var(--app-bg);
-  ">
+  <div id="pwa-splash">
     <img src="icons/kapital_192.png" alt="Kapital" style="width: 120px; height: 120px; opacity: 0.8;">
   </div>
 
@@ -177,6 +188,26 @@
 
   <script>
     (function () {
+      function syncViewportHeight() {
+        const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+      }
+
+      syncViewportHeight();
+      window.addEventListener('resize', syncViewportHeight, { passive: true });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', syncViewportHeight, { passive: true });
+      }
+
+      const splash = document.getElementById('pwa-splash');
+      window.addEventListener('flutter-first-frame', function () {
+        if (!splash) return;
+        splash.classList.add('hidden');
+        setTimeout(function () {
+          splash.remove();
+        }, 260);
+      });
+
       var deferredPrompt = null;
       var banner = document.getElementById('pwa-install-banner');
       var installBtn = document.getElementById('pwa-install-btn');
