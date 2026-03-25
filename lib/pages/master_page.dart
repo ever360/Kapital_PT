@@ -409,16 +409,19 @@ class _MasterHomePageState extends State<MasterHomePage> {
                                     ),
                                   ),
                                   const SizedBox(width: 6),
-                                  Text(
-                                    (emp['is_active'] ?? false)
-                                        ? 'Activa'
-                                        : 'Inactiva',
-                                    style: TextStyle(
-                                      color: isDark
-                                          ? Colors.white54
-                                          : Colors.black54,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
+                                  Flexible(
+                                    child: Text(
+                                      (emp['is_active'] ?? false)
+                                          ? 'Activa'
+                                          : 'Inactiva',
+                                      style: TextStyle(
+                                        color: isDark
+                                            ? Colors.white54
+                                            : Colors.black54,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -428,14 +431,17 @@ class _MasterHomePageState extends State<MasterHomePage> {
                                     color: primary,
                                   ),
                                   const SizedBox(width: 4),
-                                  Text(
-                                    '${emp['total_rutas_contratadas'] ?? 0} rutas',
-                                    style: TextStyle(
-                                      color: isDark
-                                          ? Colors.white54
-                                          : Colors.black54,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
+                                  Flexible(
+                                    child: Text(
+                                      '${emp['total_rutas_contratadas'] ?? 0} rutas',
+                                      style: TextStyle(
+                                        color: isDark
+                                            ? Colors.white54
+                                            : Colors.black54,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
@@ -718,59 +724,62 @@ class _MasterHomePageState extends State<MasterHomePage> {
                                       ),
                                     ),
                                     // Rutas badge
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 3,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: primary.withValues(
-                                              alpha: 0.1,
+                                    Flexible(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 3,
                                             ),
-                                            borderRadius: BorderRadius.circular(
-                                              20,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                Icons.location_on_rounded,
-                                                size: 11,
-                                                color: primary,
+                                            decoration: BoxDecoration(
+                                              color: primary.withValues(
+                                                alpha: 0.1,
                                               ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                '${pago['rutas_contratadas'] ?? 0}',
-                                                style: TextStyle(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons.location_on_rounded,
+                                                  size: 11,
                                                   color: primary,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 11,
                                                 ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        if (pago['fecha_vencimiento'] != null)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              top: 4,
-                                            ),
-                                            child: Text(
-                                              'Vence ${_formatDate(pago['fecha_vencimiento'])}',
-                                              style: TextStyle(
-                                                color: isDark
-                                                    ? Colors.white30
-                                                    : Colors.black26,
-                                                fontSize: 10,
-                                              ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  '${pago['rutas_contratadas'] ?? 0}',
+                                                  style: TextStyle(
+                                                    color: primary,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 11,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                      ],
+                                          if (pago['fecha_vencimiento'] != null)
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 4,
+                                              ),
+                                              child: Text(
+                                                'Vence ${_formatDate(pago['fecha_vencimiento'])}',
+                                                style: TextStyle(
+                                                  color: isDark
+                                                      ? Colors.white30
+                                                      : Colors.black26,
+                                                  fontSize: 10,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 1,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),
