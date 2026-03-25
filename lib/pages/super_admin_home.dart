@@ -865,19 +865,19 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
     final bool isActive = _miEmpresa!['is_active'] ?? false;
 
     String estadoPlan = 'Activo';
-    Color estadoColor = Colors.green;
+    Color estadoColor = Colors.greenAccent;
     if (!isActive) {
       estadoPlan = 'Bloqueada';
-      estadoColor = Colors.red;
+      estadoColor = Colors.redAccent;
     } else if (fechaVenc != null) {
       final vencDate = DateTime.parse(fechaVenc).toLocal();
       final diff = vencDate.difference(DateTime.now()).inDays;
       if (diff < 0) {
         estadoPlan = 'Vencida';
-        estadoColor = Colors.red;
+        estadoColor = Colors.redAccent;
       } else if (diff <= 7) {
         estadoPlan = 'Por vencer';
-        estadoColor = Colors.orange;
+        estadoColor = Colors.orangeAccent;
       }
     }
 
@@ -908,33 +908,36 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: isDark
-              ? [const Color(0xFF1A1D2E), const Color(0xFF14171F)]
-              : [Colors.white, const Color(0xFFF8F6F0)],
+          colors: [
+            primary.withValues(alpha: 0.15),
+            primary.withValues(alpha: 0.05),
+            isDark ? const Color(0xFF1A1A2E) : Colors.white,
+          ],
         ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: primary.withValues(alpha: 0.15)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: primary.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: primary.withValues(alpha: isDark ? 0.08 : 0.04),
+            color: primary.withValues(alpha: 0.08),
             blurRadius: 20,
-            offset: const Offset(0, 8),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header con nombre y estado
+          // ── Header: icono + nombre + status dot ──
           Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: primary.withValues(alpha: 0.1),
+                  color: primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: primary.withValues(alpha: 0.3)),
                 ),
-                child: Icon(Icons.business_rounded, color: primary, size: 24),
+                child: Icon(Icons.business_rounded, color: primary, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -945,165 +948,190 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                       nombre,
                       style: TextStyle(
                         color: isDark ? Colors.white : Colors.black87,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w900,
                         fontSize: 18,
-                        letterSpacing: -0.3,
+                        letterSpacing: -0.5,
                       ),
                     ),
-                    if (ciudad != null && ciudad.isNotEmpty)
-                      Text(
-                        ciudad,
-                        style: TextStyle(
-                          color: isDark ? Colors.white38 : Colors.black38,
-                          fontSize: 13,
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: estadoColor,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: estadoColor.withValues(alpha: 0.6),
+                                blurRadius: 6,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 6),
+                        Text(
+                          estadoPlan,
+                          style: TextStyle(
+                            color: isDark ? Colors.white54 : Colors.black54,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        if (ciudad != null && ciudad.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.location_on_rounded,
+                            size: 12,
+                            color: isDark ? Colors.white30 : Colors.black26,
+                          ),
+                          const SizedBox(width: 3),
+                          Flexible(
+                            child: Text(
+                              ciudad,
+                              style: TextStyle(
+                                color: isDark ? Colors.white38 : Colors.black38,
+                                fontSize: 12,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: estadoColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: estadoColor.withValues(alpha: 0.3)),
-                ),
-                child: Text(
-                  estadoPlan,
-                  style: TextStyle(
-                    color: estadoColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: 20),
-          // Datos del plan en grid
+          const SizedBox(height: 18),
+          // ── Mini stats row (estilo master) ──
           Row(
             children: [
-              Expanded(
-                child: _membershipStat(
-                  Icons.location_on_rounded,
-                  '$rutasContratadas',
-                  'Rutas contratadas',
-                  primary,
-                  isDark,
-                ),
+              _membershipMiniStat(
+                'RUTAS',
+                '$rutasContratadas',
+                Icons.route_rounded,
+                isDark,
+                primary,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _membershipStat(
-                  Icons.people_rounded,
-                  '$maxUsuarios',
-                  'Usuarios máx.',
-                  primary,
-                  isDark,
-                ),
+              const SizedBox(width: 8),
+              _membershipMiniStat(
+                'USUARIOS',
+                '$maxUsuarios',
+                Icons.people_rounded,
+                isDark,
+                primary,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _membershipStat(
-                  Icons.store_rounded,
-                  '${_sucursales.length}',
-                  'Sucursales',
-                  primary,
-                  isDark,
-                ),
+              const SizedBox(width: 8),
+              _membershipMiniStat(
+                'SUCURSALES',
+                '${_sucursales.length}',
+                Icons.store_rounded,
+                isDark,
+                primary,
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          // Fecha de vencimiento y teléfono
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.04)
-                  : Colors.black.withValues(alpha: 0.02),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.calendar_today_rounded,
-                  size: 16,
-                  color: isDark ? Colors.white38 : Colors.black38,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Vence: $fechaVencStr',
-                  style: TextStyle(
-                    color: isDark ? Colors.white60 : Colors.black54,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (telefono != null && telefono.isNotEmpty) ...[
-                  const Spacer(),
-                  Icon(
-                    Icons.phone_rounded,
-                    size: 16,
-                    color: isDark ? Colors.white38 : Colors.black38,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    telefono,
-                    style: TextStyle(
-                      color: isDark ? Colors.white60 : Colors.black54,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ],
-            ),
+          const SizedBox(height: 14),
+          // ── Info chips: vencimiento y teléfono ──
+          _membershipInfoChip(
+            Icons.calendar_today_rounded,
+            'Vence: $fechaVencStr',
+            isDark,
+            primary,
           ),
+          if (telefono != null && telefono.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _membershipInfoChip(Icons.phone_rounded, telefono, isDark, primary),
+          ],
         ],
       ),
     );
   }
 
-  Widget _membershipStat(
-    IconData icon,
-    String value,
+  Widget _membershipMiniStat(
     String label,
-    Color color,
+    String value,
+    IconData icon,
     bool isDark,
+    Color color,
+  ) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.04)
+              : Colors.black.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: isDark ? Colors.white30 : Colors.black26,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _membershipInfoChip(
+    IconData icon,
+    String text,
+    bool isDark,
+    Color color,
   ) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: isDark
             ? Colors.white.withValues(alpha: 0.04)
-            : Colors.black.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(14),
+            : Colors.black.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.1)),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              color: isDark ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.w900,
-              fontSize: 20,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isDark ? Colors.white38 : Colors.black38,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+          Icon(icon, size: 14, color: color.withValues(alpha: 0.7)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: isDark ? Colors.white60 : Colors.black54,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

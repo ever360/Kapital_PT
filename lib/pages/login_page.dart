@@ -960,7 +960,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             const SizedBox(height: 20),
                             Text(
-                              'v1.8.0 - Pagos empresa, WhatsApp, dark mode',
+                              'v1.8.5 - Panel empresa, PWA nativo, dark mode',
                               style: TextStyle(
                                 color: isDark ? Colors.white24 : Colors.black38,
                                 fontSize: 11,
