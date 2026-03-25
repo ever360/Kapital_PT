@@ -1297,122 +1297,130 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
     final isDark = tp.isDarkMode;
     final primary = AppColors.primary(isDark);
     final int maxGlobal = _miEmpresa?['total_rutas_contratadas'] ?? 0;
+    final int rutasReales = _rutas.length;
     final double progreso = maxGlobal > 0
         ? _rutasAsignadasTotales / maxGlobal
         : 0;
-    final bool isAtLimit = _rutasAsignadasTotales >= maxGlobal;
+    final bool isAtLimit = _rutasAsignadasTotales >= maxGlobal && maxGlobal > 0;
     final int rutasDisponibles = (maxGlobal - _rutasAsignadasTotales).clamp(
       0,
       999999,
     );
+    final Color accentColor = isAtLimit ? Colors.orangeAccent : primary;
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.05),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            accentColor.withValues(alpha: 0.12),
+            accentColor.withValues(alpha: 0.04),
+            isDark ? const Color(0xFF1A1A2E) : Colors.white,
+          ],
         ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accentColor.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: (isAtLimit ? Colors.orange : primary).withValues(
-              alpha: isDark ? 0.1 : 0.03,
-            ),
+            color: accentColor.withValues(alpha: 0.08),
             blurRadius: 20,
-            offset: const Offset(0, 10),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Header ──
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Balance de Rutas",
-                    style: TextStyle(
-                      color: isDark ? Colors.white38 : Colors.black38,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.1,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        "$_rutasAsignadasTotales",
-                        style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black87,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 28,
-                          letterSpacing: -1,
-                        ),
-                      ),
-                      Text(
-                        " / $maxGlobal",
-                        style: TextStyle(
-                          color: isDark ? Colors.white24 : Colors.black26,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: (isAtLimit ? Colors.orange : primary).withValues(
-                    alpha: 0.1,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
+                  color: accentColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: accentColor.withValues(alpha: 0.3)),
                 ),
-                child: Icon(
-                  Icons.pie_chart_outline_rounded,
-                  color: isAtLimit ? Colors.orange : primary,
-                  size: 24,
+                child: Icon(Icons.route_rounded, color: accentColor, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Balance de Rutas',
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Distribución de tu plan',
+                      style: TextStyle(
+                        color: isDark ? Colors.white38 : Colors.black38,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Número grande
+              Text(
+                '$_rutasAsignadasTotales',
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 32,
+                  letterSpacing: -1,
+                ),
+              ),
+              Text(
+                '/$maxGlobal',
+                style: TextStyle(
+                  color: isDark ? Colors.white30 : Colors.black26,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
+          // ── Barra de progreso ──
           Stack(
             children: [
               Container(
-                height: 10,
+                height: 8,
                 decoration: BoxDecoration(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.black.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(5),
+                      ? Colors.white.withValues(alpha: 0.06)
+                      : Colors.black.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
               AnimatedContainer(
                 duration: const Duration(milliseconds: 800),
-                height: 10,
-                width: MediaQuery.of(context).size.width * 0.8 * progreso,
+                height: 8,
+                width:
+                    MediaQuery.of(context).size.width *
+                    0.75 *
+                    progreso.clamp(0.0, 1.0),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: isAtLimit
                         ? [Colors.orange, Colors.orangeAccent]
-                        : [primary, primary.withValues(alpha: 0.6)],
+                        : [accentColor, accentColor.withValues(alpha: 0.6)],
                   ),
-                  borderRadius: BorderRadius.circular(5),
+                  borderRadius: BorderRadius.circular(4),
                   boxShadow: [
                     BoxShadow(
-                      color: (isAtLimit ? Colors.orange : primary).withValues(
-                        alpha: 0.3,
-                      ),
-                      blurRadius: 8,
+                      color: accentColor.withValues(alpha: 0.4),
+                      blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
                   ],
@@ -1420,41 +1428,120 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: (isAtLimit ? Colors.orange : primary).withValues(
-                alpha: isDark ? 0.12 : 0.08,
+          const SizedBox(height: 14),
+          // ── Mini stats ──
+          Row(
+            children: [
+              _quotaMiniStat(
+                'CONTRATADAS',
+                '$maxGlobal',
+                Icons.verified_rounded,
+                isDark,
+                accentColor,
               ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              'Tu plan incluye $maxGlobal rutas. En uso $_rutasAsignadasTotales, disponibles $rutasDisponibles.',
-              style: TextStyle(
-                color: isAtLimit
-                    ? Colors.orange
-                    : (isDark ? Colors.white70 : Colors.black87),
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+              const SizedBox(width: 8),
+              _quotaMiniStat(
+                'ASIGNADAS',
+                '$_rutasAsignadasTotales',
+                Icons.assignment_turned_in_rounded,
+                isDark,
+                accentColor,
+              ),
+              const SizedBox(width: 8),
+              _quotaMiniStat(
+                'CREADAS',
+                '$rutasReales',
+                Icons.map_rounded,
+                isDark,
+                Colors.blueAccent,
+              ),
+              const SizedBox(width: 8),
+              _quotaMiniStat(
+                'DISPONIBLES',
+                '$rutasDisponibles',
+                Icons.add_circle_outline_rounded,
+                isDark,
+                rutasDisponibles > 0 ? Colors.greenAccent : Colors.orangeAccent,
+              ),
+            ],
+          ),
+          if (isAtLimit) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    size: 14,
+                    color: Colors.orangeAccent,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Has alcanzado el límite de rutas contratadas.',
+                      style: TextStyle(
+                        color: Colors.orangeAccent,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            isAtLimit
-                ? "⚠️ Has alcanzado el límite de rutas contratadas."
-                : "Has distribuido el ${(progreso * 100).toInt()}% de tu cupo total.",
-            style: TextStyle(
-              color: isAtLimit
-                  ? Colors.orange
-                  : (isDark ? Colors.white38 : Colors.black38),
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _quotaMiniStat(
+    String label,
+    String value,
+    IconData icon,
+    bool isDark,
+    Color color,
+  ) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.04)
+              : Colors.black.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black87,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(
+                color: isDark ? Colors.white30 : Colors.black26,
+                fontSize: 7,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
