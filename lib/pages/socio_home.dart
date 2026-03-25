@@ -420,6 +420,8 @@ class _SocioHomePageState extends State<SocioHomePage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       extendBody: true,
+      onDrawerChanged: (isOpen) =>
+          ThemeProvider.handleDrawerChanged(isOpen, isDark),
       drawer: const KapitalDrawer(),
       appBar: AppBar(
         title: Text(

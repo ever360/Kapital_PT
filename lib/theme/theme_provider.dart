@@ -81,9 +81,7 @@ class ThemeProvider extends ChangeNotifier {
   // Helper para obtener el estilo del sistema consistente
   static SystemUiOverlayStyle getSystemUIOverlayStyle(bool isDark) {
     return SystemUiOverlayStyle(
-      statusBarColor: isDark
-          ? const Color(0xFF050816)
-          : const Color(0xFFF9F6ED),
+      statusBarColor: Colors.transparent,
       statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
       statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
       systemNavigationBarColor: isDark
@@ -92,9 +90,20 @@ class ThemeProvider extends ChangeNotifier {
       systemNavigationBarIconBrightness: isDark
           ? Brightness.light
           : Brightness.dark,
-      systemNavigationBarDividerColor:
-          Colors.transparent, // Intentar quitar línea en algunos Android
+      systemNavigationBarDividerColor: Colors.transparent,
     );
+  }
+
+  /// Llamar en onDrawerChanged de cada Scaffold para que la PWA
+  /// muestre la barra de estado del mismo color que el tope del drawer.
+  static void handleDrawerChanged(bool isOpen, bool isDark) {
+    if (kIsWeb) {
+      if (isOpen) {
+        updateWebThemeColorHex(isDark ? '#07111A' : '#FBF7EF');
+      } else {
+        updateWebPWATheme(isDark);
+      }
+    }
   }
 }
 

@@ -19,6 +19,8 @@ class HomePage extends StatelessWidget {
       backgroundColor: isDark
           ? const Color(0xFF050816)
           : const Color(0xFFF9F6ED),
+      onDrawerChanged: (isOpen) =>
+          ThemeProvider.handleDrawerChanged(isOpen, isDark),
       drawer: const KapitalDrawer(),
       appBar: AppBar(
         title: Text(

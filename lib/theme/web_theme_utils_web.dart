@@ -14,6 +14,19 @@ void updateWebPWATheme(bool isDark) {
   }
 }
 
+void updateWebThemeColorHex(String hex) {
+  try {
+    final metaTag =
+        web.document.querySelector('meta[name="theme-color"]')
+            as web.HTMLMetaElement?;
+    if (metaTag != null) {
+      metaTag.content = hex;
+    }
+  } catch (e) {
+    debugPrint('Error updating PWA theme color: $e');
+  }
+}
+
 void saveThemeToWebStorage(String theme) {
   try {
     web.window.localStorage.setItem('app_theme', theme);

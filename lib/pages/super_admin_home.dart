@@ -219,6 +219,8 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
             : const Color(0xFFF9F6ED),
         extendBodyBehindAppBar: true,
         extendBody: true,
+        onDrawerChanged: (isOpen) =>
+            ThemeProvider.handleDrawerChanged(isOpen, isDark),
         drawer: const KapitalDrawer(),
         appBar: AppBar(
           backgroundColor: isDark
@@ -380,15 +382,22 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
           ? const Color(0xFF050816)
           : const Color(0xFFF9F6ED),
       extendBodyBehindAppBar: true,
+      onDrawerChanged: widget.isSubView
+          ? null
+          : (isOpen) => ThemeProvider.handleDrawerChanged(isOpen, isDark),
       drawer: widget.isSubView ? null : const KapitalDrawer(),
       appBar: widget.isSubView
           ? null
           : AppBar(
               systemOverlayStyle: SystemUiOverlayStyle(
-                statusBarColor: isDark
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: isDark
+                    ? Brightness.light
+                    : Brightness.dark,
+                systemNavigationBarColor: isDark
                     ? const Color(0xFF050816)
                     : const Color(0xFFF9F6ED),
-                statusBarIconBrightness: isDark
+                systemNavigationBarIconBrightness: isDark
                     ? Brightness.light
                     : Brightness.dark,
               ),

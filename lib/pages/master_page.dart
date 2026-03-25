@@ -2740,13 +2740,19 @@ class _MasterHomePageState extends State<MasterHomePage> {
           : const Color(0xFFF9F6ED),
       extendBodyBehindAppBar: true,
       extendBody: true,
+      onDrawerChanged: (isOpen) =>
+          ThemeProvider.handleDrawerChanged(isOpen, isDark),
       drawer: const KapitalDrawer(),
       appBar: AppBar(
         systemOverlayStyle: SystemUiOverlayStyle(
-          statusBarColor: isDark
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          systemNavigationBarColor: isDark
               ? const Color(0xFF050816)
               : const Color(0xFFF9F6ED),
-          statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          systemNavigationBarIconBrightness: isDark
+              ? Brightness.light
+              : Brightness.dark,
         ),
         title: Text(
           _currentPageTitle(tp),
