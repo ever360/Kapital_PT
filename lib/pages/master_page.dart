@@ -513,7 +513,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                         Expanded(
                           child: _buildInfoChip(
                             Icons.payments_outlined,
-                            'Total: \$${totalPagado.toStringAsFixed(0)}',
+                            'Total: \$ ${_formatMiles(totalPagado)}',
                             isDark,
                             Colors.greenAccent,
                           ),
@@ -690,7 +690,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            '\$ ${monto.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
+                                            '\$ ${_formatMiles(monto)}',
                                             style: TextStyle(
                                               color: isDark
                                                   ? Colors.white
