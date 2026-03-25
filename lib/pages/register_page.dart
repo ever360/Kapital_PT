@@ -147,6 +147,7 @@ class _RegisterPageState extends State<RegisterPage> {
           final authResponse = await supabase.auth.signUp(
             email: emailController.text.trim(),
             password: passwordController.text.trim(),
+            data: {'nombre': nameController.text.trim()},
           );
 
           if (!mounted) return;

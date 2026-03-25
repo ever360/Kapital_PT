@@ -423,7 +423,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                                   ),
                                   const SizedBox(width: 12),
                                   Icon(
-                                    Icons.alt_route_rounded,
+                                    Icons.location_on_rounded,
                                     size: 13,
                                     color: primary,
                                   ),
@@ -739,7 +739,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Icon(
-                                                Icons.alt_route_rounded,
+                                                Icons.location_on_rounded,
                                                 size: 11,
                                                 color: primary,
                                               ),
@@ -939,7 +939,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
     if (_pendientes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('No hay solicitudes pendientes v1'),
+          content: Text('No hay solicitudes pendientes '),
           backgroundColor: Colors.green,
         ),
       );
@@ -1179,10 +1179,18 @@ class _MasterHomePageState extends State<MasterHomePage> {
     final empresaCtrl = TextEditingController(
       text: 'Kapital - ${user['nombre']}',
     );
-    final rutasMaxCtrl = TextEditingController(
-      text: '0',
-    ); // Rutas pagadas por defecto
-    final montoCtrl = TextEditingController();
+    final rutasMaxCtrl = TextEditingController(text: '0');
+    final montoCtrl = TextEditingController(); // Valor por ruta
+    double _totalPagar = 0;
+
+    void _recalcularTotal(void Function(void Function()) setDialogState) {
+      final rutas = int.tryParse(rutasMaxCtrl.text.trim()) ?? 0;
+      final valorRaw = montoCtrl.text.replaceAll('.', '').replaceAll(',', '');
+      final valor = double.tryParse(valorRaw) ?? 0;
+      setDialogState(() {
+        _totalPagar = rutas * valor;
+      });
+    }
 
     DateTime fechaPagoSel = DateTime.now();
     DateTime fechaVencSel = fechaPagoSel.add(const Duration(days: 30));
@@ -1323,12 +1331,12 @@ class _MasterHomePageState extends State<MasterHomePage> {
                           color: isDark ? Colors.white : Colors.black87,
                         ),
                         decoration: InputDecoration(
-                          labelText: 'Rutas Máximas Pagadas',
+                          labelText: 'Rutas contratadas',
                           labelStyle: TextStyle(
                             color: isDark ? Colors.white60 : Colors.black54,
                           ),
                           prefixIcon: Icon(
-                            Icons.alt_route_rounded,
+                            Icons.location_on_rounded,
                             color: AppColors.primary(isDark),
                           ),
                           filled: true,
@@ -1340,6 +1348,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                             borderSide: BorderSide.none,
                           ),
                         ),
+                        onChanged: (_) => _recalcularTotal(setDialogState),
                         validator: (v) {
                           if (v == null || v.trim().isEmpty)
                             return 'Obligatorio';
@@ -1358,7 +1367,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                           color: isDark ? Colors.white : Colors.black87,
                         ),
                         decoration: InputDecoration(
-                          labelText: 'Valor a Pagar',
+                          labelText: 'Valor por ruta',
                           hintText: '0',
                           labelStyle: TextStyle(
                             color: isDark ? Colors.white60 : Colors.black54,
@@ -1377,13 +1386,55 @@ class _MasterHomePageState extends State<MasterHomePage> {
                             borderSide: BorderSide.none,
                           ),
                         ),
+                        onChanged: (_) => _recalcularTotal(setDialogState),
                         validator: (v) {
                           final raw =
                               v?.replaceAll('.', '').replaceAll(',', '') ?? '';
                           final n = double.tryParse(raw) ?? 0;
-                          if (n <= 0) return 'Ingresa un monto mayor a 0';
+                          if (n <= 0) return 'Ingresa un valor mayor a 0';
                           return null;
                         },
+                      ),
+                      const SizedBox(height: 12),
+                      // Total a pagar (calculado)
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary(
+                            isDark,
+                          ).withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.primary(
+                              isDark,
+                            ).withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Total a pagar',
+                              style: TextStyle(
+                                color: isDark ? Colors.white70 : Colors.black87,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Text(
+                              '\$ ${_formatMiles(_totalPagar)}',
+                              style: TextStyle(
+                                color: AppColors.primary(isDark),
+                                fontWeight: FontWeight.w900,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Container(
@@ -1471,11 +1522,12 @@ class _MasterHomePageState extends State<MasterHomePage> {
                       final rutasContratadas = int.parse(
                         rutasMaxCtrl.text.trim(),
                       );
-                      final montoRaw = montoCtrl.text
+                      final valorRaw = montoCtrl.text
                           .replaceAll('.', '')
                           .replaceAll(',', '')
                           .trim();
-                      final montoVal = double.tryParse(montoRaw) ?? 0;
+                      final valorRuta = double.tryParse(valorRaw) ?? 0;
+                      final montoVal = valorRuta * rutasContratadas;
                       final empRes = await supabase
                           .from('empresas')
                           .insert({
@@ -1617,7 +1669,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                           color: isDark ? Colors.white60 : Colors.black54,
                         ),
                         prefixIcon: Icon(
-                          Icons.alt_route_rounded,
+                          Icons.location_on_rounded,
                           color: AppColors.primary(isDark),
                         ),
                         filled: true,
@@ -1994,7 +2046,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                             color: isDark ? Colors.white60 : Colors.black54,
                           ),
                           prefixIcon: Icon(
-                            Icons.alt_route_rounded,
+                            Icons.location_on_rounded,
                             color: primary,
                           ),
                           filled: true,

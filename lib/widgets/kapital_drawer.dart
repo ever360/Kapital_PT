@@ -11,8 +11,9 @@ class KapitalDrawer extends StatefulWidget {
 }
 
 class _KapitalDrawerState extends State<KapitalDrawer> {
-  String _rol = 'Cargando...';
-  String _nombre = 'Usuario Kapital';
+  String _rol = '';
+  String _nombre = '';
+  bool _profileLoaded = false;
   String? _miEmpresaId;
   List<Map<String, dynamic>> _empresas = [];
   Map<String, Map<String, int>> _empresaStats = {};
@@ -22,6 +23,16 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
   @override
   void initState() {
     super.initState();
+    // Nombre inmediato desde user_metadata (sin consulta)
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      final meta = user.userMetadata;
+      _nombre =
+          meta?['nombre']?.toString() ??
+          meta?['full_name']?.toString() ??
+          meta?['name']?.toString() ??
+          '';
+    }
     _loadUserProfile();
   }
 
@@ -36,8 +47,9 @@ class _KapitalDrawerState extends State<KapitalDrawer> {
       if (mounted) {
         setState(() {
           _rol = res['rol'] ?? 'usuario';
-          _nombre = res['nombre'] ?? 'Usuario Kapital';
+          _nombre = res['nombre'] ?? _nombre;
           _miEmpresaId = res['empresa_id'];
+          _profileLoaded = true;
         });
 
         if ((res['rol'] ?? '').toString().toLowerCase() == 'master') {
