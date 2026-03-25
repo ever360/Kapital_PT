@@ -25,6 +25,8 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
   Map<String, dynamic>? _miEmpresa;
   String? _miEmpresaId;
   List<Map<String, dynamic>> _sucursales = [];
+  List<Map<String, dynamic>> _rutas = [];
+  List<Map<String, dynamic>> _perfiles = [];
   int _rutasAsignadasTotales = 0;
   int _usuariosActivos = 0;
   int _totalAlcanzable = 0;
@@ -63,24 +65,33 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
             .select()
             .eq('empresa_id', _miEmpresaId!);
 
-        // 3. Contar usuarios activos de la empresa
+        // Rutas reales creadas en la empresa
+        final rutasRes = await supabase
+            .from('rutas')
+            .select()
+            .eq('empresa_id', _miEmpresaId!);
+
+        // Perfiles de la empresa con info de rol
         final profilesRes = await supabase
             .from('profiles')
-            .select('id')
-            .eq('empresa_id', _miEmpresaId!)
-            .eq('isActive', true);
+            .select('id, nombre, rol, isActive')
+            .eq('empresa_id', _miEmpresaId!);
 
         int rutasContadas = 0;
         for (var s in sucursalesRes) {
           rutasContadas += (s['rutas_permitidas'] as int? ?? 0);
         }
 
+        final activos = profilesRes.where((p) => p['isActive'] == true).length;
+
         if (mounted) {
           setState(() {
             _miEmpresa = empresaRes;
             _sucursales = List<Map<String, dynamic>>.from(sucursalesRes);
+            _rutas = List<Map<String, dynamic>>.from(rutasRes);
+            _perfiles = List<Map<String, dynamic>>.from(profilesRes);
             _rutasAsignadasTotales = rutasContadas;
-            _usuariosActivos = profilesRes.length;
+            _usuariosActivos = activos;
             _totalAlcanzable = empresaRes['total_rutas_contratadas'] ?? 0;
             _isLoading = false;
           });
@@ -518,149 +529,584 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildPaymentBanner(isDark),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  if (constraints.maxWidth > 600) {
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: _buildQuotaCard()),
-                        const SizedBox(width: 16),
-                        Expanded(child: _buildTeamCard()),
-                      ],
-                    );
-                  }
-                  return Column(
-                    children: [
-                      _buildQuotaCard(),
-                      const SizedBox(height: 16),
-                      _buildTeamCard(),
-                    ],
-                  );
-                },
-              ),
+              _buildMembershipCard(isDark),
+              const SizedBox(height: 16),
+              _buildQuotaCard(),
               const SizedBox(height: 32),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 4,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary(isDark),
-                        borderRadius: BorderRadius.circular(2),
+              _buildSectionTitle(
+                'Mis Sucursales / Sedes',
+                Icons.store_rounded,
+                isDark,
+              ),
+              const SizedBox(height: 16),
+              if (_sucursales.isEmpty)
+                _buildEmptyState(
+                  icon: Icons.store_outlined,
+                  text:
+                      'No tienes sucursales creadas.\nToca + para crear tu primera sede.',
+                  isDark: isDark,
+                )
+              else
+                ..._sucursales.map((s) => _buildSucursalCard(s, isDark)),
+              const SizedBox(height: 32),
+              _buildSectionTitle('Equipo', Icons.people_alt_rounded, isDark),
+              const SizedBox(height: 16),
+              if (_perfiles.isEmpty)
+                _buildEmptyState(
+                  icon: Icons.person_off_outlined,
+                  text: 'No hay miembros en tu equipo.',
+                  isDark: isDark,
+                )
+              else
+                _buildTeamSummary(isDark),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, IconData icon, bool isDark) {
+    final primary = AppColors.primary(isDark);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: primary, size: 18),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            title,
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.black87,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String text,
+    required bool isDark,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 48,
+              color: isDark ? Colors.white10 : Colors.black12,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: isDark ? Colors.white38 : Colors.black38),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSucursalCard(Map<String, dynamic> s, bool isDark) {
+    final primary = AppColors.primary(isDark);
+    final int cupo = s['rutas_permitidas'] as int? ?? 0;
+    // Contar rutas reales asignadas a esta sucursal (por socio_id)
+    final rutasEnSucursal = _rutas
+        .where((r) => r['socio_id'] == s['id'])
+        .length;
+    final double progreso = cupo > 0
+        ? (rutasEnSucursal / cupo).clamp(0.0, 1.0)
+        : 0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.05),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.store_rounded, color: primary, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s['nombre'] ?? 'Sin nombre',
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$rutasEnSucursal de $cupo rutas asignadas',
+                        style: TextStyle(
+                          color: isDark ? Colors.white38 : Colors.black38,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: (rutasEnSucursal >= cupo ? Colors.orange : primary)
+                        .withValues(alpha: isDark ? 0.15 : 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$cupo rutas',
+                    style: TextStyle(
+                      color: rutasEnSucursal >= cupo ? Colors.orange : primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(width: 10),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Barra de progreso de rutas
+            Stack(
+              children: [
+                Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.03),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+                FractionallySizedBox(
+                  widthFactor: progreso,
+                  child: Container(
+                    height: 6,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: rutasEnSucursal >= cupo
+                            ? [Colors.orange, Colors.orangeAccent]
+                            : [primary, primary.withValues(alpha: 0.6)],
+                      ),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTeamSummary(bool isDark) {
+    final primary = AppColors.primary(isDark);
+    // Agrupar por rol
+    final Map<String, int> rolCount = {};
+    for (var p in _perfiles) {
+      final rol = p['rol']?.toString() ?? 'sin_rol';
+      rolCount[rol] = (rolCount[rol] ?? 0) + 1;
+    }
+
+    final rolLabels = {
+      'super_admin': 'Dueños',
+      'admin': 'Admins',
+      'socio': 'Socios',
+      'cobrador': 'Cobradores',
+      'supervisor': 'Supervisores',
+    };
+
+    final rolIcons = {
+      'super_admin': Icons.admin_panel_settings_rounded,
+      'admin': Icons.manage_accounts_rounded,
+      'socio': Icons.handshake_rounded,
+      'cobrador': Icons.directions_walk_rounded,
+      'supervisor': Icons.visibility_rounded,
+    };
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.05),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Resumen rápido
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${_perfiles.length} miembros',
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () async {
+                  await Navigator.pushNamed(context, '/gestion_equipo');
+                  _loadDashboardData();
+                },
+                icon: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: primary,
+                ),
+                label: Text(
+                  'Gestionar',
+                  style: TextStyle(color: primary, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: rolCount.entries.map((e) {
+              final label = rolLabels[e.key] ?? e.key;
+              final icon = rolIcons[e.key] ?? Icons.person_rounded;
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: isDark ? 0.1 : 0.06),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: primary.withValues(alpha: 0.15)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, size: 16, color: primary),
+                    const SizedBox(width: 6),
                     Text(
-                      "Mis Sucursales / Sedes",
+                      '${e.value} $label',
                       style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black87,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
+                        color: isDark ? Colors.white70 : Colors.black87,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              if (_sucursales.isEmpty)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(40),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.store_outlined,
-                          size: 48,
-                          color: isDark ? Colors.white10 : Colors.black12,
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          "No tienes sucursales creadas.",
-                          style: TextStyle(
-                            color: isDark ? Colors.white38 : Colors.black38,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _sucursales.length,
-                  itemBuilder: (context, index) {
-                    final s = _sucursales[index];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.05)
-                              : Colors.black.withValues(alpha: 0.05),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(
-                              alpha: isDark ? 0.3 : 0.03,
-                            ),
-                            blurRadius: 15,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        leading: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.store_rounded,
-                            color: Colors.amber,
-                            size: 24,
-                          ),
-                        ),
-                        title: Text(
-                          s['nombre'],
-                          style: TextStyle(
-                            color: isDark ? Colors.white : Colors.black87,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        subtitle: Text(
-                          "Cupo: ${s['rutas_permitidas']} rutas",
-                          style: TextStyle(
-                            color: isDark ? Colors.white38 : Colors.black38,
-                            fontSize: 13,
-                          ),
-                        ),
-                        trailing: Icon(
-                          Icons.chevron_right_rounded,
-                          color: isDark ? Colors.white24 : Colors.black26,
-                        ),
-                        onTap: () {
-                          // Navegar a gestión de la sucursal (próximamente)
-                        },
-                      ),
-                    );
-                  },
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMembershipCard(bool isDark) {
+    if (_miEmpresa == null) return const SizedBox.shrink();
+    final primary = AppColors.primary(isDark);
+    final int rutasContratadas = _miEmpresa!['total_rutas_contratadas'] ?? 0;
+    final int maxUsuarios = _miEmpresa!['max_usuarios'] ?? 0;
+    final String nombre = _miEmpresa!['nombre'] ?? 'Mi Empresa';
+    final String? ciudad = _miEmpresa!['ciudad'];
+    final String? telefono = _miEmpresa!['telefono'];
+    final fechaVenc = _miEmpresa!['fecha_vencimiento'];
+    final bool isActive = _miEmpresa!['is_active'] ?? false;
+
+    String estadoPlan = 'Activo';
+    Color estadoColor = Colors.green;
+    if (!isActive) {
+      estadoPlan = 'Bloqueada';
+      estadoColor = Colors.red;
+    } else if (fechaVenc != null) {
+      final vencDate = DateTime.parse(fechaVenc).toLocal();
+      final diff = vencDate.difference(DateTime.now()).inDays;
+      if (diff < 0) {
+        estadoPlan = 'Vencida';
+        estadoColor = Colors.red;
+      } else if (diff <= 7) {
+        estadoPlan = 'Por vencer';
+        estadoColor = Colors.orange;
+      }
+    }
+
+    final meses = [
+      'ene',
+      'feb',
+      'mar',
+      'abr',
+      'may',
+      'jun',
+      'jul',
+      'ago',
+      'sep',
+      'oct',
+      'nov',
+      'dic',
+    ];
+    String fechaVencStr = 'Sin fecha';
+    if (fechaVenc != null) {
+      final d = DateTime.parse(fechaVenc).toLocal();
+      fechaVencStr = '${d.day} ${meses[d.month - 1]} ${d.year}';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [const Color(0xFF1A1D2E), const Color(0xFF14171F)]
+              : [Colors.white, const Color(0xFFF8F6F0)],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: primary.withValues(alpha: 0.15)),
+        boxShadow: [
+          BoxShadow(
+            color: primary.withValues(alpha: isDark ? 0.08 : 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header con nombre y estado
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
                 ),
+                child: Icon(Icons.business_rounded, color: primary, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      nombre,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    if (ciudad != null && ciudad.isNotEmpty)
+                      Text(
+                        ciudad,
+                        style: TextStyle(
+                          color: isDark ? Colors.white38 : Colors.black38,
+                          fontSize: 13,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: estadoColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: estadoColor.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  estadoPlan,
+                  style: TextStyle(
+                    color: estadoColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ],
           ),
-        ),
+          const SizedBox(height: 20),
+          // Datos del plan en grid
+          Row(
+            children: [
+              Expanded(
+                child: _membershipStat(
+                  Icons.location_on_rounded,
+                  '$rutasContratadas',
+                  'Rutas contratadas',
+                  primary,
+                  isDark,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _membershipStat(
+                  Icons.people_rounded,
+                  '$maxUsuarios',
+                  'Usuarios máx.',
+                  primary,
+                  isDark,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _membershipStat(
+                  Icons.store_rounded,
+                  '${_sucursales.length}',
+                  'Sucursales',
+                  primary,
+                  isDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Fecha de vencimiento y teléfono
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.04)
+                  : Colors.black.withValues(alpha: 0.02),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_rounded,
+                  size: 16,
+                  color: isDark ? Colors.white38 : Colors.black38,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Vence: $fechaVencStr',
+                  style: TextStyle(
+                    color: isDark ? Colors.white60 : Colors.black54,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (telefono != null && telefono.isNotEmpty) ...[
+                  const Spacer(),
+                  Icon(
+                    Icons.phone_rounded,
+                    size: 16,
+                    color: isDark ? Colors.white38 : Colors.black38,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    telefono,
+                    style: TextStyle(
+                      color: isDark ? Colors.white60 : Colors.black54,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _membershipStat(
+    IconData icon,
+    String value,
+    String label,
+    Color color,
+    bool isDark,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.04)
+            : Colors.black.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.black87,
+              fontWeight: FontWeight.w900,
+              fontSize: 20,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: isDark ? Colors.white38 : Colors.black38,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -981,160 +1427,6 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTeamCard() {
-    final tp = Provider.of<ThemeProvider>(context);
-    final isDark = tp.isDarkMode;
-    final primary = AppColors.primary(isDark);
-    final double progreso = _totalAlcanzable > 0
-        ? _usuariosActivos / _totalAlcanzable
-        : 0;
-    final bool isAtLimit =
-        _usuariosActivos >= _totalAlcanzable && _totalAlcanzable > 0;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.05),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () async {
-            await Navigator.pushNamed(context, '/gestion_equipo');
-            _loadDashboardData();
-          },
-          borderRadius: BorderRadius.circular(24),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "MI EQUIPO",
-                          style: TextStyle(
-                            color: isDark ? Colors.white38 : Colors.black38,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.1,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Text(
-                              "$_usuariosActivos",
-                              style: TextStyle(
-                                color: isDark ? Colors.white : Colors.black87,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 28,
-                                letterSpacing: -1,
-                              ),
-                            ),
-                            Text(
-                              " / $_totalAlcanzable",
-                              style: TextStyle(
-                                color: isDark ? Colors.white24 : Colors.black26,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: (isAtLimit ? Colors.redAccent : primary)
-                            .withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        isAtLimit
-                            ? Icons.warning_rounded
-                            : Icons.people_alt_rounded,
-                        color: isAtLimit ? Colors.redAccent : primary,
-                        size: 24,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Stack(
-                  children: [
-                    Container(
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.black.withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 1000),
-                      height: 8,
-                      width: MediaQuery.of(context).size.width * 0.8 * progreso,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: isAtLimit
-                              ? [Colors.redAccent, Colors.red]
-                              : [primary, Colors.greenAccent],
-                        ),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      isAtLimit
-                          ? "⚠️ Cupo de personal agotado"
-                          : "Tienes ${_totalAlcanzable - _usuariosActivos} espacios disponibles",
-                      style: TextStyle(
-                        color: isAtLimit
-                            ? Colors.redAccent
-                            : (isDark ? Colors.white38 : Colors.black38),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 14,
-                      color: primary,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
