@@ -102625,7 +102625,7 @@ if(r)r=a8
 else{r=b1?B.aa:B.a9
 o=b1?B.ao:B.an
 n=b1?B.aa:B.a9
-m=A.H("Panel Empresa \u2022 Dashboard",a8,a8,a8,A.L(a8,a8,b1?B.e:B.n,a8,a8,a8,a8,a8,a8,a8,a8,a8,a8,a8,B.w,a8,a8,!0,a8,0.4,a8,a8,a8,a8,a8,a8),a8,a8,a8)
+m=A.H("Panel Empresa \u2022 v1.8.5",a8,a8,a8,A.L(a8,a8,b1?B.e:B.n,a8,a8,a8,a8,a8,a8,a8,a8,a8,a8,a8,B.w,a8,a8,!0,a8,0.4,a8,a8,a8,a8,a8,a8),a8,a8,a8)
 l=a7.f
 l=l==null?a8:l.h(0,"nombre")
 l=J.bD(l==null?"Mi Empresa":l)
