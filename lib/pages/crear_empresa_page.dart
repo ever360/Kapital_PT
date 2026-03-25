@@ -32,7 +32,8 @@ class _CrearEmpresaPageState extends State<CrearEmpresaPage> {
       final empresaData = {
         'nombre': nombreController.text.trim(),
         'is_active': false, // Sigue requiriendo activacion del Master
-        'total_rutas_contratadas': 1, // Valor inicial por defecto
+        'total_rutas_contratadas': 1, // Valor inicial, Master ajusta al aprobar
+        'max_usuarios': 10, // Valor inicial, Master ajusta al aprobar
         'ciudad': ciudadController.text.trim(),
         'telefono': telefonoController.text.trim(),
         'descripcion': descripcionController.text.trim(),

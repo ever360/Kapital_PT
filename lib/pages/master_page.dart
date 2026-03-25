@@ -1322,6 +1322,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
       text: 'Kapital - ${user['nombre']}',
     );
     final rutasMaxCtrl = TextEditingController(text: '0');
+    final maxUsuariosCtrl = TextEditingController(text: '10');
     final montoCtrl = TextEditingController(); // Valor por ruta
     double _totalPagar = 0;
 
@@ -1502,6 +1503,40 @@ class _MasterHomePageState extends State<MasterHomePage> {
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
+                        controller: maxUsuariosCtrl,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Máx. usuarios',
+                          labelStyle: TextStyle(
+                            color: isDark ? Colors.white60 : Colors.black54,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.people_rounded,
+                            color: AppColors.primary(isDark),
+                          ),
+                          filled: true,
+                          fillColor: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.03),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty)
+                            return 'Obligatorio';
+                          if (int.tryParse(v) == null || int.parse(v) < 1) {
+                            return 'Mínimo 1';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
                         controller: montoCtrl,
                         keyboardType: TextInputType.number,
                         inputFormatters: [_ThousandSeparatorFormatter()],
@@ -1670,11 +1705,14 @@ class _MasterHomePageState extends State<MasterHomePage> {
                           .trim();
                       final valorRuta = double.tryParse(valorRaw) ?? 0;
                       final montoVal = valorRuta * rutasContratadas;
+                      final maxUsuarios =
+                          int.tryParse(maxUsuariosCtrl.text.trim()) ?? 10;
                       final empRes = await supabase
                           .from('empresas')
                           .insert({
                             'nombre': empresaCtrl.text.trim(),
                             'total_rutas_contratadas': rutasContratadas,
+                            'max_usuarios': maxUsuarios,
                             'is_active': true,
                             'fecha_pago': fechaPagoSel
                                 .toUtc()
@@ -1748,6 +1786,9 @@ class _MasterHomePageState extends State<MasterHomePage> {
     final rutasCtrl = TextEditingController(
       text: '${emp['total_rutas_contratadas'] ?? 1}',
     );
+    final maxUsuariosEditCtrl = TextEditingController(
+      text: '${emp['max_usuarios'] ?? 10}',
+    );
     final notasCtrl = TextEditingController(text: emp['notas_master'] ?? '');
     final montoEditCtrl = TextEditingController(text: '0');
     DateTime fechaPagoSel = emp['fecha_pago'] != null
@@ -1812,6 +1853,32 @@ class _MasterHomePageState extends State<MasterHomePage> {
                         ),
                         prefixIcon: Icon(
                           Icons.location_on_rounded,
+                          color: AppColors.primary(isDark),
+                        ),
+                        filled: true,
+                        fillColor: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.black.withValues(alpha: 0.03),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: maxUsuariosEditCtrl,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Máx. usuarios',
+                        labelStyle: TextStyle(
+                          color: isDark ? Colors.white60 : Colors.black54,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.people_rounded,
                           color: AppColors.primary(isDark),
                         ),
                         filled: true,
@@ -1934,6 +2001,10 @@ class _MasterHomePageState extends State<MasterHomePage> {
                     final rutasNuevas =
                         int.tryParse(rutasCtrl.text) ??
                         emp['total_rutas_contratadas'];
+                    final maxUsuariosNuevos =
+                        int.tryParse(maxUsuariosEditCtrl.text) ??
+                        emp['max_usuarios'] ??
+                        10;
                     await supabase
                         .from('empresas')
                         .update({
@@ -1942,6 +2013,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                               .toUtc()
                               .toIso8601String(),
                           'total_rutas_contratadas': rutasNuevas,
+                          'max_usuarios': maxUsuariosNuevos,
                           'notas_master': notasCtrl.text.trim(),
                         })
                         .eq('id', emp['id']);
