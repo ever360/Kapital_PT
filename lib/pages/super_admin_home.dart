@@ -429,6 +429,57 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                   ),
                   onPressed: _loadDashboardData,
                 ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: Tooltip(
+                    message: isDark ? 'Modo Claro' : 'Modo Oscuro',
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(22),
+                        onTap: () => themeProvider.toggleTheme(),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.white.withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                              color:
+                                  (isDark
+                                          ? AppColors.verdeSupabase
+                                          : AppColors.doradoKapital)
+                                      .withValues(alpha: 0.35),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    (isDark
+                                            ? AppColors.verdeSupabase
+                                            : AppColors.doradoKapital)
+                                        .withValues(alpha: 0.25),
+                                blurRadius: 14,
+                                spreadRadius: -4,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            isDark
+                                ? Icons.light_mode_rounded
+                                : Icons.dark_mode_rounded,
+                            size: 21,
+                            color: isDark
+                                ? AppColors.verdeSupabase
+                                : AppColors.doradoKapital,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
       floatingActionButton: FloatingActionButton.extended(

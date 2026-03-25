@@ -2,6 +2,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'web_notification_stub.dart'
+    if (dart.library.js_interop) 'web_notification.dart'
+    as web_notif;
 
 class PushNotificationService {
   static final FirebaseMessaging _firebaseMessaging =
@@ -100,14 +103,17 @@ class PushNotificationService {
   }
 
   static Future<void> _showForegroundNotification(RemoteMessage message) async {
-    if (kIsWeb) return;
-
-    await _initializeLocalNotifications();
-
     final String title =
         message.notification?.title ?? 'Nueva notificacion de Kapital';
     final String body =
         message.notification?.body ?? 'Tienes una solicitud pendiente.';
+
+    if (kIsWeb) {
+      await web_notif.showWebNotification(title, body);
+      return;
+    }
+
+    await _initializeLocalNotifications();
 
     await _localNotifications.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
@@ -123,7 +129,7 @@ class PushNotificationService {
           playSound: true,
           enableVibration: true,
           ticker: 'Kapital',
-          icon: '@mipmap/ic_launcher',
+          icon: '@drawable/notification_logo',
           largeIcon: const DrawableResourceAndroidBitmap('notification_logo'),
         ),
         iOS: const DarwinNotificationDetails(),

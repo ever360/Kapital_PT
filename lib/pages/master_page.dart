@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:kapital_app/theme/theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:kapital_app/widgets/kapital_drawer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Se ignoran advertencias de miembros obsoletos usados en este archivo, especialmente
 // RadioListTile.groupValue/onChanged y Switch.activeColor.
@@ -215,6 +216,16 @@ class _MasterHomePageState extends State<MasterHomePage> {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
+  String _formatMiles(dynamic value) {
+    final num n = value is String ? (num.tryParse(value) ?? 0) : (value ?? 0);
+    return n
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]}.',
+        );
+  }
+
   int _daysUntilVencimiento(Map<String, dynamic> empresa) {
     final fechaVenc = empresa['fecha_vencimiento'];
     if (fechaVenc == null) return 99999;
@@ -412,7 +423,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                                   ),
                                   const SizedBox(width: 12),
                                   Icon(
-                                    Icons.route_rounded,
+                                    Icons.alt_route_rounded,
                                     size: 13,
                                     color: primary,
                                   ),
@@ -728,7 +739,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Icon(
-                                                Icons.route_rounded,
+                                                Icons.alt_route_rounded,
                                                 size: 11,
                                                 color: primary,
                                               ),
@@ -1169,9 +1180,9 @@ class _MasterHomePageState extends State<MasterHomePage> {
       text: 'Kapital - ${user['nombre']}',
     );
     final rutasMaxCtrl = TextEditingController(
-      text: '5',
+      text: '0',
     ); // Rutas pagadas por defecto
-    final montoCtrl = TextEditingController(text: '0');
+    final montoCtrl = TextEditingController();
 
     DateTime fechaPagoSel = DateTime.now();
     DateTime fechaVencSel = fechaPagoSel.add(const Duration(days: 30));
@@ -1317,7 +1328,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                             color: isDark ? Colors.white60 : Colors.black54,
                           ),
                           prefixIcon: Icon(
-                            Icons.route,
+                            Icons.alt_route_rounded,
                             color: AppColors.primary(isDark),
                           ),
                           filled: true,
@@ -1342,11 +1353,13 @@ class _MasterHomePageState extends State<MasterHomePage> {
                       TextFormField(
                         controller: montoCtrl,
                         keyboardType: TextInputType.number,
+                        inputFormatters: [_ThousandSeparatorFormatter()],
                         style: TextStyle(
                           color: isDark ? Colors.white : Colors.black87,
                         ),
                         decoration: InputDecoration(
-                          labelText: 'Monto del Pago',
+                          labelText: 'Valor a Pagar',
+                          hintText: '0',
                           labelStyle: TextStyle(
                             color: isDark ? Colors.white60 : Colors.black54,
                           ),
@@ -1354,6 +1367,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                             Icons.attach_money,
                             color: AppColors.primary(isDark),
                           ),
+                          prefixText: '\$ ',
                           filled: true,
                           fillColor: isDark
                               ? Colors.white.withValues(alpha: 0.05)
@@ -1363,6 +1377,13 @@ class _MasterHomePageState extends State<MasterHomePage> {
                             borderSide: BorderSide.none,
                           ),
                         ),
+                        validator: (v) {
+                          final raw =
+                              v?.replaceAll('.', '').replaceAll(',', '') ?? '';
+                          final n = double.tryParse(raw) ?? 0;
+                          if (n <= 0) return 'Ingresa un monto mayor a 0';
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 12),
                       Container(
@@ -1450,6 +1471,11 @@ class _MasterHomePageState extends State<MasterHomePage> {
                       final rutasContratadas = int.parse(
                         rutasMaxCtrl.text.trim(),
                       );
+                      final montoRaw = montoCtrl.text
+                          .replaceAll('.', '')
+                          .replaceAll(',', '')
+                          .trim();
+                      final montoVal = double.tryParse(montoRaw) ?? 0;
                       final empRes = await supabase
                           .from('empresas')
                           .insert({
@@ -1468,7 +1494,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                       // Registrar pago inicial de la empresa
                       await supabase.from('pagos_empresa').insert({
                         'empresa_id': empRes['id'],
-                        'monto': double.tryParse(montoCtrl.text.trim()) ?? 0,
+                        'monto': montoVal,
                         'rutas_contratadas': rutasContratadas,
                         'fecha_pago': fechaPagoSel.toUtc().toIso8601String(),
                         'fecha_vencimiento': fechaVencSel
@@ -1493,6 +1519,15 @@ class _MasterHomePageState extends State<MasterHomePage> {
                           content: Text('✅ Dueño aprobado y empresa creada'),
                           backgroundColor: Colors.green,
                         ),
+                      );
+                      // Ofrecer enviar comprobante por WhatsApp
+                      _ofrecerWhatsApp(
+                        telefono: user['telefono'],
+                        empresa: empresaCtrl.text.trim(),
+                        monto: montoVal,
+                        rutas: rutasContratadas,
+                        fechaPago: fechaPagoSel,
+                        fechaVenc: fechaVencSel,
                       );
                     } catch (e) {
                       if (!mounted) return;
@@ -1582,7 +1617,7 @@ class _MasterHomePageState extends State<MasterHomePage> {
                           color: isDark ? Colors.white60 : Colors.black54,
                         ),
                         prefixIcon: Icon(
-                          Icons.route,
+                          Icons.alt_route_rounded,
                           color: AppColors.primary(isDark),
                         ),
                         filled: true,
@@ -1622,14 +1657,15 @@ class _MasterHomePageState extends State<MasterHomePage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
+                    TextFormField(
                       controller: montoEditCtrl,
                       keyboardType: TextInputType.number,
+                      inputFormatters: [_ThousandSeparatorFormatter()],
                       style: TextStyle(
                         color: isDark ? Colors.white : Colors.black87,
                       ),
                       decoration: InputDecoration(
-                        labelText: 'Monto del Pago',
+                        labelText: 'Valor a Pagar',
                         labelStyle: TextStyle(
                           color: isDark ? Colors.white60 : Colors.black54,
                         ),
@@ -1740,6 +1776,415 @@ class _MasterHomePageState extends State<MasterHomePage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ============== WHATSAPP COMPROBANTE ==============
+
+  Future<void> _ofrecerWhatsApp({
+    required String? telefono,
+    required String empresa,
+    required double monto,
+    required int rutas,
+    required DateTime fechaPago,
+    required DateTime fechaVenc,
+  }) async {
+    if (!mounted) return;
+    final enviar = await showDialog<bool>(
+      context: this.context,
+      builder: (ctx) {
+        final isDark = Provider.of<ThemeProvider>(ctx).isDarkMode;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.send_rounded, color: Colors.green, size: 24),
+              const SizedBox(width: 10),
+              const Text('Enviar Comprobante'),
+            ],
+          ),
+          content: Text(
+            '¿Enviar comprobante de pago por WhatsApp a $empresa?',
+            style: TextStyle(color: isDark ? Colors.white70 : Colors.black87),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('No', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF25D366),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.send, color: Colors.white, size: 18),
+              label: const Text(
+                'Enviar WhatsApp',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+            ),
+          ],
+        );
+      },
+    );
+    if (enviar != true) return;
+
+    final tel = (telefono ?? '').replaceAll(RegExp(r'[^0-9]'), '');
+    if (tel.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(this.context).showSnackBar(
+          const SnackBar(
+            content: Text('El usuario no tiene teléfono registrado'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    final fechaPagoStr = _formatDate(fechaPago.toIso8601String());
+    final fechaVencStr = _formatDate(fechaVenc.toIso8601String());
+    final montoStr = _formatMiles(monto);
+
+    final mensaje = Uri.encodeComponent(
+      '✅ *COMPROBANTE DE PAGO - KAPITAL*\n\n'
+      '🏢 Empresa: *$empresa*\n'
+      '💰 Monto pagado: *\$$montoStr*\n'
+      '🗓️ Fecha de pago: *$fechaPagoStr*\n'
+      '📅 Vence: *$fechaVencStr*\n'
+      '📍 Rutas contratadas: *$rutas*\n\n'
+      '¡Gracias por tu pago! Tu cuenta está activa.',
+    );
+
+    final url = Uri.parse('https://wa.me/$tel?text=$mensaje');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  // ============== REGISTRAR PAGO EMPRESA ==============
+
+  Future<void> _registrarPagoEmpresa(Map<String, dynamic> emp) async {
+    final montoCtrl = TextEditingController();
+    final rutasCtrl = TextEditingController(
+      text: '${emp['total_rutas_contratadas'] ?? 1}',
+    );
+    final notasCtrl = TextEditingController();
+    DateTime fechaPagoSel = DateTime.now();
+    DateTime fechaVencSel = emp['fecha_vencimiento'] != null
+        ? (DateTime.tryParse(emp['fecha_vencimiento'])?.toLocal() ??
+                  DateTime.now())
+              .add(const Duration(days: 30))
+        : DateTime.now().add(const Duration(days: 30));
+
+    final formKey = GlobalKey<FormState>();
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        final tp = Provider.of<ThemeProvider>(ctx);
+        final isDark = tp.isDarkMode;
+        final primary = AppColors.primary(isDark);
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            Future<void> pickDate(bool isPago) async {
+              final initial = isPago ? fechaPagoSel : fechaVencSel;
+              final selected = await showDatePicker(
+                context: context,
+                initialDate: initial,
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2100),
+              );
+              if (selected == null) return;
+              setDialogState(() {
+                if (isPago) {
+                  fechaPagoSel = selected;
+                  if (fechaVencSel.isBefore(fechaPagoSel)) {
+                    fechaVencSel = fechaPagoSel.add(const Duration(days: 30));
+                  }
+                } else {
+                  fechaVencSel = selected;
+                }
+              });
+            }
+
+            return AlertDialog(
+              backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Row(
+                children: [
+                  Icon(Icons.payments_rounded, color: primary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Pago: ${emp['nombre']}',
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                        fontSize: 16,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              content: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: montoCtrl,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [_ThousandSeparatorFormatter()],
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Valor a pagar ',
+                          labelStyle: TextStyle(
+                            color: isDark ? Colors.white60 : Colors.black54,
+                          ),
+                          prefixIcon: Icon(Icons.attach_money, color: primary),
+                          prefixText: '\$ ',
+                          filled: true,
+                          fillColor: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.03),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        validator: (v) {
+                          final raw =
+                              v?.replaceAll('.', '').replaceAll(',', '') ?? '';
+                          final n = double.tryParse(raw) ?? 0;
+                          if (n <= 0) return 'Ingresa un monto mayor a 0';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: rutasCtrl,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Rutas Contratadas',
+                          labelStyle: TextStyle(
+                            color: isDark ? Colors.white60 : Colors.black54,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.alt_route_rounded,
+                            color: primary,
+                          ),
+                          filled: true,
+                          fillColor: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.03),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty)
+                            return 'Obligatorio';
+                          if (int.tryParse(v) == null || int.parse(v) < 1)
+                            return 'Mínimo 1';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: notasCtrl,
+                        maxLines: 2,
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Notas (opcional)',
+                          labelStyle: TextStyle(
+                            color: isDark ? Colors.white60 : Colors.black54,
+                          ),
+                          prefixIcon: Icon(Icons.note_outlined, color: primary),
+                          filled: true,
+                          fillColor: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.03),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => pickDate(true),
+                              icon: Icon(Icons.event_available, color: primary),
+                              label: Text(
+                                'Pago: ${_formatDate(fechaPagoSel.toIso8601String())}',
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Colors.white70
+                                      : Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => pickDate(false),
+                              icon: Icon(Icons.event_busy, color: primary),
+                              label: Text(
+                                'Vence: ${_formatDate(fechaVencSel.toIso8601String())}',
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Colors.white70
+                                      : Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text(
+                    'Cancelar',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                  ),
+                  icon: const Icon(Icons.check_circle, color: Colors.black),
+                  label: const Text(
+                    'Registrar Pago',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: () async {
+                    if (!formKey.currentState!.validate()) return;
+                    Navigator.pop(ctx);
+                    setState(() => _isLoading = true);
+                    try {
+                      final montoRaw = montoCtrl.text
+                          .replaceAll('.', '')
+                          .replaceAll(',', '')
+                          .trim();
+                      final montoVal = double.tryParse(montoRaw) ?? 0;
+                      final rutasNuevas =
+                          int.tryParse(rutasCtrl.text.trim()) ??
+                          emp['total_rutas_contratadas'];
+
+                      // Actualizar empresa
+                      await supabase
+                          .from('empresas')
+                          .update({
+                            'fecha_pago': fechaPagoSel
+                                .toUtc()
+                                .toIso8601String(),
+                            'fecha_vencimiento': fechaVencSel
+                                .toUtc()
+                                .toIso8601String(),
+                            'total_rutas_contratadas': rutasNuevas,
+                          })
+                          .eq('id', emp['id']);
+
+                      // Registrar pago
+                      await supabase.from('pagos_empresa').insert({
+                        'empresa_id': emp['id'],
+                        'monto': montoVal,
+                        'rutas_contratadas': rutasNuevas,
+                        'fecha_pago': fechaPagoSel.toUtc().toIso8601String(),
+                        'fecha_vencimiento': fechaVencSel
+                            .toUtc()
+                            .toIso8601String(),
+                        'notas': notasCtrl.text.trim(),
+                        'registrado_por': supabase.auth.currentUser?.id,
+                      });
+
+                      _refreshData();
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(this.context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            '✅ Pago de \$${_formatMiles(montoVal)} registrado',
+                          ),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+
+                      // Buscar teléfono del dueño de la empresa
+                      final owner = _todosUsuarios.firstWhere(
+                        (p) =>
+                            p['empresa_id'] == emp['id'] &&
+                            (p['rol'] == 'super_admin' || p['rol'] == 'admin'),
+                        orElse: () => <String, dynamic>{},
+                      );
+                      _ofrecerWhatsApp(
+                        telefono: owner['telefono'],
+                        empresa: emp['nombre'] ?? '',
+                        monto: montoVal,
+                        rutas: rutasNuevas,
+                        fechaPago: fechaPagoSel,
+                        fechaVenc: fechaVencSel,
+                      );
+                    } catch (e) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(this.context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    } finally {
+                      if (mounted) setState(() => _isLoading = false);
+                    }
+                  },
                 ),
               ],
             );
@@ -2063,6 +2508,11 @@ class _MasterHomePageState extends State<MasterHomePage> {
                 onPressed: () => _showEmpresaDetalles(emp),
                 icon: const Icon(Icons.info_outline),
                 label: const Text('Detalles'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _registrarPagoEmpresa(emp),
+                icon: const Icon(Icons.payments_rounded),
+                label: const Text('Registrar Pago'),
               ),
               TextButton(
                 onPressed: () {
@@ -2557,5 +3007,35 @@ class _MasterHomePageState extends State<MasterHomePage> {
         ),
       ),
     );
+  }
+}
+
+// ============== THOUSAND SEPARATOR FORMATTER ==============
+
+class _ThousandSeparatorFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text.replaceAll('.', '');
+    if (text.isEmpty) return newValue.copyWith(text: '');
+    if (int.tryParse(text) == null) return oldValue;
+
+    final formatted = _format(text);
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+
+  String _format(String s) {
+    final buf = StringBuffer();
+    final len = s.length;
+    for (var i = 0; i < len; i++) {
+      if (i > 0 && (len - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
+    }
+    return buf.toString();
   }
 }
