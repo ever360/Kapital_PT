@@ -508,6 +508,7 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _buildPaymentBanner(isDark),
               LayoutBuilder(
                 builder: (context, constraints) {
                   if (constraints.maxWidth > 600) {
@@ -651,6 +652,159 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentBanner(bool isDark) {
+    if (_miEmpresa == null) return const SizedBox.shrink();
+
+    final bool isActive = _miEmpresa!['is_active'] ?? false;
+    final fechaVenc = _miEmpresa!['fecha_vencimiento'];
+
+    // Cuenta bloqueada
+    if (!isActive) {
+      return _paymentBannerCard(
+        isDark: isDark,
+        icon: Icons.block_rounded,
+        color: Colors.red,
+        title: 'Cuenta bloqueada',
+        message:
+            'Tu cuenta ha sido bloqueada. Contacta al administrador para reactivar tu servicio.',
+      );
+    }
+
+    if (fechaVenc == null) return const SizedBox.shrink();
+
+    final vencDate = DateTime.parse(fechaVenc).toLocal();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final vencDay = DateTime(vencDate.year, vencDate.month, vencDate.day);
+    final diff = vencDay
+        .difference(today)
+        .inDays; // positivo = faltan días, negativo = vencido
+
+    final meses = [
+      'enero',
+      'febrero',
+      'marzo',
+      'abril',
+      'mayo',
+      'junio',
+      'julio',
+      'agosto',
+      'septiembre',
+      'octubre',
+      'noviembre',
+      'diciembre',
+    ];
+    final fechaStr =
+        '${vencDate.day.toString().padLeft(2, '0')} de ${meses[vencDate.month - 1]}';
+
+    // Vencido por 2+ días (día 3 o más) → rojo, último día
+    if (diff <= -2) {
+      return _paymentBannerCard(
+        isDark: isDark,
+        icon: Icons.error_rounded,
+        color: Colors.red,
+        title: 'Último día de pago',
+        message:
+            'Tu último día de pago es hoy. Tu cuenta será bloqueada si no realizas el pago.',
+      );
+    }
+
+    // Vencido por 1 día (día 2) → naranja
+    if (diff == -1) {
+      return _paymentBannerCard(
+        isDark: isDark,
+        icon: Icons.warning_amber_rounded,
+        color: Colors.orange,
+        title: 'Pago vencido',
+        message:
+            'Recuerda, tu pago tiene 1 día vencido. Haz el pago para evitar bloqueos.',
+      );
+    }
+
+    // Vence hoy → naranja
+    if (diff == 0) {
+      return _paymentBannerCard(
+        isDark: isDark,
+        icon: Icons.access_time_rounded,
+        color: Colors.orange,
+        title: 'Tu pago vence hoy',
+        message:
+            'Recuerda que tu pago vence hoy $fechaStr. Realiza el pago para mantener tu servicio activo.',
+      );
+    }
+
+    // Faltan 7 días o menos → aviso dorado
+    if (diff <= 7) {
+      return _paymentBannerCard(
+        isDark: isDark,
+        icon: Icons.notifications_active_rounded,
+        color: const Color(0xFFD4A017),
+        title: 'Próximo pago',
+        message:
+            'Recuerda que tu pago vence el $fechaStr. Faltan $diff día${diff == 1 ? '' : 's'}.',
+      );
+    }
+
+    // Todo en orden
+    return const SizedBox.shrink();
+  }
+
+  Widget _paymentBannerCard({
+    required bool isDark,
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String message,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.15 : 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  message,
+                  style: TextStyle(
+                    color: isDark ? Colors.white70 : Colors.black87,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -920,13 +920,146 @@ class _MasterHomePageState extends State<MasterHomePage> {
   }
 
   Future<void> _toggleEmpresaActiva(Map<String, dynamic> emp) async {
-    final bool nuevoEstado = !(emp['is_active'] ?? false);
+    final bool activa = emp['is_active'] ?? false;
+    final bool nuevoEstado = !activa;
+    final isDark = Provider.of<ThemeProvider>(
+      context,
+      listen: false,
+    ).isDarkMode;
+    final nombre = emp['nombre'] ?? 'Sin nombre';
+    final fechaVenc = emp['fecha_vencimiento'];
+
+    String mensajeDueno = '';
+    if (nuevoEstado == false && fechaVenc != null) {
+      // Bloqueando: mostrar qué mensaje verá el dueño
+      final venc = DateTime.parse(fechaVenc).toLocal();
+      final meses = [
+        'enero',
+        'febrero',
+        'marzo',
+        'abril',
+        'mayo',
+        'junio',
+        'julio',
+        'agosto',
+        'septiembre',
+        'octubre',
+        'noviembre',
+        'diciembre',
+      ];
+      final fechaStr =
+          '${venc.day.toString().padLeft(2, '0')} de ${meses[venc.month - 1]} de ${venc.year}';
+      mensajeDueno =
+          'El dueño verá:\n"Tu cuenta ha sido bloqueada. Tu fecha de pago era el $fechaStr. Contacta al administrador para reactivar."';
+    }
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(
+              nuevoEstado ? Icons.play_circle_outline : Icons.block_rounded,
+              color: nuevoEstado ? Colors.green : Colors.redAccent,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                nuevoEstado ? 'Activar Empresa' : 'Bloquear Empresa',
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              nuevoEstado
+                  ? '¿Reactivar la empresa "$nombre"?'
+                  : '¿Bloquear la empresa "$nombre"?',
+              style: TextStyle(
+                color: isDark ? Colors.white70 : Colors.black87,
+                fontSize: 15,
+              ),
+            ),
+            if (mensajeDueno.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.redAccent.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.visibility_rounded,
+                      size: 18,
+                      color: Colors.redAccent,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        mensajeDueno,
+                        style: TextStyle(
+                          color: isDark ? Colors.white60 : Colors.black54,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: isDark ? Colors.white54 : Colors.black54),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: nuevoEstado ? Colors.green : Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(nuevoEstado ? 'Activar' : 'Bloquear'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
     try {
       await supabase
           .from('empresas')
           .update({'is_active': nuevoEstado})
           .eq('id', emp['id']);
       _refreshData();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(nuevoEstado ? 'Empresa activada' : 'Empresa bloqueada'),
+          backgroundColor: nuevoEstado ? Colors.green : Colors.redAccent,
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2545,11 +2678,9 @@ class _MasterHomePageState extends State<MasterHomePage> {
                   ),
                 ),
                 icon: Icon(
-                  activa
-                      ? Icons.pause_circle_outline
-                      : Icons.play_circle_outline,
+                  activa ? Icons.block_rounded : Icons.play_circle_outline,
                 ),
-                label: Text(activa ? 'Poner Inactiva' : 'Poner Activa'),
+                label: Text(activa ? 'Bloquear' : 'Activar'),
               ),
               OutlinedButton.icon(
                 onPressed: () => _editarEmpresa(emp),
