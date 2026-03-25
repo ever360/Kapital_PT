@@ -413,7 +413,7 @@ class _SuperAdminHomePageState extends State<SuperAdminHomePage> {
                     : Brightness.dark,
               ),
               title: Text(
-                'Panel Empresa • Dashboard',
+                'Panel Empresa • v1.8.5',
                 style: TextStyle(
                   color: isDark ? Colors.white : Colors.black87,
                   fontWeight: FontWeight.bold,
